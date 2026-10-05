@@ -139,3 +139,18 @@ Server-side proxy (Places API New) — key never reaches the browser. Restrict `
 - **Studio/1 BHK, 5 BHK+, Custom Area and Commercial** have no prices in the brief → estimator returns `PRICE_ON_REQUEST` for them until you set BHK pricing / `areaRate` per package.
 - Site stats (years, projects, consultations) are hidden until real values are entered. Company phone/address/GST are blank.
 - City list in `funnel.options` defaults to Delhi-NCR — edit if you serve other cities.
+
+## Day-to-day workflow
+See [WORKFLOW.md](WORKFLOW.md) — booking → contractor → site visit → measurements → quotation → review → customer → project.
+
+## Testing
+- **API end-to-end:** `cd backend && API_URL=http://localhost:5000 ADMIN_EMAIL=... ADMIN_PASSWORD=... npm run test:e2e` — 125 checks across funnels, OTP, uploads, estimate, permissions, site visit, measurements, quotation review/PDF/revisions, acceptance, projects, settings and audit. Needs `SMS_PROVIDER=LOG`/`WHATSAPP_PROVIDER=LOG` (OTP codes are read from `logs/combined.log`) and working storage (`STORAGE_PROVIDER=LOCAL` is simplest). Creates test data — never run against production.
+- Verified on a local Mongo-compatible server (FerretDB); dashboard, OTP and seed code avoid `$lookup`/`$cond`/projection-on-update so they run on MongoDB Atlas and compatible servers alike.
+
+## Local storage (development)
+`STORAGE_PROVIDER=LOCAL` stores uploads under `backend/uploads/` and serves them from `/api/v1/files/*` (private files only through expiring signed links). Refused in production unless `ALLOW_LOCAL_STORAGE=true`. Use Cloudinary or S3 in production.
+
+## Security notes
+- Real credentials belong in `backend/.env` / `frontend/.env.local` (gitignored), never in `.env.example`.
+- `SEED_SUPER_ADMIN_PASSWORD` must be at least 10 characters; otherwise the seed skips creating the admin.
+- If an Atlas URI only has the host, data goes to the `insider_india` database (override with `MONGODB_DB`).

@@ -103,16 +103,16 @@ export default function LocationStep({ initial, autocomplete, onSubmit, onBack, 
                 if (e.key === 'Escape') setOpen(false);
               }}
               onBlur={() => setTimeout(() => setOpen(false), 150)}
-              className={clsx('h-13 w-full rounded-[3px] border bg-paper pl-12 pr-10 text-base focus:border-charcoal focus:outline-none', err.formattedAddress ? 'border-error' : 'border-stone-deep')}
+              className={clsx('h-13 w-full rounded-none border bg-paper pl-12 pr-10 text-base focus:border-wine focus:outline-none', err.formattedAddress ? 'border-error' : 'border-stone-deep')}
               placeholder="e.g. Tower B, Sector 150, Noida"
             />
             {(searching || resolving) && <Spinner className="absolute right-4 top-1/2 size-4 -translate-y-1/2 text-graphite" />}
             {open && suggestions.length > 0 && (
-              <ul id={listId} role="listbox" className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-[3px] border border-stone-deep bg-paper py-1 shadow-lg">
+              <ul id={listId} role="listbox" className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-none border border-stone-deep bg-paper py-1 shadow-lg">
                 {suggestions.map((s, i) => (
                   <li key={s.placeId} id={`sugg-${i}`} role="option" aria-selected={i === active}
                     onMouseDown={(e) => { e.preventDefault(); choose(s); }}
-                    className={clsx('flex cursor-pointer gap-3 px-4 py-3', i === active ? 'bg-linen' : 'hover:bg-linen')}>
+                    className={clsx('flex cursor-pointer gap-3 px-4 py-3', i === active ? 'bg-blush/50' : 'hover:bg-blush/60')}>
                     <MapPin className="mt-0.5 size-4 shrink-0 text-graphite" aria-hidden="true" />
                     <span><span className="block font-medium">{s.mainText || s.text}</span>{s.secondaryText && <span className="block text-sm text-graphite">{s.secondaryText}</span>}</span>
                   </li>
@@ -131,7 +131,7 @@ export default function LocationStep({ initial, autocomplete, onSubmit, onBack, 
       )}
 
       {addr.formattedAddress && !manual && (
-        <p className="flex gap-2 rounded-[3px] bg-paper p-4 text-sm"><MapPin className="size-4 shrink-0 text-wine" aria-hidden="true" />{addr.formattedAddress}</p>
+        <p className="flex gap-2 rounded-none bg-paper p-4 text-sm"><MapPin className="size-4 shrink-0 text-wine" aria-hidden="true" />{addr.formattedAddress}</p>
       )}
 
       <div className="grid gap-5 sm:grid-cols-3">

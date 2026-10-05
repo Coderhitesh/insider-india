@@ -102,7 +102,7 @@ export function Content() {
         <CrudResource embedded endpoint="/admin/projects" title="Projects" managePerm="content.manage" reorder
           filters={[{ name: 'category', label: 'Category', options: CATS }]}
           columns={[
-            { key: 'title', label: 'Project', render: (r) => <span className="flex items-center gap-3">{r.coverImage && <img src={r.coverImage} alt="" className="size-10 rounded-[2px] object-cover" />}{r.title}</span> },
+            { key: 'title', label: 'Project', render: (r) => <span className="flex items-center gap-3">{r.coverImage && <img src={r.coverImage} alt="" className="size-10 rounded-none object-cover" />}{r.title}</span> },
             { key: 'category', label: 'Category', render: (r) => CATS.find(([k]) => k === r.category)?.[1] }, { key: 'city', label: 'City' },
             { key: 'isFeatured', label: 'Featured', render: (r) => (r.isFeatured ? 'Yes' : '') }, { key: 'isPublished', label: 'Status', render: published },
           ]}

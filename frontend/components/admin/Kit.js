@@ -14,7 +14,7 @@ export function Header({ title, subtitle, back, children }) {
       {back && <Link href={back[0]} className="mb-3 inline-block text-sm text-graphite hover:text-charcoal">← {back[1]}</Link>}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-sans text-2xl font-semibold tracking-tight">{title}</h1>
+          <h1 className="font-display text-2xl">{title}</h1>
           {subtitle && <p className="mt-1 text-sm text-graphite">{subtitle}</p>}
         </div>
         {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
@@ -25,10 +25,10 @@ export function Header({ title, subtitle, back, children }) {
 
 export function Box({ title, action, children, className, pad = true }) {
   return (
-    <section className={clsx('rounded-[3px] border border-stone bg-paper', className)}>
+    <section className={clsx('border border-stone-deep bg-paper', className)}>
       {(title || action) && (
-        <div className="flex items-center justify-between gap-3 border-b border-stone px-5 py-3">
-          {title && <h2 className="font-sans text-sm font-semibold tracking-normal">{title}</h2>}
+        <div className="flex items-center justify-between gap-3 border-b-2 border-wine px-5 py-3">
+          {title && <h2 className="font-sans text-sm font-bold tracking-normal [font-stretch:100%]">{title}</h2>}
           {action}
         </div>
       )}
@@ -38,8 +38,8 @@ export function Box({ title, action, children, className, pad = true }) {
 }
 
 const PILL = {
-  wine: 'bg-wine text-paper', green: 'bg-success/12 text-success', amber: 'bg-brass/15 text-[#7a5a24]',
-  grey: 'bg-stone/70 text-charcoal', red: 'bg-error/10 text-error', outline: 'border border-stone-deep text-graphite',
+  wine: 'bg-wine text-paper', green: 'bg-success/12 text-success', amber: 'bg-[#fff1d6] text-[#7a4b00]',
+  grey: 'bg-blush text-charcoal', red: 'border border-wine text-wine', outline: 'border border-stone-deep text-graphite',
 };
 const STATUS_TONE = {
   NEW: 'amber', IN_PROGRESS: 'amber', OTP_PENDING: 'amber', VERIFIED: 'grey', QUALIFIED: 'grey', BOOKED: 'wine', CONTRACTOR_ASSIGNED: 'grey',
@@ -56,9 +56,9 @@ export function Pill({ value, tone, children }) {
 
 export function Stat({ label, value, hint }) {
   return (
-    <div className="rounded-[3px] border border-stone bg-paper p-4">
-      <p className="text-xs text-graphite">{label}</p>
-      <p className="tabular mt-1 text-2xl font-semibold tracking-tight">{value}</p>
+    <div className="border border-stone-deep border-t-4 border-t-wine bg-paper p-4">
+      <p className="text-xs font-semibold text-graphite">{label}</p>
+      <p className="tabular mt-1 text-2xl font-bold tracking-tight text-charcoal">{value}</p>
       {hint && <p className="mt-0.5 text-xs text-graphite">{hint}</p>}
     </div>
   );
@@ -83,13 +83,13 @@ export function DataTable({ columns, rows, loading, error, retry, empty = 'Nothi
   const allSelected = selectable && rows?.length > 0 && rows.every((r) => selected?.has(r.id));
 
   return (
-    <div className="rounded-[3px] border border-stone bg-paper">
-      <div className="flex items-center justify-end gap-2 border-b border-stone px-3 py-2">
+    <div className="border border-stone-deep bg-paper">
+      <div className="flex items-center justify-end gap-2 border-b border-stone-deep px-3 py-2">
         {meta && <span className="mr-auto text-xs text-graphite">{meta.total.toLocaleString('en-IN')} result{meta.total === 1 ? '' : 's'}</span>}
         <div className="relative">
           <Button size="sm" variant="ghost" onClick={() => setPicker((p) => !p)} aria-expanded={picker}><Columns3 className="size-4" />Columns</Button>
           {picker && (
-            <div className="absolute right-0 z-20 mt-1 w-52 rounded-[3px] border border-stone bg-paper p-2 shadow-lg">
+            <div className="absolute right-0 z-20 mt-1 w-52 rounded-none border border-stone bg-paper p-2 shadow-lg">
               {columns.map((c) => (
                 <label key={c.key} className="flex items-center gap-2 px-2 py-1 text-sm">
                   <input type="checkbox" checked={!hidden.has(c.key)} onChange={() => toggle(c.key)} className="accent-[var(--color-wine)]" />{c.label}
@@ -103,7 +103,7 @@ export function DataTable({ columns, rows, loading, error, retry, empty = 'Nothi
       {error ? <div className="p-4"><Failed error={error} retry={retry} /></div> : (
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-linen/60 text-xs text-graphite">
+            <thead className="border-b-2 border-wine bg-blush text-xs font-semibold text-charcoal">
               <tr>
                 {selectable && <th className="w-10 px-3 py-2.5"><input type="checkbox" aria-label="Select all" checked={allSelected} onChange={() => onSelect(allSelected ? new Set() : new Set(rows.map((r) => r.id)))} className="accent-[var(--color-wine)]" /></th>}
                 {cols.map((c) => (
@@ -124,7 +124,7 @@ export function DataTable({ columns, rows, loading, error, retry, empty = 'Nothi
               ) : !rows?.length ? (
                 <tr><td colSpan={cols.length + 1} className="px-3 py-12 text-center text-graphite">{empty}</td></tr>
               ) : rows.map((r) => (
-                <tr key={r.id} className={clsx('align-top', rowHref && 'hover:bg-linen/50', loading && 'opacity-60')}>
+                <tr key={r.id} className={clsx('align-top', rowHref && 'hover:bg-blush/60', loading && 'opacity-60')}>
                   {selectable && <td className="px-3 py-3"><input type="checkbox" aria-label="Select row" checked={selected?.has(r.id)} onChange={() => { const n = new Set(selected); n.has(r.id) ? n.delete(r.id) : n.add(r.id); onSelect(n); }} className="accent-[var(--color-wine)]" /></td>}
                   {cols.map((c, i) => (
                     <td key={c.key} className={clsx('px-3 py-3', c.className)}>
@@ -152,10 +152,10 @@ export function DataTable({ columns, rows, loading, error, retry, empty = 'Nothi
 
 export function Tabs({ tabs, value, onChange }) {
   return (
-    <div role="tablist" className="mb-5 flex gap-1 overflow-x-auto border-b border-stone">
+    <div role="tablist" className="mb-5 flex gap-1 overflow-x-auto border-b-2 border-wine">
       {tabs.map(([k, label]) => (
         <button key={k} role="tab" type="button" aria-selected={value === k} onClick={() => onChange(k)}
-          className={clsx('-mb-px whitespace-nowrap border-b-2 px-3 py-2 text-sm', value === k ? 'border-wine text-wine' : 'border-transparent text-graphite hover:text-charcoal')}>{label}</button>
+          className={clsx('-mb-px whitespace-nowrap border-b-2 px-3 py-2 text-sm font-semibold', value === k ? 'border-wine bg-wine text-paper' : 'border-transparent text-graphite hover:text-wine')}>{label}</button>
       ))}
     </div>
   );

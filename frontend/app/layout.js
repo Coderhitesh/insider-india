@@ -6,8 +6,8 @@ import { getSite } from '@/lib/server-api';
 import { localBusinessLd } from '@/lib/seo';
 import { SITE_URL } from '@/lib/config';
 
-const bodoni = localFont({ src: '../public/fonts/BodoniModa.woff2', variable: '--font-bodoni', weight: '400 900', display: 'swap' });
-const hanken = localFont({ src: '../public/fonts/HankenGrotesk.woff2', variable: '--font-hanken', weight: '100 900', display: 'swap' });
+// Archivo variable (weight 100–900, width 62–125%) — one family; headings use its expanded width.
+const archivo = localFont({ src: '../public/fonts/Archivo.woff2', variable: '--font-archivo', weight: '100 900', style: 'normal', display: 'swap', declarations: [{ prop: 'font-stretch', value: '62% 125%' }] });
 
 export async function generateMetadata() {
   const { company } = await getSite();
@@ -21,12 +21,12 @@ export async function generateMetadata() {
   };
 }
 
-export const viewport = { themeColor: '#f3eee6', width: 'device-width', initialScale: 1 };
+export const viewport = { themeColor: '#c8102e', width: 'device-width', initialScale: 1 };
 
 export default async function RootLayout({ children }) {
   const { company } = await getSite();
   return (
-    <html lang="en-IN" className={`${bodoni.variable} ${hanken.variable}`}>
+    <html lang="en-IN" className={archivo.variable}>
       <body className="flex min-h-dvh flex-col">
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:bg-paper focus:px-4 focus:py-2">Skip to content</a>
         <Providers>{children}</Providers>

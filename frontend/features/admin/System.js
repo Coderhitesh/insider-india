@@ -22,7 +22,7 @@ function SendForm() {
     setMsg(null);
     try { const r = await api('/admin/notifications/send', { method: 'POST', body: { userIds: f.userIds.split(/[\s,]+/).filter(Boolean), title: f.title, body: f.body, link: f.link || undefined } }); setMsg({ tone: 'success', text: r.message }); } catch (x) { setMsg({ tone: 'error', text: x.message }); }
   };
-  const inp = 'w-full rounded-[3px] border border-stone-deep bg-paper px-3 py-2 text-sm';
+  const inp = 'w-full rounded-none border border-stone-deep bg-paper px-3 py-2 text-sm';
   return (
     <Box title="Send an in-app message">
       <div className="grid gap-3">
@@ -135,7 +135,7 @@ export function AuditLogs() {
         ]} />
       <Drawer open={Boolean(open)} onClose={() => setOpen(null)} title={open?.action || ''}>
         {open && ['before', 'after', 'meta'].filter((k) => open[k]).map((k) => (
-          <div key={k} className="mb-4"><p className="mb-1 text-xs font-medium text-graphite">{k}</p><pre className="overflow-x-auto rounded-[3px] bg-linen p-3 text-xs">{JSON.stringify(open[k], null, 2)}</pre></div>
+          <div key={k} className="mb-4"><p className="mb-1 text-xs font-medium text-graphite">{k}</p><pre className="overflow-x-auto rounded-none bg-blush/50 p-3 text-xs">{JSON.stringify(open[k], null, 2)}</pre></div>
         ))}
         {open && <p className="text-xs text-graphite">{open.userAgent}</p>}
       </Drawer>
@@ -148,7 +148,7 @@ export function Reports() {
   const [range, setRange] = useState({ range: '30d', from: '', to: '' });
   const [msg, setMsg] = useState(null);
   const run = (path, name) => downloadCsv(`${path}${qs(range)}`, `${name}-${range.range}.csv`).then(() => setMsg(null)).catch((e) => setMsg(e.message));
-  const cls = 'h-9 rounded-[3px] border border-stone-deep bg-paper px-2.5 text-sm';
+  const cls = 'h-9 rounded-none border border-stone-deep bg-paper px-2.5 text-sm';
   return (
     <>
       <Header title="Reports" subtitle="CSV exports for the chosen period. Charts are on the dashboard." />
@@ -162,7 +162,7 @@ export function Reports() {
         </div>
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[['/admin/leads', 'leads', 'Leads', 'Every lead with status, funnel progress, campaign'], ['/admin/bookings', 'bookings', 'Bookings', 'Requirements, contractor, status'], ['/admin/quotations', 'quotations', 'Quotations', 'Contractor vs final totals, adjustments'], ['/admin/customers', 'customers', 'Customers', 'Contact details, leads and bookings count']].map(([p, n, l, d]) => (
-            <div key={p} className="rounded-[3px] border border-stone p-4"><p className="font-medium">{l}</p><p className="mt-1 text-sm text-graphite">{d}</p><Button size="sm" variant="secondary" className="mt-3" onClick={() => run(p, n)}>Download CSV</Button></div>
+            <div key={p} className="rounded-none border border-stone p-4"><p className="font-medium">{l}</p><p className="mt-1 text-sm text-graphite">{d}</p><Button size="sm" variant="secondary" className="mt-3" onClick={() => run(p, n)}>Download CSV</Button></div>
           ))}
         </div>
         {msg && <Notice tone="error" className="mt-4">{msg}</Notice>}

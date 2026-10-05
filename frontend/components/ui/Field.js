@@ -18,8 +18,8 @@ export function Input({ id, error, className, prefix, ...props }) {
       aria-invalid={error ? true : undefined}
       aria-describedby={error ? `${id}-error` : undefined}
       className={clsx(
-        'h-13 w-full rounded-[3px] border bg-paper px-4 text-base text-charcoal placeholder:text-mist transition-colors',
-        'focus:border-charcoal focus:outline-none focus-visible:outline-none',
+        'h-13 w-full rounded-none border bg-paper px-4 text-base text-charcoal placeholder:text-mist transition-colors',
+        'focus:border-wine focus:shadow-[inset_0_0_0_1px_var(--color-wine)] focus:outline-none focus-visible:outline-none',
         error ? 'border-error' : 'border-stone-deep',
         prefix && 'pl-14',
         className,
@@ -30,7 +30,7 @@ export function Input({ id, error, className, prefix, ...props }) {
   if (!prefix) return input;
   return (
     <div className="relative">
-      <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-graphite">{prefix}</span>
+      <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center font-semibold text-wine">{prefix}</span>
       {input}
     </div>
   );
@@ -41,7 +41,7 @@ export function Textarea({ id, error, className, ...props }) {
     <textarea
       id={id}
       aria-invalid={error ? true : undefined}
-      className={clsx('min-h-24 w-full rounded-[3px] border bg-paper px-4 py-3 text-base focus:border-charcoal focus:outline-none', error ? 'border-error' : 'border-stone-deep', className)}
+      className={clsx('min-h-24 w-full rounded-none border bg-paper px-4 py-3 text-base focus:border-wine focus:shadow-[inset_0_0_0_1px_var(--color-wine)] focus:outline-none', error ? 'border-error' : 'border-stone-deep', className)}
       {...props}
     />
   );

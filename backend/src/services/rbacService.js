@@ -8,7 +8,7 @@ async function getRolePermissions(roleKey) {
   const hit = cache.get(roleKey);
   if (hit && hit.expires > Date.now()) return hit.perms;
   const role = await Role.findOne({ key: roleKey }).lean();
-  const perms = role ? role.permissions : [];
+  const perms = Array.isArray(role?.permissions) ? role.permissions : [];
   cache.set(roleKey, { perms, expires: Date.now() + TTL });
   return perms;
 }

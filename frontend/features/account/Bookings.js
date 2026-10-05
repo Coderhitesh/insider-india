@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import Timeline from '@/components/account/Timeline';
 import Button from '@/components/ui/Button';
+import BudgetCard from '@/components/ui/BudgetCard';
 import { Badge, Panel, PageTitle, Empty, Loading, LoadError, Row, BackLink } from '@/components/account/Bits';
 import { useApi } from '@/lib/useApi';
 import { BOOKING_STATUS, QUOTATION_STATUS } from '@/lib/status';
@@ -18,10 +19,10 @@ export function BookingsList() {
       {loading ? <Loading /> : error ? <LoadError error={error} onRetry={reload} /> : !data.items.length ? (
         <Empty title="No bookings yet" body="Your consultation requests will appear here." href="/book-consultation" cta="Book a consultation" />
       ) : (
-        <ul className="divide-y divide-stone rounded-[3px] border border-stone bg-paper">
+        <ul className="divide-y divide-stone rounded-none border border-stone bg-paper">
           {data.items.map((b) => (
             <li key={b.id}>
-              <Link href={`/account/bookings/${b.id}`} className="flex items-center gap-4 p-5 hover:bg-linen/60">
+              <Link href={`/account/bookings/${b.id}`} className="flex items-center gap-4 p-5 hover:bg-blush/60">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-3"><span className="tabular font-semibold">{b.bookingNumber}</span><Badge map={BOOKING_STATUS} value={b.status} /></div>
                   <p className="mt-1 truncate text-sm text-graphite">{[b.labels?.requirementType, b.labels?.bhk, b.address?.formattedAddress].filter(Boolean).join(', ')}</p>
@@ -41,7 +42,7 @@ export function BookingDetail({ id }) {
   const { data, error, loading, reload } = useApi(`/bookings/${id}`);
   if (loading) return <Loading rows={4} />;
   if (error) return <><BackLink href="/account/bookings">Bookings</BackLink><LoadError error={error} onRetry={reload} /></>;
-  const { booking: b, siteVisit, quotations = [], project } = data;
+  const { booking: b, siteVisit, quotations = [], project, budget } = data;
   const l = b.labels || {};
   return (
     <>
@@ -49,6 +50,7 @@ export function BookingDetail({ id }) {
       <PageTitle code title={b.bookingNumber}><Badge map={BOOKING_STATUS} value={b.status} /></PageTitle>
       <div className="grid gap-6 xl:grid-cols-5">
         <div className="space-y-6 xl:col-span-3">
+          {budget && !quotations.length && <BudgetCard budget={budget} showPackages />}
           {siteVisit && (
             <Panel title="Site visit">
               <p className="text-lg">{siteVisit.status === 'COMPLETED' ? 'Completed' : 'Scheduled for'} {formatDateTime(siteVisit.scheduledAt)}</p>

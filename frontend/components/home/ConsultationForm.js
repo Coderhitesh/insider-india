@@ -41,7 +41,7 @@ export default function ConsultationForm({ inverse = false, id = 'cta' }) {
     }
   };
 
-  const labelCls = inverse ? '[&_label]:text-paper [&_p]:text-stone' : '';
+  const labelCls = inverse ? '[&_label]:text-paper [&_p]:text-paper/85' : '';
   return (
     <form onSubmit={submit} noValidate className={`grid gap-4 sm:grid-cols-3 ${labelCls}`}>
       <Field id={`${id}-name`} label="Full name" error={errors.name}>

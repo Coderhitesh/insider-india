@@ -88,7 +88,7 @@ export default function FloorPlanStep({ floorPlan, charge, onSave, onBack, savin
             onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
             onDragLeave={() => setDrag(false)}
             onDrop={(e) => { e.preventDefault(); setDrag(false); add(e.dataTransfer.files); }}
-            className={clsx('flex flex-col items-center justify-center rounded-[3px] border-2 border-dashed px-6 py-10 text-center transition-colors', drag ? 'border-wine bg-wine-tint' : 'border-stone-deep bg-paper')}
+            className={clsx('flex flex-col items-center justify-center rounded-none border-2 border-dashed px-6 py-10 text-center transition-colors', drag ? 'border-wine bg-wine-tint' : 'border-stone-deep bg-paper')}
           >
             <UploadCloud className="size-8 text-graphite" aria-hidden="true" />
             <p className="mt-3 font-medium">Drag and drop your floor plan here</p>
@@ -99,8 +99,8 @@ export default function FloorPlanStep({ floorPlan, charge, onSave, onBack, savin
           {files.length > 0 && (
             <ul className="mt-5 space-y-3" aria-live="polite">
               {files.map((f) => (
-                <li key={f.key} className="flex items-center gap-4 rounded-[3px] border border-stone bg-paper p-3">
-                  <div className="relative size-14 shrink-0 overflow-hidden rounded-[2px] bg-linen">
+                <li key={f.key} className="flex items-center gap-4 rounded-none border border-stone bg-paper p-3">
+                  <div className="relative size-14 shrink-0 overflow-hidden rounded-none bg-blush/50">
                     {f.preview ? <img src={f.preview} alt="" className="size-full object-cover" /> : <FileText className="m-auto mt-4 size-6 text-graphite" aria-hidden="true" />}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -127,7 +127,7 @@ export default function FloorPlanStep({ floorPlan, charge, onSave, onBack, savin
       )}
 
       {choice === 'no' && (
-        <div className="mt-8 rounded-[3px] border border-stone bg-paper p-6">
+        <div className="mt-8 rounded-none border border-stone bg-paper p-6">
           <div className="flex gap-4">
             <Ruler className="size-6 shrink-0 text-wine" strokeWidth={1.5} aria-hidden="true" />
             <div>

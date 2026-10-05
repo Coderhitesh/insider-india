@@ -10,8 +10,8 @@ import { useAuth } from '@/store/auth';
 import { can, qs, inr } from '@/lib/admin';
 import { navFor } from '@/components/admin/AdminShell';
 
-const C = { wine: '#5e1f2b', brass: '#a67c3d', charcoal: '#262320', stone: '#bfb2a0', grid: '#e4dccf' };
-const axis = { fontSize: 11, fill: '#5b544d' };
+const C = { wine: '#c8102e', brass: '#e8838e', charcoal: '#7a0a1c', stone: '#e0b3ba', grid: '#f4e3e5' };
+const axis = { fontSize: 11, fill: '#6e5a5d' };
 
 function Bars({ data, color = C.wine, height = 240, vertical = true }) {
   if (!data?.length) return <p className="py-10 text-center text-sm text-graphite">No data for this period.</p>;
@@ -44,12 +44,12 @@ export default function Dashboard() {
   return (
     <>
       <Header title="Dashboard" subtitle="Figures for the selected period">
-        <select aria-label="Period" className="h-9 rounded-[3px] border border-stone-deep bg-paper px-2.5 text-sm" value={range.range} onChange={(e) => setRange({ range: e.target.value, from: '', to: '' })}>
+        <select aria-label="Period" className="h-9 rounded-none border border-stone-deep bg-paper px-2.5 text-sm" value={range.range} onChange={(e) => setRange({ range: e.target.value, from: '', to: '' })}>
           {RANGES.filter(([v]) => v).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
         {range.range === 'custom' && <>
-          <input type="date" aria-label="From" className="h-9 rounded-[3px] border border-stone-deep bg-paper px-2 text-sm" value={range.from} onChange={(e) => setRange({ ...range, from: e.target.value })} />
-          <input type="date" aria-label="To" className="h-9 rounded-[3px] border border-stone-deep bg-paper px-2 text-sm" value={range.to} onChange={(e) => setRange({ ...range, to: e.target.value })} />
+          <input type="date" aria-label="From" className="h-9 rounded-none border border-stone-deep bg-paper px-2 text-sm" value={range.from} onChange={(e) => setRange({ ...range, from: e.target.value })} />
+          <input type="date" aria-label="To" className="h-9 rounded-none border border-stone-deep bg-paper px-2 text-sm" value={range.to} onChange={(e) => setRange({ ...range, to: e.target.value })} />
         </>}
       </Header>
       {error ? <Failed error={error} retry={reload} /> : !data ? <Loader /> : (
@@ -98,7 +98,7 @@ export default function Dashboard() {
             <Box title="Contractor workload" className="xl:col-span-2" pad={false}>
               {data.contractorWorkload.length ? (
                 <table className="w-full text-sm">
-                  <thead className="bg-linen/60 text-xs text-graphite"><tr><th className="px-5 py-2 text-left font-medium">Contractor</th><th className="px-5 py-2 text-right font-medium">Open bookings</th><th className="px-5 py-2 text-right font-medium">Visits pending</th></tr></thead>
+                  <thead className="border-b-2 border-wine bg-blush text-xs text-charcoal"><tr><th className="px-5 py-2 text-left font-medium">Contractor</th><th className="px-5 py-2 text-right font-medium">Open bookings</th><th className="px-5 py-2 text-right font-medium">Visits pending</th></tr></thead>
                   <tbody className="divide-y divide-stone">{data.contractorWorkload.map((c) => <tr key={c.id}><td className="px-5 py-2.5">{c.name}</td><td className="tabular px-5 py-2.5 text-right">{c.open}</td><td className="tabular px-5 py-2.5 text-right">{c.siteVisitsPending}</td></tr>)}</tbody>
                 </table>
               ) : <p className="p-5 text-sm text-graphite">No open assignments.</p>}

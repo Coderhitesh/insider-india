@@ -1,29 +1,30 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import clsx from 'clsx';
 import Swatch from '@/components/ui/Swatch';
 import { Section, SectionHeading } from '@/components/ui/Section';
 import { SOLUTIONS, IMAGES } from '@/lib/content';
 
 const imageKey = { '/interiors': 'interiors', '/kitchen': 'kitchen', '/wardrobes': 'wardrobes', '/renovation': 'renovation', '/commercial-interiors': 'commercial' };
 
+// An index of drawings: each row turns solid red on hover, like a sheet being selected in a set.
 export default function Solutions() {
   return (
     <Section labelledBy="solutions-title">
       <SectionHeading id="solutions-title" title="Explore our interior solutions" intro="Start with the whole home or a single room. Every project follows the same measured, itemised process." />
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6 lg:grid-rows-2">
-        {SOLUTIONS.map((s, i) => {
+      <ul className="border-t-2 border-wine">
+        {SOLUTIONS.map((s) => {
           const img = IMAGES[imageKey[s.href]];
           return (
-            <li key={s.href} className={clsx(i === 0 ? 'lg:col-span-3 lg:row-span-2' : i < 3 ? 'lg:col-span-3' : 'lg:col-span-3 xl:col-span-3')}>
-              <Link href={s.href} className="group relative flex h-full min-h-56 flex-col justify-end overflow-hidden rounded-[3px]">
-                {img ? <Image src={img} alt="" fill sizes="(min-width:1024px) 50vw, 100vw" className="object-cover transition-transform duration-700 group-hover:scale-[1.02]" />
-                  : <Swatch tone={s.tone} className="absolute inset-0" />}
-                <span className="absolute inset-0 bg-gradient-to-t from-charcoal/80 via-charcoal/25 to-transparent" aria-hidden="true" />
-                <span className="relative p-6 text-paper sm:p-8">
-                  <span className={clsx('block font-display', i === 0 ? 'text-d3' : 'text-2xl')}>{s.title}</span>
-                  <span className="mt-2 block max-w-sm text-sm text-paper/85">{s.body}</span>
-                  <span className="mt-4 inline-block text-sm underline decoration-brass underline-offset-4">Explore {s.title.toLowerCase()}</span>
+            <li key={s.href} className="border-b border-stone-deep">
+              <Link href={s.href} className="group grid items-center gap-5 py-6 transition-colors hover:bg-wine hover:text-paper sm:grid-cols-12 sm:gap-8 sm:px-4">
+                <div className="relative aspect-[4/3] w-full overflow-hidden border border-stone-deep group-hover:border-paper sm:col-span-3 lg:col-span-2">
+                  {img ? <Image src={img} alt="" fill sizes="(min-width:1024px) 16vw, (min-width:640px) 25vw, 100vw" className="object-cover" />
+                    : <Swatch tone={s.tone} className="absolute inset-0 bg-paper" />}
+                </div>
+                <h3 className="text-d3 sm:col-span-5 lg:col-span-5">{s.title}</h3>
+                <p className="text-graphite group-hover:text-paper/90 sm:col-span-3 lg:col-span-4">{s.body}</p>
+                <span aria-hidden="true" className="hidden justify-self-end sm:col-span-1 sm:flex">
+                  <span className="relative block h-0.5 w-10 bg-current after:absolute after:-right-px after:-top-[5px] after:size-3 after:rotate-45 after:border-r-2 after:border-t-2 after:border-current" />
                 </span>
               </Link>
             </li>

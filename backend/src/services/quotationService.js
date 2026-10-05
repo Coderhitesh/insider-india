@@ -184,7 +184,15 @@ async function createExecutionProject(q) {
 // ── Dashboard metrics ───────────────────────────────────────
 registerMetric('quotations', async ({ start, end }, scope) => {
   const match = { isLatest: true, createdAt: { $gte: start, $lte: end }, ...(scope.assignedContractor ? { contractor: scope.assignedContractor } : {}) };
-  const rows = await Quotation.aggregate([{ $match: match }, { $group: { _id: '$status', n: { $sum: 1 }, value: { $sum: '$totals.grandTotal' } } }]);
+  // Summed in JS (bounded by the date range) so it works on any Mongo-compatible server.
+  const docs = await Quotation.find(match).select('status totals.grandTotal').limit(50000).lean();
+  const acc = {};
+  for (const d of docs) {
+    const r = (acc[d.status] ||= { _id: d.status, n: 0, value: 0 });
+    r.n += 1;
+    r.value += Number(d.totals?.grandTotal) || 0;
+  }
+  const rows = Object.values(acc);
   const by = Object.fromEntries(rows.map((r) => [r._id, r]));
   const sum = (keys, k) => keys.reduce((s, x) => s + (by[x]?.[k] || 0), 0);
   const sent = sum(CUSTOMER_VISIBLE_QUOTATION, 'n');

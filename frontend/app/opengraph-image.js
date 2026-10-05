@@ -5,18 +5,22 @@ export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
 export default function OgImage() {
-  const chip = (bg, flex) => <div style={{ background: bg, flex, display: 'flex' }} />;
+  const red = '#c8102e';
   return new ImageResponse(
     (
-      <div style={{ width: '100%', height: '100%', display: 'flex', background: '#f3eee6', color: '#262320', padding: 64 }}>
+      <div style={{ width: '100%', height: '100%', display: 'flex', background: '#fff', color: '#1a0b0d', padding: 64, borderBottom: `24px solid ${red}` }}>
         <div style={{ flex: 3, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: 30, letterSpacing: 4 }}>INSIDER INDIA LLP</div>
-          <div style={{ fontSize: 70, lineHeight: 1.05, maxWidth: 640 }}>Interiors designed around the way you live.</div>
-          <div style={{ fontSize: 24, color: '#5b544d' }}>Full homes, kitchens, wardrobes and renovation</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ width: 56, height: 56, background: red, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, fontWeight: 800 }}>II</div>
+            <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: 2 }}>INSIDER INDIA</div>
+          </div>
+          <div style={{ fontSize: 68, lineHeight: 1.04, fontWeight: 800, maxWidth: 680 }}>Interiors designed around the way you live.</div>
+          <div style={{ fontSize: 26, color: red, fontWeight: 700 }}>Measured on site. Priced item by item.</div>
         </div>
-        <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{ display: 'flex', flex: 3, gap: 10 }}>{chip('#9c7a55', 2)}{chip('#5e1f2b', 1)}</div>
-          <div style={{ display: 'flex', flex: 1, gap: 10 }}>{chip('#d9cfc0', 1)}{chip('#a67c3d', 1)}{chip('#262320', 1)}</div>
+        <div style={{ flex: 2, display: 'flex', border: `6px solid ${red}`, position: 'relative' }}>
+          <div style={{ position: 'absolute', left: 0, top: 160, width: '60%', height: 6, background: red }} />
+          <div style={{ position: 'absolute', left: '60%', top: 0, width: 6, height: '100%', background: red }} />
+          <div style={{ position: 'absolute', left: '60%', top: 300, width: '40%', height: 6, background: red }} />
         </div>
       </div>
     ),

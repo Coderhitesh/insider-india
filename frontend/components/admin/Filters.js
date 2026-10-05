@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import Button from '@/components/ui/Button';
 
-const cls = 'h-9 rounded-[3px] border border-stone-deep bg-paper px-2.5 text-sm focus:border-charcoal focus:outline-none';
+const cls = 'h-9 rounded-none border border-stone-deep bg-paper px-2.5 text-sm focus:border-wine focus:outline-none';
 export const RANGES = [['', 'Any time'], ['today', 'Today'], ['7d', 'Last 7 days'], ['30d', 'Last 30 days'], ['month', 'This month'], ['custom', 'Custom range']];
 
 /** filters: [{ name, label, options:[[value,label]] } | { name:'range' } ] */

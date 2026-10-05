@@ -1,4 +1,4 @@
-const { Lead, Service, Media } = require('../models');
+const { Lead, Service, Media, User } = require('../models');
 const { loadLeadForAccess } = require('../services/leadAccess');
 const options = require('../services/optionsService');
 const geo = require('../services/geoService');
@@ -30,6 +30,9 @@ exports.create = asyncHandler(async (req, res) => {
   const b = req.body;
   const mobile = normalizeMobile(req.user?.mobile || b.mobile);
   if (!mobile) throw new ApiError(422, 'Enter a valid 10-digit Indian mobile number', 'VALIDATION_ERROR', [{ field: 'mobile', message: 'Invalid mobile number' }]);
+
+  // Logged-in user without a name yet (OTP-only signup): keep the name they just typed.
+  if (req.user && !req.user.name && b.name) await User.updateOne({ _id: req.user._id, $or: [{ name: null }, { name: '' }] }, { $set: { name: b.name } });
 
   // Logged-in user: continue their open lead for this flow instead of duplicating.
   if (req.user) {

@@ -27,6 +27,11 @@ module.exports = {
   corsOrigins: origins,
   frontendUrl: origins[0],
   mongoUri: process.env.MONGODB_URI,
+  // Atlas links often have no database in the path; default to a named DB instead of "test".
+  mongoDbName: process.env.MONGODB_DB || (/^mongodb(\+srv)?:\/\/[^/]+\/[^?/]+/.test(process.env.MONGODB_URI) ? undefined : 'insider_india'),
+  apiPublicUrl: (process.env.API_PUBLIC_URL || `http://localhost:${int(process.env.PORT, 5000)}`).replace(/\/$/, ''),
+  localStorageDir: path.resolve(__dirname, '../..', process.env.LOCAL_STORAGE_DIR || 'uploads'),
+  allowLocalStorage: bool(process.env.ALLOW_LOCAL_STORAGE, !isProd),
   mongoAutoIndex: bool(process.env.MONGO_AUTO_INDEX, true),
   jwt: {
     accessSecret: process.env.JWT_ACCESS_SECRET,
@@ -42,6 +47,11 @@ module.exports = {
     sameSite: process.env.COOKIE_SAMESITE || 'lax',
   },
   encryptionKey: process.env.ENCRYPTION_KEY,
+  // Shared secret for the Next.js server's own SSR requests (exempt from per-IP rate limits).
+  internalApiKey: process.env.INTERNAL_API_KEY || '',
+  // Testing without an SMS/WhatsApp provider: every OTP is this code and nothing is sent.
+  // Refused in production unless ALLOW_FIXED_OTP=true (anyone could log in as any customer).
+  otpFixedCode: /^\d{4,8}$/.test(process.env.OTP_FIXED_CODE || '') && (!isProd || bool(process.env.ALLOW_FIXED_OTP, false)) ? process.env.OTP_FIXED_CODE : '',
   allowLogProviders: bool(process.env.ALLOW_LOG_PROVIDERS, !isProd),
   logLevel: process.env.LOG_LEVEL || (isProd ? 'info' : 'debug'),
   google: { mapsServerKey: process.env.GOOGLE_MAPS_API_KEY || '' },

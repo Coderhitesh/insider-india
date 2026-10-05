@@ -30,24 +30,24 @@ export default async function ServicePage({ pageKey }) {
 
       <Section labelledBy="includes-title">
         <div className="grid gap-12 lg:grid-cols-12">
-          <div className="relative min-h-80 overflow-hidden rounded-[3px] lg:col-span-6">
+          <div className="relative min-h-80 overflow-hidden border-2 border-wine lg:col-span-6">
             {img ? <Image src={img} alt={s.title} fill sizes="(min-width:1024px) 50vw, 100vw" className="object-cover" /> : <Swatch tone={s.tone} className="absolute inset-0" label />}
           </div>
           <div className="lg:col-span-5 lg:col-start-8">
             <h2 id="includes-title" className="text-d3">What is included</h2>
-            <ul className="mt-6 divide-y divide-stone border-y border-stone">
-              {s.includes.map((x) => <li key={x} className="py-3.5">{x}</li>)}
+            <ul className="mt-6 divide-y divide-stone-deep border-y-2 border-wine">
+              {s.includes.map((x) => <li key={x} className="flex items-center gap-3 py-3.5"><span aria-hidden="true" className="size-2 shrink-0 bg-wine" />{x}</li>)}
             </ul>
             <p className="mt-4 text-sm text-graphite">Your quotation lists exactly what is included for your home, item by item.</p>
           </div>
         </div>
       </Section>
 
-      <Section tone="paper" labelledBy="approach-title">
+      <Section tone="blush" labelledBy="approach-title">
         <SectionHeading id="approach-title" title="How we approach it" />
         <dl className="grid gap-10 md:grid-cols-3">
           {s.points.map((p) => (
-            <div key={p.title} className="border-t border-charcoal pt-5">
+            <div key={p.title} className="border-t-2 border-wine bg-paper p-5">
               <dt className="text-lg font-semibold">{p.title}</dt>
               <dd className="mt-2 text-graphite">{p.body}</dd>
             </div>
@@ -62,10 +62,10 @@ export default async function ServicePage({ pageKey }) {
         </Section>
       )}
 
-      <Section tone="stone" labelledBy="svc-cta">
+      <Section tone="red" labelledBy="svc-cta">
         <div className="grid gap-10 lg:grid-cols-12">
           <h2 id="svc-cta" className="text-d2 lg:col-span-4">Start with a conversation</h2>
-          <div className="lg:col-span-8"><ConsultationForm id={`svc-${pageKey}`} /></div>
+          <div className="lg:col-span-8"><ConsultationForm id={`svc-${pageKey}`} inverse /></div>
         </div>
       </Section>
       <JsonLd data={serviceLd({ name: s.title, description: s.lede, path: s.path, company })} />

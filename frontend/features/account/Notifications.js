@@ -46,7 +46,7 @@ export default function Notifications() {
         <Empty title="No notifications" body="Updates about your booking, site visit, quotation and project will appear here." />
       ) : (
         <>
-          <ul className="divide-y divide-stone rounded-[3px] border border-stone bg-paper">
+          <ul className="divide-y divide-stone rounded-none border border-stone bg-paper">
             {items.map((n) => {
               const inner = (
                 <div className="flex gap-3 p-5">
@@ -61,8 +61,8 @@ export default function Notifications() {
               const safeLink = n.link && n.link.startsWith('/') && !n.link.startsWith('//') ? n.link : null;
               return (
                 <li key={n.id}>
-                  {safeLink ? <Link href={safeLink} onClick={() => markRead(n)} className="block hover:bg-linen/60">{inner}</Link>
-                    : <button type="button" onClick={() => markRead(n)} className="block w-full text-left hover:bg-linen/60">{inner}</button>}
+                  {safeLink ? <Link href={safeLink} onClick={() => markRead(n)} className="block hover:bg-blush/60">{inner}</Link>
+                    : <button type="button" onClick={() => markRead(n)} className="block w-full text-left hover:bg-blush/60">{inner}</button>}
                 </li>
               );
             })}

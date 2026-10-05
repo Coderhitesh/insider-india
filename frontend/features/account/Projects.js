@@ -16,10 +16,10 @@ export function ProjectsList() {
       {loading ? <Loading /> : error ? <LoadError error={error} onRetry={reload} /> : !data.items.length ? (
         <Empty title="No projects yet" body="A project is created when you accept a quotation. You can then follow every stage here." href="/account/quotations" cta="View quotations" />
       ) : (
-        <ul className="divide-y divide-stone rounded-[3px] border border-stone bg-paper">
+        <ul className="divide-y divide-stone rounded-none border border-stone bg-paper">
           {data.items.map((p) => (
             <li key={p.id}>
-              <Link href={`/account/projects/${p.id}`} className="flex items-center gap-4 p-5 hover:bg-linen/60">
+              <Link href={`/account/projects/${p.id}`} className="flex items-center gap-4 p-5 hover:bg-blush/60">
                 <div className="flex-1">
                   <p className="tabular font-semibold">{p.projectNumber}</p>
                   <p className="text-sm text-graphite">Booking {p.bookingNumber}. {p.startedAt ? `Stage ${p.stageIndex} of ${p.stageCount}: ${p.stageLabel}` : 'Starting soon'}</p>
@@ -80,8 +80,8 @@ export function ProjectDetail({ id }) {
                         {u.media.map((m) => (
                           <li key={m.id}>
                             <a href={m.url} target="_blank" rel="noopener noreferrer" className="block">
-                              {m.mimeType?.startsWith('image/') ? <img src={m.url} alt={m.originalName} className="size-24 rounded-[2px] object-cover" loading="lazy" />
-                                : <span className="flex h-24 w-24 flex-col items-center justify-center gap-1 rounded-[2px] border border-stone text-xs"><FileText className="size-5" />{m.mimeType?.split('/')[1]}</span>}
+                              {m.mimeType?.startsWith('image/') ? <img src={m.url} alt={m.originalName} className="size-24 rounded-none object-cover" loading="lazy" />
+                                : <span className="flex h-24 w-24 flex-col items-center justify-center gap-1 rounded-none border border-stone text-xs"><FileText className="size-5" />{m.mimeType?.split('/')[1]}</span>}
                             </a>
                           </li>
                         ))}

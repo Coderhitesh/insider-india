@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { CalendarClock, UserRound, FileText, Hammer, Calculator, FolderOpen } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import RangeText from '@/components/ui/RangeText';
+import BudgetCard from '@/components/ui/BudgetCard';
 import Timeline from '@/components/account/Timeline';
 import { Badge, Panel, PageTitle, Empty, Loading, LoadError } from '@/components/account/Bits';
 import { useApi } from '@/lib/useApi';
@@ -15,7 +16,7 @@ export default function Dashboard() {
   const { data, error, loading, reload } = useApi('/account/summary');
   if (loading) return <Loading rows={4} />;
   if (error) return <LoadError error={error} onRetry={reload} />;
-  const { user, activeBooking: b, siteVisit, quotation, project, openLead, estimate, notifications, floorPlans } = data;
+  const { user, activeBooking: b, siteVisit, quotation, project, openLead, estimate, notifications, floorPlans, budget } = data;
   const firstName = user.name ? user.name.split(' ')[0] : null;
   const est = estimate?.results?.find((r) => r.package === estimate.selectedPackage);
 
@@ -58,8 +59,9 @@ export default function Dashboard() {
               </Fact>
               <Fact icon={FolderOpen} label="Floor plans">{floorPlans ? `${floorPlans} uploaded` : b.floorPlan?.measurementAssistance?.opted ? 'Measurement assistance requested' : 'None uploaded'}</Fact>
             </dl>
+            {budget && !quotation && <div className="mt-6"><BudgetCard budget={budget} compact /></div>}
             {quotation?.status === 'SENT_TO_CUSTOMER' && quotation.isLatest && (
-              <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-[3px] bg-wine-tint p-4">
+              <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-none bg-wine-tint p-4">
                 <p className="font-medium text-wine">Your quotation is ready for review.</p>
                 <Button href={`/account/quotations/${quotation.id}`} size="sm">Review quotation</Button>
               </div>
@@ -73,7 +75,7 @@ export default function Dashboard() {
             </Panel>
           )}
 
-          {est && (
+          {est && estimate?.source !== 'AUTO_BOOKING' && (
             <Panel title="Latest estimate" action={<Link href="/account/estimates" className="text-sm text-wine underline underline-offset-4">All estimates</Link>}>
               <div className="flex items-center gap-3"><Calculator className="size-5 text-wine" aria-hidden="true" /><p>{est.packageName}</p></div>
               <p className="tabular mt-2 text-2xl font-semibold tracking-tight">{est.available ? <RangeText min={est.finalMin} max={est.finalMax} /> : 'Price on request'}</p>

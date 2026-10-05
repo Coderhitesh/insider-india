@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, ArrowUp, ArrowDown, Eye, Download, ImagePlus, X } from 'lucide-react';
+import { Plus, Trash2, ArrowUp, ArrowDown, Eye, Download, ImagePlus, X, Ruler, CheckCircle2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import Dialog from '@/components/account/Dialog';
@@ -17,7 +17,34 @@ import { preview } from './quoteCalc';
 
 const UNITS = ['PCS', 'SQFT', 'RFT', 'FT', 'INCH', 'MM', 'CM', 'M', 'SQM'];
 const SECTION_PRESETS = ['Modular Kitchen', 'Wardrobe', 'Bedroom', 'Bed', 'TV Unit', 'False Ceiling', 'Painting', 'Wall Panelling', 'Electrical Work', 'Civil Work', 'Doors', 'Furniture', 'Pooja Unit', 'Bathroom', 'Flooring'];
-const inp = 'w-full min-w-0 rounded-[2px] border border-stone-deep bg-paper px-2 py-1.5 text-sm focus:border-charcoal focus:outline-none disabled:border-stone disabled:bg-linen';
+const inp = 'w-full min-w-0 rounded-none border border-stone-deep bg-paper px-2 py-1.5 text-sm focus:border-wine focus:outline-none disabled:border-stone disabled:bg-blush/50 disabled:text-graphite';
+// Turns the measurement sheet into quotation sections: one section per room, one item per measurement.
+const AREA_UNIT = { FT: 'SQFT', INCH: 'SQFT', SQFT: 'SQFT', M: 'SQM', CM: 'SQM', MM: 'SQM', SQM: 'SQM' };
+const RUN_UNIT = { FT: 'RFT', RFT: 'RFT', INCH: 'RFT', M: 'M', CM: 'M', MM: 'M' };
+function sectionsFromMeasurement(m) {
+  return (m?.rooms || []).filter((r) => r.rows?.length).map((r) => ({
+    title: r.name,
+    items: r.rows.map((x) => {
+      const dims = [x.width, x.height, x.length].filter(Boolean).join(' × ');
+      const area = x.area || (x.width && (x.length || x.height) ? Math.round(x.width * (x.length || x.height) * 100) / 100 : null);
+      const qty = area || x.length || x.width || x.quantity || 1;
+      const unit = area ? (AREA_UNIT[x.unit] || 'SQFT') : (x.length || x.width) ? (RUN_UNIT[x.unit] || x.unit) : 'PCS';
+      return { ...blankItem(), name: x.label, dimensions: dims ? `${dims} ${x.unit.toLowerCase()}` : '', quantity: Math.round(qty * (x.quantity > 1 && area ? x.quantity : 1) * 100) / 100, unit, notes: x.notes || '' };
+    }),
+  }));
+}
+
+const FLOW = [['DRAFT', 'Draft'], ['UNDER_ADMIN_REVIEW', 'Admin review'], ['APPROVED', 'Approved'], ['SENT_TO_CUSTOMER', 'Sent to customer'], ['ACCEPTED', 'Accepted']];
+const GUIDE = {
+  DRAFT: 'Add sections and items with quantity and rates (material + labour, or a unit price), Save, then click Submit for admin review.',
+  UNDER_ADMIN_REVIEW: 'Admin: check every rate. Changing a price asks for a reason (saved in the audit log). Add discounts, GST, validity and payment schedule, Preview PDF, then Approve & send to customer.',
+  APPROVED: 'Approved but not sent. Click Send to customer — the PDF is generated and the customer is notified on WhatsApp and in their dashboard.',
+  SENT_TO_CUSTOMER: 'Waiting for the customer to accept, request a revision or decline from their dashboard.',
+  REVISION_REQUESTED: 'The customer asked for changes (see their note). Click Create revision, update the new version, then Approve & send again.',
+  REJECTED: 'The customer declined. If they want changes, Create revision and send again.',
+  ACCEPTED: 'Accepted. A project has been created — open Projects to start it and track stages and payments.',
+};
+
 const blankItem = () => ({ name: '', category: '', description: '', material: '', finish: '', dimensions: '', quantity: 1, unit: 'PCS', unitPrice: 0, materialPrice: 0, labourPrice: 0, taxPercent: null, notes: '', image: null, customFields: [] });
 
 function toState(q) {
@@ -144,6 +171,18 @@ export default function QuotationEditor({ id }) {
         {q.isLatest && ['SENT_TO_CUSTOMER', 'REJECTED', 'REVISION_REQUESTED'].includes(q.status) && isAdmin && <Button size="sm" onClick={() => setDialog({ kind: 'revise', note: '', returnToContractor: false })}>Create revision</Button>}
       </Header>
 
+      {q.isLatest && (
+        <div className="mb-4 border-2 border-wine bg-paper">
+          <ol className="grid grid-cols-5 gap-px bg-stone-deep text-xs">
+            {FLOW.map(([k, l], i) => {
+              const idx = FLOW.findIndex(([x]) => x === (['REVISION_REQUESTED', 'REJECTED'].includes(q.status) ? 'SENT_TO_CUSTOMER' : q.status));
+              const state = i < idx ? 'done' : i === idx ? 'now' : 'todo';
+              return <li key={k} className={`flex items-center gap-1.5 px-3 py-2 ${state === 'now' ? 'bg-wine font-semibold text-paper' : state === 'done' ? 'bg-paper text-charcoal' : 'bg-paper text-graphite'}`}>{state === 'done' && <CheckCircle2 className="size-3.5 text-success" aria-hidden="true" />}{i + 1}. {l}</li>;
+            })}
+          </ol>
+          <p className="px-4 py-3 text-sm"><strong>What to do now: </strong>{GUIDE[q.status]}</p>
+        </div>
+      )}
       {msg && <Notice tone={msg.tone} className="mb-4">{msg.text}</Notice>}
       {!editable && q.isLatest && <Notice className="mb-4">{contractor && q.status !== 'DRAFT' ? 'Submitted — an admin is reviewing this quotation. You will be notified if changes are needed.' : 'This version is locked. Create a revision to change it.'}</Notice>}
       {q.customerResponse?.note && <Notice className="mb-4">Customer note ({fmtDateTime(q.customerResponse.at)}): {q.customerResponse.note}</Notice>}
@@ -192,6 +231,19 @@ export default function QuotationEditor({ id }) {
               {editable && <div className="border-t border-stone p-3"><Button size="sm" variant="ghost" onClick={() => change((p) => ({ ...p, sections: p.sections.map((x, i) => (i === si ? { ...x, items: [...x.items, blankItem()] } : x)) }))}><Plus className="size-4" />Add item</Button></div>}
             </Box>
           ))}
+          {editable && !s.sections.length && (
+            <div className="border-2 border-dashed border-wine bg-blush/40 p-6">
+              <p className="font-semibold">Start the quotation</p>
+              <p className="mt-1 text-sm text-graphite">Fastest way: pull every room and measurement from the site sheet, then just fill in the rates.</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button size="sm" disabled={!measurement.data?.measurement?.rooms?.length} onClick={() => change((p) => ({ ...p, sections: sectionsFromMeasurement(measurement.data.measurement) }))}><Ruler className="size-4" />Add from measurements</Button>
+                <Button size="sm" variant="secondary" onClick={() => change((p) => ({ ...p, sections: [{ title: '', items: [blankItem()] }] }))}><Plus className="size-4" />Blank section</Button>
+              </div>
+            </div>
+          )}
+          {editable && s.sections.length > 0 && measurement.data?.measurement?.rooms?.length > 0 && (
+            <Button size="sm" variant="ghost" onClick={() => window.confirm('Append a section for every measured room?') && change((p) => ({ ...p, sections: [...p.sections, ...sectionsFromMeasurement(measurement.data.measurement)] }))}><Ruler className="size-4" />Add rooms from measurements</Button>
+          )}
           <datalist id="section-presets">{SECTION_PRESETS.map((p) => <option key={p} value={p} />)}</datalist>
           {editable && <Button variant="secondary" onClick={() => change((p) => ({ ...p, sections: [...p.sections, { title: '', items: [blankItem()] }] }))}><Plus className="size-4" />Add section</Button>}
           {!s.sections.length && !editable && <p className="text-graphite">No sections.</p>}
@@ -341,7 +393,7 @@ function ItemImage({ value, imageUrl, onChange, disabled }) {
     };
     el.click();
   };
-  if (value) return <span className="flex items-center gap-1 text-xs">{imageUrl ? <img src={imageUrl} alt="" className="size-8 rounded-[2px] object-cover" /> : 'Image attached'}{!disabled && <button type="button" aria-label="Remove image" onClick={() => onChange(null, null)} className="text-graphite"><X className="size-3.5" /></button>}</span>;
+  if (value) return <span className="flex items-center gap-1 text-xs">{imageUrl ? <img src={imageUrl} alt="" className="size-8 rounded-none object-cover" /> : 'Image attached'}{!disabled && <button type="button" aria-label="Remove image" onClick={() => onChange(null, null)} className="text-graphite"><X className="size-3.5" /></button>}</span>;
   if (disabled) return null;
   return <Button size="sm" variant="ghost" loading={busy} onClick={pick} aria-label="Attach image"><ImagePlus className="size-3.5" /></Button>;
 }

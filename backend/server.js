@@ -11,6 +11,7 @@ let server;
     await connectDB();
     server = app.listen(env.port, () => logger.info(`API listening on :${env.port} (${env.nodeEnv})`));
     if (process.env.DISABLE_JOBS !== 'true') reminders.start();
+    if (env.otpFixedCode) logger.warn(`OTP TEST MODE: every verification code is ${env.otpFixedCode}. Remove OTP_FIXED_CODE before going live.`);
   } catch (err) {
     logger.error('Startup failed', { error: err.message, stack: err.stack });
     process.exit(1);

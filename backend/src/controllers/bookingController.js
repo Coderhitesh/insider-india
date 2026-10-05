@@ -4,6 +4,7 @@ const notifications = require('../services/notifications/notificationService');
 const rbac = require('../services/rbacService');
 const { logActivity } = require('../services/activityService');
 const { computeNextStep } = require('../services/leadFlow');
+const { autoEstimateForLead, budgetSummary } = require('../services/bookingEstimateService');
 const { nextNumber } = require('../utils/sequence');
 const { bookingView } = require('../utils/serializers');
 const { ok, created } = require('../utils/respond');
@@ -16,12 +17,13 @@ const { TIMELINE, CHANNELS, ROLES } = require('../config/constants');
 const tl = (event, at, extra = {}) => ({ event, label: TIMELINE[event], at, visibleToCustomer: true, ...extra });
 
 exports.create = asyncHandler(async (req, res) => {
-  const lead = await Lead.findById(req.body.leadId).populate('services', 'title');
+  const lead = await Lead.findById(req.body.leadId).populate('services', 'title slug');
   if (!lead || String(lead.user) !== String(req.user._id)) throw ApiError.notFound('Request not found', 'LEAD_NOT_FOUND');
 
   if (lead.booking) {
     const existing = await Booking.findById(lead.booking).lean();
-    return ok(res, { booking: bookingView(existing) }, 'Booking already created');
+    const est = existing?.estimate ? await Estimate.findById(existing.estimate).lean() : null;
+    return ok(res, { booking: bookingView(existing), budget: budgetSummary(est) }, 'Booking already created');
   }
 
   const nextStep = computeNextStep(lead);
@@ -38,7 +40,12 @@ exports.create = asyncHandler(async (req, res) => {
     projectType: options.labelOf(opts, 'projectTypes', lead.projectType),
   };
 
-  const estimate = lead.estimate ? await Estimate.findById(lead.estimate).select('selectedPackage').lean() : null;
+  // Direct bookings get an indicative budget too (from BHK, typical rooms and chosen services).
+  let estimate = lead.estimate ? await Estimate.findById(lead.estimate).lean() : null;
+  if (!estimate) {
+    const auto = await autoEstimateForLead(lead);
+    if (auto) { estimate = auto.toObject(); lead.estimate = auto._id; }
+  }
   const now = new Date();
 
   const property = await Property.create({
@@ -75,7 +82,7 @@ exports.create = asyncHandler(async (req, res) => {
         media: lead.floorPlan.media,
         measurementAssistance: { opted: lead.floorPlan.measurementAssistance?.opted, charge: lead.floorPlan.measurementAssistance?.charge || 0 },
       },
-      estimate: lead.estimate,
+      estimate: estimate?._id || lead.estimate,
       package: estimate?.selectedPackage,
       timeline: [
         tl('REQUIREMENT_SUBMITTED', lead.createdAt),
@@ -117,7 +124,7 @@ exports.create = asyncHandler(async (req, res) => {
     data: { bookingId: String(booking._id) },
   });
 
-  created(res, { booking: bookingView(booking.toObject()) }, 'Your interior consultation request has been received');
+  created(res, { booking: bookingView(booking.toObject()), budget: budgetSummary(estimate) }, 'Your interior consultation request has been received');
 });
 
 exports.mine = asyncHandler(async (req, res) => {
@@ -144,14 +151,16 @@ exports.get = asyncHandler(async (req, res) => {
   if (!isOwner) return ok(res, { booking: bookingView(booking, { customer: false }) });
 
   // Customer dashboard context: next/last site visit, released quotations, execution project.
-  const [visit, quotations, project] = await Promise.all([
+  const [visit, quotations, project, est] = await Promise.all([
     SiteVisit.findOne({ booking: booking._id, status: { $in: ['SCHEDULED', 'COMPLETED'] } }).sort({ scheduledAt: -1 })
       .select('scheduledAt status contactPerson completedAt').populate('contractor', 'name').lean(),
     Quotation.find({ booking: booking._id, sentAt: { $ne: null } }).sort({ version: -1 }).select('displayNumber version isLatest status totals.grandTotal sentAt viewedAt').lean(),
     ExecutionProject.findOne({ booking: booking._id }).select('projectNumber stage startedAt').lean(),
+    booking.estimate ? Estimate.findById(booking.estimate).lean() : null,
   ]);
   return ok(res, {
     booking: bookingView(booking, { customer: true }),
+    budget: budgetSummary(est),
     siteVisit: visit ? { scheduledAt: visit.scheduledAt, status: visit.status, completedAt: visit.completedAt, expert: visit.contractor?.name } : null,
     quotations: quotations.map((q) => ({ id: String(q._id), displayNumber: q.displayNumber, version: q.version, isLatest: q.isLatest, status: q.status, grandTotal: q.totals.grandTotal, sentAt: q.sentAt, viewedAt: q.viewedAt })),
     project: project ? { id: String(project._id), projectNumber: project.projectNumber, stage: project.stage, startedAt: project.startedAt } : null,

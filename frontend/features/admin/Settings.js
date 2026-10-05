@@ -104,8 +104,8 @@ function ProviderTest({ kind }) {
     <Box title="Test connection" className="mt-4">
       <p className="mb-3 text-sm text-graphite">{kind === 'storage' ? 'Uploads, signs and deletes a 1-pixel image with the saved settings.' : 'Sends a test message with the saved settings. Save first.'}</p>
       <div className="flex flex-wrap gap-2">
-        {kind !== 'storage' && <input aria-label="Recipient" className="h-9 w-64 rounded-[3px] border border-stone-deep bg-paper px-3 text-sm" placeholder={kind === 'email' ? 'you@example.com' : '10-digit mobile'} value={to} onChange={(e) => setTo(e.target.value)} />}
-        {kind === 'whatsapp' && <input aria-label="Template name" className="h-9 w-56 rounded-[3px] border border-stone-deep bg-paper px-3 text-sm" placeholder="Approved template (optional)" value={tpl} onChange={(e) => setTpl(e.target.value)} />}
+        {kind !== 'storage' && <input aria-label="Recipient" className="h-9 w-64 rounded-none border border-stone-deep bg-paper px-3 text-sm" placeholder={kind === 'email' ? 'you@example.com' : '10-digit mobile'} value={to} onChange={(e) => setTo(e.target.value)} />}
+        {kind === 'whatsapp' && <input aria-label="Template name" className="h-9 w-56 rounded-none border border-stone-deep bg-paper px-3 text-sm" placeholder="Approved template (optional)" value={tpl} onChange={(e) => setTpl(e.target.value)} />}
         <Button size="sm" variant="secondary" onClick={run} loading={busy}>Run test</Button>
       </div>
       {msg && <Notice tone={msg.tone} className="mt-3">{msg.text}</Notice>}
@@ -138,7 +138,7 @@ function SettingForm({ settingKey }) {
         <fieldset disabled={!manage}><Fields fields={fields} value={value} onChange={setValue} errors={errors} /></fieldset>
         {manage && (
           <div className="mt-6 flex flex-wrap items-end gap-3 border-t border-stone pt-4">
-            <label className="flex-1 text-xs text-graphite">Reason for change (audit log)<input className="mt-1 w-full rounded-[3px] border border-stone-deep bg-paper px-3 py-2 text-sm" value={reason} onChange={(e) => setReason(e.target.value)} /></label>
+            <label className="flex-1 text-xs text-graphite">Reason for change (audit log)<input className="mt-1 w-full rounded-none border border-stone-deep bg-paper px-3 py-2 text-sm" value={reason} onChange={(e) => setReason(e.target.value)} /></label>
             <Button onClick={save} loading={busy}>Save settings</Button>
           </div>
         )}

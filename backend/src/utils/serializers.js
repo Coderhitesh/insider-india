@@ -58,6 +58,7 @@ function estimateView(e) {
   return {
     id: String(e._id),
     estimateNumber: e.estimateNumber,
+    source: e.source || 'CALCULATOR',
     leadId: e.lead ? String(e.lead) : null,
     inputs: e.inputs,
     results: (e.results || []).map((r) => ({ ...r, package: String(r.package) })),

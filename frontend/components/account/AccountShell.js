@@ -58,10 +58,10 @@ export default function AccountShell({ children }) {
           {NAV.map(([href, label, Icon]) => (
             <li key={href}>
               <Link href={href} aria-current={isActive(href) ? 'page' : undefined}
-                className={clsx('flex items-center gap-3 whitespace-nowrap px-3 py-2.5 text-sm transition-colors lg:rounded-[3px]',
-                  isActive(href) ? 'border-b-2 border-wine text-wine lg:border-b-0 lg:bg-paper lg:shadow-[inset_2px_0_0_var(--color-wine)]' : 'text-graphite hover:text-charcoal')}>
+                className={clsx('flex items-center gap-3 whitespace-nowrap px-3 py-2.5 text-sm transition-colors lg:rounded-none',
+                  isActive(href) ? 'border-b-2 border-wine font-semibold text-wine lg:border-b-0 lg:bg-wine lg:text-paper' : 'text-graphite hover:text-wine')}>
                 <Icon className="size-4" aria-hidden="true" />{label}
-                {href === '/account/notifications' && unread > 0 && <span className="ml-auto rounded-full bg-wine px-1.5 text-[0.7rem] text-paper" aria-label={`${unread} unread`}>{unread}</span>}
+                {href === '/account/notifications' && unread > 0 && <span className="ml-auto rounded-full bg-wine px-1.5 text-[0.7rem] text-paper ring-1 ring-paper" aria-label={`${unread} unread`}>{unread}</span>}
               </Link>
             </li>
           ))}

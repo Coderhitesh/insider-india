@@ -264,7 +264,7 @@ export function Roles() {
             ]} />
             <div className="mt-6 space-y-4">
               {groups.map((g) => (
-                <fieldset key={g.group} className="rounded-[3px] border border-stone p-3">
+                <fieldset key={g.group} className="rounded-none border border-stone p-3">
                   <legend className="px-1 text-sm font-semibold">{g.group}</legend>
                   <div className="grid gap-1 sm:grid-cols-2">
                     {g.permissions.map((p) => (

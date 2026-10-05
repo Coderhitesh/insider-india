@@ -52,9 +52,9 @@ export function LeadsList() {
       <Header title="Leads" subtitle="Every submitted or partially submitted funnel" />
       <Filters params={list.params} setParams={list.setParams} filters={filters} placeholder="Name, mobile or lead ID" />
       {canAssign && selected.size > 0 && (
-        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-[3px] border border-wine/30 bg-wine-tint px-3 py-2 text-sm">
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-none border border-wine/30 bg-wine-tint px-3 py-2 text-sm">
           <span className="font-medium">{selected.size} selected</span>
-          <select aria-label="Contractor for selected" className="h-8 rounded-[3px] border border-stone-deep bg-paper px-2" value={bulk.cid} onChange={(e) => setBulk({ ...bulk, cid: e.target.value })}>
+          <select aria-label="Contractor for selected" className="h-8 rounded-none border border-stone-deep bg-paper px-2" value={bulk.cid} onChange={(e) => setBulk({ ...bulk, cid: e.target.value })}>
             <option value="">Assign to…</option>{ref.contractors.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           <Button size="sm" disabled={!bulk.cid} loading={bulk.busy} onClick={bulkAssign}>Assign</Button>
@@ -156,11 +156,11 @@ export function LeadDetail({ id }) {
           {can(user, 'leads.edit') && (
             <Box title="Status">
               <form onSubmit={saveStatus} className="space-y-2">
-                <select aria-label="New status" className="w-full rounded-[3px] border border-stone-deep bg-paper px-3 py-2 text-sm" value={status.value} onChange={(e) => setStatus({ ...status, value: e.target.value })}>
+                <select aria-label="New status" className="w-full rounded-none border border-stone-deep bg-paper px-3 py-2 text-sm" value={status.value} onChange={(e) => setStatus({ ...status, value: e.target.value })}>
                   <option value="">Change status…</option>
                   {MANUAL_STATUSES.filter((s) => s !== l.status && (!booking || !['NEW', 'IN_PROGRESS', 'VERIFIED', 'QUALIFIED'].includes(s))).map((s) => <option key={s} value={s}>{nice(s)}</option>)}
                 </select>
-                <input aria-label="Reason" className="w-full rounded-[3px] border border-stone-deep bg-paper px-3 py-2 text-sm" placeholder={status.value === 'LOST' ? 'Reason (required)' : 'Reason (optional)'} value={status.reason} onChange={(e) => setStatus({ ...status, reason: e.target.value })} />
+                <input aria-label="Reason" className="w-full rounded-none border border-stone-deep bg-paper px-3 py-2 text-sm" placeholder={status.value === 'LOST' ? 'Reason (required)' : 'Reason (optional)'} value={status.reason} onChange={(e) => setStatus({ ...status, reason: e.target.value })} />
                 <Button size="sm" type="submit" loading={status.busy} disabled={!status.value || (status.value === 'LOST' && !status.reason)}>Update status</Button>
                 {status.msg && <Notice tone={status.msg.tone}>{status.msg.text}</Notice>}
                 {booking && <p className="text-xs text-graphite">Marking a booked lead lost or cancelled also cancels its booking.</p>}

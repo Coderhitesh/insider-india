@@ -12,7 +12,7 @@ import { can } from '@/lib/admin';
 
 const UNITS = [['FT', 'ft'], ['INCH', 'inch'], ['SQFT', 'sq ft'], ['RFT', 'running ft'], ['MM', 'mm'], ['CM', 'cm'], ['M', 'm'], ['SQM', 'sq m'], ['PCS', 'piece']];
 const ROOMS = [['LIVING_ROOM', 'Living room'], ['BEDROOM', 'Bedroom'], ['KITCHEN', 'Kitchen'], ['BATHROOM', 'Bathroom'], ['BALCONY', 'Balcony'], ['STUDY', 'Study'], ['POOJA_ROOM', 'Pooja room'], ['DINING', 'Dining'], ['FOYER', 'Foyer'], ['UTILITY', 'Utility'], ['CUSTOM', 'Custom area']];
-const cell = 'w-full min-w-0 rounded-[2px] border border-stone-deep bg-paper px-2 py-1.5 text-sm focus:border-charcoal focus:outline-none disabled:bg-linen';
+const cell = 'w-full min-w-0 rounded-none border border-stone-deep bg-paper px-2 py-1.5 text-sm focus:border-wine focus:outline-none disabled:bg-blush/50 disabled:text-graphite';
 const num = (v) => (v === '' || v == null ? null : Number(v));
 const blankRow = () => ({ label: '', width: null, height: null, length: null, area: null, quantity: 1, unit: 'FT', notes: '' });
 

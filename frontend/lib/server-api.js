@@ -4,7 +4,11 @@ import { SERVER_API_URL, COMPANY_FALLBACK } from './config';
 // Server-side reads for public pages. Cached with ISR; never throws so pages render if the API is down.
 async function getJSON(path, { revalidate = 300, fallback = null } = {}) {
   try {
-    const res = await fetch(`${SERVER_API_URL}/api/v1${path}`, { next: { revalidate }, signal: AbortSignal.timeout(8000) });
+    const res = await fetch(`${SERVER_API_URL}/api/v1${path}`, {
+      next: { revalidate },
+      signal: AbortSignal.timeout(15000),
+      headers: process.env.API_INTERNAL_KEY ? { 'X-Internal-Key': process.env.API_INTERNAL_KEY } : undefined,
+    });
     if (!res.ok) return fallback;
     const body = await res.json();
     return body?.success ? body.data : fallback;

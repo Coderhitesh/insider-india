@@ -25,6 +25,7 @@ const estimateSchema = new Schema(
     estimateNumber: { type: String, required: true, unique: true },
     user: { type: Types.ObjectId, ref: 'User', required: true, index: true },
     lead: { type: Types.ObjectId, ref: 'Lead', index: true },
+    source: { type: String, enum: ['CALCULATOR', 'AUTO_BOOKING'], default: 'CALCULATOR' },
     inputs: {
       propertyCategory: String,
       bhk: String,

@@ -3,7 +3,7 @@
 import { Minus, Plus } from 'lucide-react';
 
 export default function Counter({ id, label, hint, value, min = 0, max = 10, onChange }) {
-  const btn = 'flex size-11 items-center justify-center rounded-full border border-stone-deep text-charcoal transition-colors hover:border-charcoal disabled:opacity-35 disabled:hover:border-stone-deep';
+  const btn = 'flex size-11 items-center justify-center rounded-full border border-stone-deep text-charcoal transition-colors hover:border-wine disabled:opacity-35 disabled:hover:border-stone-deep';
   return (
     <div className="flex items-center justify-between gap-4 border-b border-stone py-5 last:border-b-0">
       <div>

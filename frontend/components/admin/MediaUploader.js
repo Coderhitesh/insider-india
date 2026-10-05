@@ -26,12 +26,12 @@ export default function MediaUploader({ purpose, accept, value, onChange, label 
     <div>
       <div className="flex flex-wrap gap-2">
         {value.map((m) => (
-          <div key={m.id} className="relative flex size-20 items-center justify-center overflow-hidden rounded-[2px] border border-stone bg-linen text-xs">
+          <div key={m.id} className="relative flex size-20 items-center justify-center overflow-hidden rounded-none border border-stone bg-blush/50 text-xs">
             {m.type?.startsWith('image/') && m.url ? <img src={m.url} alt={m.name} className="size-full object-cover" /> : <span className="flex flex-col items-center gap-1 p-1 text-center"><FileText className="size-4" />{m.name?.slice(0, 14)}</span>}
             <button type="button" aria-label={`Remove ${m.name}`} onClick={() => onChange((v) => v.filter((x) => x.id !== m.id))} className="absolute right-0.5 top-0.5 rounded-full bg-charcoal/70 p-0.5 text-paper"><X className="size-3" /></button>
           </div>
         ))}
-        {Object.entries(progress).map(([k, p]) => <div key={k} className="flex size-20 items-center justify-center rounded-[2px] border border-dashed border-stone-deep text-xs">{p}%</div>)}
+        {Object.entries(progress).map(([k, p]) => <div key={k} className="flex size-20 items-center justify-center rounded-none border border-dashed border-stone-deep text-xs">{p}%</div>)}
       </div>
       <Button type="button" size="sm" variant="secondary" className="mt-2" onClick={() => ref.current?.click()} disabled={value.length >= max}><Upload className="size-4" />{label}</Button>
       <input ref={ref} type="file" multiple accept={accept} className="sr-only" tabIndex={-1} onChange={(e) => { add(e.target.files); e.target.value = ''; }} />

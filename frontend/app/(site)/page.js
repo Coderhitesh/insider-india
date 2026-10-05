@@ -45,18 +45,19 @@ export default async function Home() {
       <Solutions />
       <HowItWorks />
 
-      <Section tone="charcoal" labelledBy="packages-title">
+      <Section tone="red" labelledBy="packages-title" className="grid-paper-invert">
         <SectionHeading id="packages-title" title="Four packages, one honest process" intro="Choose the finish level that suits you. Compare what each package includes, then get a range for your home." />
         <PackageBoards packages={packages} inverse />
-        <Button href="/packages" variant="link" className="mt-8 !text-paper decoration-brass">Compare packages in detail</Button>
+        <Button href="/packages" variant="link" className="mt-8 !text-paper decoration-paper">Compare packages in detail</Button>
       </Section>
 
-      <section aria-labelledby="calc-title" className="bg-wine text-paper">
+      <section aria-labelledby="calc-title" className="border-y-2 border-wine bg-paper">
+        <div className="ruler h-3.5 text-wine" aria-hidden="true" />
         <div className="container-x grid items-center gap-8 py-16 sm:py-20 lg:grid-cols-12">
-          <h2 id="calc-title" className="text-d2 lg:col-span-7">Calculate my interior budget</h2>
+          <h2 id="calc-title" className="text-d1 text-wine lg:col-span-7">Calculate my interior budget</h2>
           <div className="lg:col-span-5">
-            <p className="text-lg text-paper/85">Five quick questions about your home, then an indicative range for each package. Free, and you can book a consultation straight from the result.</p>
-            <Button href="/estimate" variant="light" size="lg" className="mt-6">Start the calculator</Button>
+            <p className="text-lg text-graphite">Five quick questions about your home, then an indicative range for each package. Free, and you can book a consultation straight from the result.</p>
+            <Button href="/estimate" size="lg" className="mt-6">Start the calculator</Button>
           </div>
         </div>
       </section>
@@ -65,8 +66,8 @@ export default async function Home() {
       <Testimonials items={testimonials} />
       <Faq items={faqs} />
 
-      <Section tone="stone" labelledBy="consult-title">
-        <div className="grid gap-10 lg:grid-cols-12">
+      <Section tone="blush" labelledBy="consult-title">
+        <div className="grid gap-10 border-2 border-wine bg-paper p-6 sm:p-10 lg:grid-cols-12">
           <div className="lg:col-span-4">
             <h2 id="consult-title" className="text-d2">Talk to a designer</h2>
             <p className="mt-4 text-graphite">Tell us who you are and we will take you through a few questions about your home. It takes about three minutes.</p>

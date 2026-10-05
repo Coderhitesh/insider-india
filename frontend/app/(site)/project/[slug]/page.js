@@ -34,7 +34,7 @@ export default async function ProjectPage({ params }) {
     <>
       <PageHeader title={p.title} lede={p.summary} crumbs={[{ name: 'Projects', path: '/projects' }, { name: p.title, path: `/project/${p.slug}` }]} />
       {p.coverImage && (
-        <div className="container-x pt-10"><div className="relative aspect-[16/9] overflow-hidden rounded-[3px]"><Image src={p.coverImage} alt={p.title} fill priority sizes="100vw" className="object-cover" /></div></div>
+        <div className="container-x pt-10"><div className="relative aspect-[16/9] overflow-hidden rounded-none"><Image src={p.coverImage} alt={p.title} fill priority sizes="100vw" className="object-cover" /></div></div>
       )}
       <Section>
         <div className="grid gap-12 lg:grid-cols-12">
@@ -49,7 +49,7 @@ export default async function ProjectPage({ params }) {
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
               {[['Before', before[0]], ['After', after[0]]].map(([label, img]) => (
                 <figure key={label}>
-                  <div className="relative aspect-[4/3] overflow-hidden rounded-[3px]"><Image src={img.url} alt={img.alt || `${p.title} — ${label.toLowerCase()}`} fill sizes="(min-width:640px) 50vw, 100vw" className="object-cover" /></div>
+                  <div className="relative aspect-[4/3] overflow-hidden rounded-none"><Image src={img.url} alt={img.alt || `${p.title} — ${label.toLowerCase()}`} fill sizes="(min-width:640px) 50vw, 100vw" className="object-cover" /></div>
                   <figcaption className="mt-2 text-sm text-graphite">{label}{img.caption ? `: ${img.caption}` : ''}</figcaption>
                 </figure>
               ))}
@@ -61,7 +61,7 @@ export default async function ProjectPage({ params }) {
             {gallery.map((img, i) => (
               <li key={img.url} className={i % 3 === 0 ? 'sm:col-span-2' : ''}>
                 <figure>
-                  <div className={`relative overflow-hidden rounded-[3px] ${i % 3 === 0 ? 'aspect-[16/9]' : 'aspect-[4/5]'}`}><Image src={img.url} alt={img.alt || p.title} fill sizes={i % 3 === 0 ? '100vw' : '50vw'} className="object-cover" loading="lazy" /></div>
+                  <div className={`relative overflow-hidden rounded-none ${i % 3 === 0 ? 'aspect-[16/9]' : 'aspect-[4/5]'}`}><Image src={img.url} alt={img.alt || p.title} fill sizes={i % 3 === 0 ? '100vw' : '50vw'} className="object-cover" loading="lazy" /></div>
                   {img.caption && <figcaption className="mt-2 text-sm text-graphite">{img.caption}</figcaption>}
                 </figure>
               </li>

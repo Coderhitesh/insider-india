@@ -16,7 +16,7 @@ export function setIn(obj, path, value) {
   return out;
 }
 
-const inputCls = (err) => clsx('w-full rounded-[3px] border bg-paper px-3 py-2 text-sm focus:border-charcoal focus:outline-none', err ? 'border-error' : 'border-stone-deep');
+const inputCls = (err) => clsx('w-full rounded-none border bg-paper px-3 py-2 text-sm focus:border-wine focus:outline-none', err ? 'border-error' : 'border-stone-deep');
 
 function ImageField({ value, onChange, purpose = 'CONTENT_IMAGE' }) {
   const ref = useRef(null);
@@ -24,7 +24,7 @@ function ImageField({ value, onChange, purpose = 'CONTENT_IMAGE' }) {
   const [err, setErr] = useState('');
   return (
     <div className="flex items-center gap-3">
-      {value ? <img src={value} alt="" className="size-14 rounded-[2px] object-cover" /> : <div className="size-14 rounded-[2px] bg-stone/60" />}
+      {value ? <img src={value} alt="" className="size-14 rounded-none object-cover" /> : <div className="size-14 rounded-none bg-stone/60" />}
       <div className="flex-1 space-y-1">
         <input className={inputCls()} value={value || ''} onChange={(e) => onChange(e.target.value)} placeholder="https://… or upload" />
         <div className="flex items-center gap-2">
@@ -70,7 +70,7 @@ export function Fields({ fields, value, onChange, errors = {}, prefix = '' }) {
             </select>
           ); break;
           case 'multiselect': control = (
-            <div className="grid max-h-64 gap-1 overflow-y-auto rounded-[3px] border border-stone p-2 sm:grid-cols-2">
+            <div className="grid max-h-64 gap-1 overflow-y-auto rounded-none border border-stone p-2 sm:grid-cols-2">
               {(f.options || []).map((o) => {
                 const ov = o.value ?? o; const on = (v || []).includes(ov);
                 return (
@@ -109,7 +109,7 @@ function RowsField({ field, value, onChange, errors, path }) {
   return (
     <div className="space-y-2">
       {value.map((row, i) => (
-        <div key={row._id || row.value || i} className="rounded-[3px] border border-stone bg-linen/40 p-3">
+        <div key={row._id || row.value || i} className="rounded-none border border-stone bg-blush/50 p-3">
           <Fields fields={field.fields} value={row} onChange={(nv) => onChange(value.map((r, j) => (j === i ? nv : r)))} errors={errors} prefix={`${path}.${i}`} />
           <div className="mt-2 flex justify-end gap-1">
             {field.sortable !== false && <><Button type="button" size="sm" variant="ghost" disabled={i === 0} onClick={() => move(i, -1)} aria-label="Move up"><ArrowUp className="size-3.5" /></Button>

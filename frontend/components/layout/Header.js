@@ -29,7 +29,7 @@ export default function Header({ company }) {
     : <Link href="/login" className="text-sm hover:text-wine">Log in</Link>;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-stone bg-linen/95 backdrop-blur-sm supports-[backdrop-filter]:bg-linen/85">
+    <header className="sticky top-0 z-40 border-b-2 border-wine bg-paper/95 backdrop-blur-sm supports-[backdrop-filter]:bg-paper/90">
       <div className="container-x flex h-18 items-center justify-between gap-6">
         <Logo company={company} />
         {!funnel && (
@@ -38,7 +38,7 @@ export default function Header({ company }) {
               {HEADER_NAV.map((n) => (
                 <li key={n.href}>
                   <Link href={n.href} aria-current={pathname === n.href ? 'page' : undefined}
-                    className={clsx('py-2 transition-colors hover:text-wine', pathname === n.href && 'text-wine underline decoration-brass decoration-1 underline-offset-8')}>
+                    className={clsx('relative py-2 font-medium transition-colors hover:text-wine', pathname === n.href && 'text-wine after:absolute after:inset-x-0 after:-bottom-[21px] after:h-[3px] after:bg-wine')}>
                     {n.label}
                   </Link>
                 </li>
@@ -60,15 +60,15 @@ export default function Header({ company }) {
       </div>
 
       {open && (
-        <div id="mobile-nav" role="dialog" aria-modal="true" aria-label="Menu" className="fixed inset-0 z-50 flex flex-col bg-linen">
-          <div className="container-x flex h-18 items-center justify-between border-b border-stone">
+        <div id="mobile-nav" role="dialog" aria-modal="true" aria-label="Menu" className="fixed inset-0 z-50 flex flex-col bg-paper">
+          <div className="container-x flex h-18 items-center justify-between border-b-2 border-wine">
             <Logo company={company} />
             <button type="button" className="-mr-2 p-2" aria-label="Close menu" onClick={() => setOpen(false)}><X className="size-6" /></button>
           </div>
           <nav aria-label="Mobile" className="container-x flex-1 overflow-y-auto py-6">
             <ul className="divide-y divide-stone">
               {NAV.map((n) => (
-                <li key={n.href}><Link href={n.href} className="block py-4 font-display text-2xl">{n.label}</Link></li>
+                <li key={n.href}><Link href={n.href} className="flex items-center justify-between py-4 font-display text-2xl hover:text-wine">{n.label}<span aria-hidden="true" className="h-px w-8 bg-wine" /></Link></li>
               ))}
               <li className="py-4">{account}</li>
             </ul>

@@ -74,6 +74,8 @@ const TIMELINE = Object.freeze({
   BOOKING_CONFIRMED: 'Booking Confirmed',
   CONTRACTOR_ASSIGNED: 'Contractor Assigned',
   SITE_VISIT_SCHEDULED: 'Site Visit Scheduled',
+  SITE_VISIT_RESCHEDULED: 'Site Visit Rescheduled',
+  MEASUREMENTS_REOPENED: 'Measurements Reopened',
   SITE_VISIT_COMPLETED: 'Site Visit Completed',
   MEASUREMENTS_RECORDED: 'Measurements Recorded',
   QUOTATION_DRAFTED: 'Quotation Drafted',

@@ -25,11 +25,19 @@ lib/                 api client (token refresh), server-api (ISR reads), content
 store/               zustand: auth (memory), booking (lead id), estimate (session)
 ```
 
-## Design system
-- Palette: linen `#f3eee6`, paper `#fbf8f3`, charcoal `#262320`, wine `#5e1f2b`, stone `#d9cfc0`, brass `#a67c3d`; terracotta and oak are used only as material swatches.
-- Type: Bodoni Moda (display) + Hanken Grotesk (UI/body), self-hosted woff2 (OFL, licences in `public/fonts`).
-- Signature: packages and hero are presented as material sample boards (`Swatch`). When you add photography, set paths in `lib/content.js → IMAGES` and the boards become photo frames.
-- Motion: one hero reveal and funnel step transitions only; `prefers-reduced-motion` respected.
+## Design system — "Redline"
+Red and white only, inspired by an architect's red-pen markup on a drawing sheet.
+- Colours (`app/globals.css`): white `#ffffff`, brand red `#c8102e` (`wine`), deep red `#9a0c22`, blush `#fdeeef`, ink `#1a0b0d` (`charcoal`), hairline `#f1dada` (`stone`). Token names are kept stable, so components read `bg-wine`, `text-charcoal`, etc.
+- Type: Archivo variable (weight 100–900, width 62–125%), self-hosted. Headings use the expanded width at weight 800; body uses normal width.
+- Motifs: drawing-sheet grid (`.grid-paper`), ruler tick bands (`.ruler`), dimension rules above section headings, sharp corners.
+- Signature: the hero floor plan draws itself in red on load (`components/home/Hero.js`). Elsewhere `Swatch` renders small red line drawings (living room, kitchen, wardrobe, renovation, office) in place of photos. Add real photography via `lib/content.js → IMAGES`.
+- Packages are drawing title blocks; footer and package section are solid red; the console has a red sidebar.
+- Motion: hero drawing + funnel step transitions only; `prefers-reduced-motion` respected.
+
+## Environment
+- `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SITE_URL` as before.
+- `API_INTERNAL_KEY` (server-only) must equal the backend's `INTERNAL_API_KEY`. Server-side rendering sends it so the website's own requests are not rate-limited as one IP.
+- Build with a clean environment: `NODE_ENV=development` set in the shell breaks `next build`.
 
 ## Content rules
 Nothing numeric or reputational is hard-coded. Stats, testimonials, projects, FAQs, company details, terms and warranty text come from the Admin panel; empty sections are hidden rather than filled with placeholders.

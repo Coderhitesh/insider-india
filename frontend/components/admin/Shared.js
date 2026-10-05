@@ -9,7 +9,7 @@ import { useApi } from '@/lib/useApi';
 import { fmtDateTime } from '@/lib/admin';
 import { useAuth } from '@/store/auth';
 
-const field = 'w-full rounded-[3px] border border-stone-deep bg-paper px-3 py-2 text-sm focus:border-charcoal focus:outline-none';
+const field = 'w-full rounded-none border border-stone-deep bg-paper px-3 py-2 text-sm focus:border-wine focus:outline-none';
 
 export function Activity({ items }) {
   if (!items?.length) return <p className="text-sm text-graphite">No activity yet.</p>;
@@ -50,7 +50,7 @@ export function Notes({ type, id }) {
         <textarea id={`note-${id}`} rows={3} className={field} placeholder="Add a note for the team (not visible to the customer)" value={text} onChange={(e) => setText(e.target.value)} />
         <div className="flex items-center justify-between gap-2">
           {user.role !== 'CONTRACTOR' ? (
-            <select aria-label="Visibility" className="h-8 rounded-[3px] border border-stone-deep bg-paper px-2 text-xs" value={visibility} onChange={(e) => setVisibility(e.target.value)}>
+            <select aria-label="Visibility" className="h-8 rounded-none border border-stone-deep bg-paper px-2 text-xs" value={visibility} onChange={(e) => setVisibility(e.target.value)}>
               <option value="STAFF">Visible to staff and assigned contractor</option><option value="ADMIN_ONLY">Admins only</option>
             </select>
           ) : <span />}

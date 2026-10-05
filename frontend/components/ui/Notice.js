@@ -10,7 +10,7 @@ const TONES = {
 export default function Notice({ tone = 'info', children, action, className }) {
   const { cls, Icon } = TONES[tone];
   return (
-    <div role={tone === 'error' ? 'alert' : 'status'} className={clsx('flex items-start gap-3 rounded-[3px] border px-4 py-3 text-sm', cls, className)}>
+    <div role={tone === 'error' ? 'alert' : 'status'} className={clsx('flex items-start gap-3 rounded-none border px-4 py-3 text-sm', cls, className)}>
       <Icon className="mt-0.5 size-4 shrink-0" />
       <div className="flex-1">{children}</div>
       {action}

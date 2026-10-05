@@ -71,7 +71,7 @@ const SETTINGS_SCHEMAS = {
     regionCodes: z.array(z.string().trim().toLowerCase().length(2)).min(1).max(15),
   }),
   storage: z.object({
-    active: z.enum(['CLOUDINARY', 'S3']),
+    active: z.enum(['CLOUDINARY', 'S3', 'LOCAL']),
     cloudinary: z.object({ cloudName: s(100), apiKey: s(100), apiSecret: s(200), folder: s(100) }),
     s3: z.object({ accessKeyId: s(128), secretAccessKey: s(200), region: s(30), bucket: s(100), cdnUrl: url, prefix: s(100) }),
   }),

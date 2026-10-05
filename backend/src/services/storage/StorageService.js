@@ -1,9 +1,10 @@
 const settings = require('../settingsService');
 const CloudinaryStorageProvider = require('./CloudinaryStorageProvider');
 const S3StorageProvider = require('./S3StorageProvider');
+const LocalStorageProvider = require('./LocalStorageProvider');
 const ApiError = require('../../utils/ApiError');
 
-const FACTORIES = { CLOUDINARY: (cfg) => new CloudinaryStorageProvider(cfg.cloudinary || {}), S3: (cfg) => new S3StorageProvider(cfg.s3 || {}) };
+const FACTORIES = { CLOUDINARY: (cfg) => new CloudinaryStorageProvider(cfg.cloudinary || {}), S3: (cfg) => new S3StorageProvider(cfg.s3 || {}), LOCAL: () => new LocalStorageProvider() };
 const instances = new Map();
 settings.onChange((key) => { if (key === 'storage') instances.clear(); });
 
@@ -20,7 +21,7 @@ async function getProvider(name) {
     instances.set(providerName, factory(cfg));
   }
   const provider = instances.get(providerName);
-  if (!provider.configured) throw ApiError.unavailable('File storage is not configured. Please contact support.', 'STORAGE_NOT_CONFIGURED');
+  if (!provider.configured) throw ApiError.unavailable(providerName === 'LOCAL' ? 'Local storage is disabled on this server. Configure Cloudinary or S3.' : 'File storage is not configured. Please contact support.', 'STORAGE_NOT_CONFIGURED');
   return provider;
 }
 

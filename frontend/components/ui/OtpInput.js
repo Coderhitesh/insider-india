@@ -44,7 +44,7 @@ export default function OtpInput({ length = 4, value, onChange, onComplete, disa
             if (e.key === 'ArrowRight' && i < length - 1) refs.current[i + 1]?.focus();
           }}
           className={clsx(
-            'tabular size-14 rounded-[3px] border bg-paper text-center font-display text-3xl focus:border-charcoal focus:outline-none sm:size-16',
+            'tabular size-14 rounded-none border bg-paper text-center font-display text-3xl focus:border-wine focus:outline-none sm:size-16',
             error ? 'border-error' : 'border-stone-deep',
           )}
         />

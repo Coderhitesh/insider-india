@@ -12,7 +12,7 @@ import { formatShort } from '@/lib/format';
 import RangeText from '@/components/ui/RangeText';
 import { useBookingStore } from '@/store/booking';
 
-const TONES = ['sand', 'terracotta', 'stone', 'brass'];
+const TONES = ['sand', 'charcoal', 'oak', 'stone'];
 
 export default function EstimateResult({ estimate, config, onChange, onRestart }) {
   const router = useRouter();
@@ -47,19 +47,20 @@ export default function EstimateResult({ estimate, config, onChange, onRestart }
 
       <div className="mt-10 grid gap-10 lg:grid-cols-12">
         <div className="lg:col-span-7">
-          {/* The one place a multi-colour accent is used: a thin ring around the estimate. */}
-          <div className="rounded-[4px] bg-[conic-gradient(from_210deg,var(--color-wine),var(--color-terracotta),var(--color-brass),var(--color-oak),var(--color-stone-deep),var(--color-wine))] p-[2px]">
-            <div className="rounded-[3px] bg-paper px-6 py-8 sm:px-10 sm:py-10">
-              <p className="text-graphite">{selected.packageName}, {sizeLabel}</p>
-              <p className="tabular mt-3 font-display text-[clamp(2.6rem,7vw,4.5rem)] leading-none" aria-live="polite">
+          {/* The estimate sits in a red drawing frame with corner registration marks. */}
+          <div className="relative border-2 border-wine p-[6px]">
+            {['-left-2 -top-2', '-right-2 -top-2', '-left-2 -bottom-2', '-right-2 -bottom-2'].map((c) => <span key={c} aria-hidden="true" className={`absolute ${c} size-4 border-wine`} style={{ borderWidth: 2 }} />)}
+            <div className="bg-wine px-6 py-8 text-paper sm:px-10 sm:py-10">
+              <p className="font-semibold text-paper/85">{selected.packageName}, {sizeLabel}</p>
+              <p className="tabular mt-3 font-display text-[clamp(2.4rem,6.5vw,4.2rem)] leading-none" aria-live="polite">
                 {selected.available ? <RangeText min={selected.finalMin} max={selected.finalMax} /> : 'Price on request'}
               </p>
-              {!selected.available && <p className="mt-4 text-graphite">We don&apos;t publish a range for this combination. Book a free consultation and our designer will prepare one for your home.</p>}
-              {selected.warranty?.years ? <p className="mt-5 flex items-center gap-2 text-sm"><ShieldCheck className="size-4 text-brass" />{selected.warranty.years}-year warranty cover plan</p> : null}
+              {!selected.available && <p className="mt-4 text-paper/85">We don&apos;t publish a range for this combination. Book a free consultation and our designer will prepare one for your home.</p>}
+              {selected.warranty?.years ? <p className="mt-5 flex items-center gap-2 text-sm font-semibold"><ShieldCheck className="size-4" />{selected.warranty.years}-year warranty cover plan</p> : null}
             </div>
           </div>
 
-          <p className="mt-6 rounded-[3px] border border-stone bg-paper p-4 text-sm text-graphite">{estimate.disclaimer}</p>
+          <p className="mt-6 border-l-4 border-wine bg-blush p-4 text-sm text-charcoal">{estimate.disclaimer}</p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Button size="lg" onClick={book}>Book free consultation</Button>
@@ -91,8 +92,8 @@ export default function EstimateResult({ estimate, config, onChange, onRestart }
             return (
               <li key={r.package}>
                 <button type="button" aria-pressed={on} onClick={() => choose(r.package)} disabled={busy !== null}
-                  className={clsx('flex w-full flex-col rounded-[3px] border bg-paper text-left transition-colors', on ? 'border-wine shadow-[inset_0_0_0_1px_var(--color-wine)]' : 'border-stone hover:border-stone-deep')}>
-                  <Swatch tone={TONES[idx % 4]} className="h-12 w-full" />
+                  className={clsx('flex w-full flex-col rounded-none border bg-paper text-left transition-colors', on ? 'border-wine shadow-[inset_0_0_0_1px_var(--color-wine)]' : 'border-stone hover:border-stone-deep')}>
+                  <Swatch tone={TONES[idx % 4]} className="h-16 w-full" />
                   <span className="p-4">
                     <span className="block font-display text-xl">{r.packageName}</span>
                     <span className="tabular mt-1 block text-sm">{r.available ? `${formatShort(r.finalMin)} – ${formatShort(r.finalMax)}` : 'Price on request'}</span>

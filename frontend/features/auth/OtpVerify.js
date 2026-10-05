@@ -84,6 +84,9 @@ export default function OtpVerify({ mobile, leadId, leadToken, name, defaultLeng
       <p className="text-lg">Verification code sent to <span className="tabular font-semibold">{info.maskedMobile}</span>
         {info.channel === 'WHATSAPP' ? ' on WhatsApp' : ' by SMS'}.</p>
       {onChangeNumber && <button type="button" onClick={onChangeNumber} className="mt-1 text-sm text-wine underline underline-offset-4">Change number</button>}
+      {info.testMode && (
+        <Notice className="mt-5 max-w-md">Testing mode: SMS/WhatsApp is not connected yet. Use code <strong className="tabular">{info.testCode}</strong>.</Notice>
+      )}
 
       <form className="mt-8" onSubmit={(e) => { e.preventDefault(); verify(); }}>
         <p className="mb-3 text-sm font-medium" id="otp-label">Enter {info.length}-digit code</p>

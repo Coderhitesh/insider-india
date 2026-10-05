@@ -87,6 +87,7 @@ exports.reopen = asyncHandler(async (req, res) => {
   if (!m || m.status !== 'FINAL') throw ApiError.conflict('Measurements are not finalised', 'NOT_FINAL');
   m.status = 'DRAFT';
   await m.save();
+  await advance(booking, { event: 'MEASUREMENTS_REOPENED', visible: false, by: req.user._id });
   await audit(req, { action: 'MEASUREMENT_REOPENED', entityType: 'Measurement', entityId: m._id, reason: req.body?.reason });
   ok(res, { measurement: view(m.toObject()) }, 'Measurements reopened for editing');
 });

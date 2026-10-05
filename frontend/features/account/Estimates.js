@@ -44,7 +44,7 @@ export default function Estimates() {
                 {expanded && (
                   <ul className="mt-5 grid gap-3 border-t border-stone pt-5 sm:grid-cols-2 lg:grid-cols-4">
                     {e.results.map((r) => (
-                      <li key={r.package} className={clsx('rounded-[3px] border p-3', r.package === e.selectedPackage ? 'border-wine' : 'border-stone')}>
+                      <li key={r.package} className={clsx('rounded-none border p-3', r.package === e.selectedPackage ? 'border-wine' : 'border-stone')}>
                         <p className="font-medium">{r.packageName}</p>
                         <p className="tabular text-sm">{r.available ? <RangeText min={r.finalMin} max={r.finalMax} /> : 'Price on request'}</p>
                       </li>

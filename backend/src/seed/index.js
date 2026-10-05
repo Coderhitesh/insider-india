@@ -30,7 +30,9 @@ async function seedSetting(key, value, { group, isPublic = false } = {}) {
 
 async function run() {
   await connectDB();
-  await Promise.all(Object.values(M).map((m) => m.createIndexes()));
+  for (const m of Object.values(M)) {
+    try { await m.createIndexes(); } catch (err) { log(`index warning (${m.modelName}): ${err.message}`); }
+  }
 
   log('permissions +', await upsertMany(M.Permission, PERMISSIONS.map((p) => ({ ...p, isSystem: true })), (p) => ({ key: p.key })));
 
@@ -51,7 +53,9 @@ async function run() {
     if (!exists) {
       const generated = !env.seed.password;
       const password = env.seed.password || crypto.randomBytes(12).toString('base64url');
-      if (password.length < 10) throw new Error('SEED_SUPER_ADMIN_PASSWORD must be at least 10 characters');
+      if (password.length < 10) {
+        log('SKIPPED super admin: SEED_SUPER_ADMIN_PASSWORD must be at least 10 characters. Fix .env and run `npm run seed` again.');
+      } else {
       await M.User.create({
         name: env.seed.name,
         email,
@@ -62,6 +66,7 @@ async function run() {
       });
       log(`super admin created: ${email}`);
       if (generated) log(`GENERATED PASSWORD (shown once, change after first login): ${password}`);
+      }
     } else {
       log(`super admin exists: ${email}`);
     }

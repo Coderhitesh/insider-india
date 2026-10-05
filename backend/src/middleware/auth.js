@@ -30,12 +30,12 @@ const authenticate = asyncHandler(async (req, res, next) => {
   next();
 });
 
-// Attaches req.user when a valid token is present; silently continues otherwise.
+// No token → anonymous. A token that is present but expired/invalid → 401, so the client refreshes
+// and retries as the logged-in user instead of silently being treated as a new anonymous visitor
+// (which made logged-in customers verify their number again).
 const optionalAuth = asyncHandler(async (req, res, next) => {
   const token = bearer(req);
-  if (token) {
-    try { req.user = await resolveUser(token); } catch { req.user = null; }
-  }
+  if (token) req.user = await resolveUser(token);
   next();
 });
 

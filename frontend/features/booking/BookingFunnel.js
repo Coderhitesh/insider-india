@@ -63,6 +63,7 @@ export default function BookingFunnel() {
   const [step, setStep] = useState(null);
   const [draft, setDraft] = useState({});
   const [booking, setBooking] = useState(null);
+  const [budget, setBudget] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
@@ -165,6 +166,7 @@ export default function BookingFunnel() {
     try {
       const res = await api('/bookings', { method: 'POST', body: { leadId: lead.id } });
       setBooking(res.data.booking);
+      setBudget(res.data.budget || null);
       reset();
       window.scrollTo({ top: 0 });
     } catch (err) {
@@ -173,7 +175,7 @@ export default function BookingFunnel() {
     } finally { setSaving(false); }
   };
 
-  if (booking) return <ThankYou booking={booking} />;
+  if (booking) return <ThankYou booking={booking} budget={budget} />;
   if (loadError) return <div className="container-x max-w-3xl py-20"><Notice tone="error" action={<Button size="sm" variant="secondary" onClick={() => window.location.reload()}>Retry</Button>}>{loadError}</Notice></div>;
   if (!step || !options) return <div className="container-x flex max-w-3xl items-center gap-3 py-24 text-graphite" role="status"><Spinner className="size-5 text-wine" />Loading your request…</div>;
 
@@ -208,7 +210,7 @@ export default function BookingFunnel() {
             <legend className="mb-3 text-sm font-medium">City</legend>
             <div className="flex flex-wrap gap-2">
               {options.cities.map((c) => (
-                <label key={c.value} className={`cursor-pointer rounded-full border px-4 py-2 text-sm transition-colors has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-wine ${draft.city === c.value ? 'border-charcoal bg-charcoal text-paper' : 'border-stone-deep bg-paper hover:border-charcoal'}`}>
+                <label key={c.value} className={`cursor-pointer rounded-full border px-4 py-2 text-sm font-medium transition-colors has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-wine ${draft.city === c.value ? 'border-wine bg-wine text-paper' : 'border-stone-deep bg-paper hover:border-wine'}`}>
                   <input type="radio" name="city" value={c.value} checked={draft.city === c.value} onChange={() => setDraft({ ...draft, city: c.value })} className="sr-only" />
                   {c.label}
                 </label>
@@ -221,7 +223,7 @@ export default function BookingFunnel() {
       );
       break;
     case 'REQUIREMENT':
-      body = <form onSubmit={submitChoice('REQUIREMENT', 'requirementType')}>{radioGrid('requirementTypes', { cols: 'sm:grid-cols-3', compact: false, media: (o) => <Swatch tone={{ FULL_HOME: 'oak', KITCHEN_WARDROBE_STORAGE: 'charcoal', CIVIL_FULL_HOME: 'terracotta' }[o.value] || 'sand'} className="h-12 rounded-[2px] sm:h-20" /> })}{errorNotice}<StepFooter onBack={back} loading={saving} /></form>;
+      body = <form onSubmit={submitChoice('REQUIREMENT', 'requirementType')}>{radioGrid('requirementTypes', { cols: 'sm:grid-cols-3', compact: false, media: (o) => <Swatch tone={{ FULL_HOME: 'oak', KITCHEN_WARDROBE_STORAGE: 'charcoal', CIVIL_FULL_HOME: 'terracotta' }[o.value] || 'sand'} className="h-12 rounded-none sm:h-20" /> })}{errorNotice}<StepFooter onBack={back} loading={saving} /></form>;
       break;
     case 'BUDGET':
       body = <form onSubmit={submitChoice('BUDGET', 'budgetRange')}>{radioGrid('budgetRanges', { cols: 'grid-cols-2 sm:grid-cols-3' })}{errorNotice}<StepFooter onBack={back} loading={saving} /></form>;
@@ -248,8 +250,8 @@ export default function BookingFunnel() {
           {radioGrid('propertyTypes', {
             cols: 'sm:grid-cols-3', compact: false,
             media: (o) => (o.image
-              ? <img src={o.image} alt="" className="h-24 w-full rounded-[2px] object-cover sm:h-36" />
-              : <Swatch tone={PROPERTY_ICON[o.value]?.[1] || 'sand'} className="flex h-24 items-center justify-center rounded-[2px] text-paper sm:h-36"><Icon name={PROPERTY_ICON[o.value]?.[0] || 'Home'} className="size-10" /></Swatch>),
+              ? <img src={o.image} alt="" className="h-24 w-full rounded-none object-cover sm:h-36" />
+              : <Swatch tone={PROPERTY_ICON[o.value]?.[1] || 'sand'} className="flex h-24 items-center justify-center rounded-none text-paper sm:h-36"><Icon name={PROPERTY_ICON[o.value]?.[0] || 'Home'} className="size-10" /></Swatch>),
           })}
           {errorNotice}<StepFooter onBack={back} loading={saving} />
         </form>

@@ -35,13 +35,16 @@ export default function AdminLogin() {
 
   return (
     <div className="grid min-h-dvh lg:grid-cols-2">
-      <div className="hidden bg-charcoal p-12 text-paper lg:flex lg:flex-col lg:justify-between">
-        <p className="font-display text-2xl tracking-[0.04em]">INSIDER INDIA</p>
-        <p className="max-w-sm text-stone">Operations console for leads, site visits, quotations and projects.</p>
+      <div className="grid-paper-invert hidden bg-wine p-12 text-paper lg:flex lg:flex-col lg:justify-between">
+        <p className="flex items-center gap-3 font-display text-xl"><span className="flex size-10 items-center justify-center bg-paper text-wine">II</span>INSIDER INDIA</p>
+        <div>
+          <p className="max-w-md font-display text-d2">Leads to handover, in one console.</p>
+          <p className="mt-4 max-w-sm text-paper/85">Operations console for leads, site visits, measurements, quotations and projects.</p>
+        </div>
       </div>
       <div className="flex items-center justify-center p-6">
         <form onSubmit={submit} noValidate className="w-full max-w-sm space-y-5">
-          <h1 className="font-sans text-2xl font-semibold tracking-tight">Staff sign in</h1>
+          <h1 className="font-display text-2xl">Staff sign in</h1>
           <Field id="a-email" label="Email"><Input id="a-email" type="email" autoComplete="username" autoFocus value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field>
           <Field id="a-pass" label="Password"><Input id="a-pass" type="password" autoComplete="current-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} /></Field>
           {error && <Notice tone="error">{error}</Notice>}

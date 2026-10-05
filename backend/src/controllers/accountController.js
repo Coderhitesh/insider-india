@@ -1,5 +1,6 @@
 const { User, CustomerProfile, Booking, Lead, Estimate, Quotation, SiteVisit, ExecutionProject, Notification, Media } = require('../models');
 const { signedList } = require('../services/mediaService');
+const { budgetSummary } = require('../services/bookingEstimateService');
 const { audit } = require('../services/auditService');
 const { bookingView, estimateView, leadView, publicUser } = require('../utils/serializers');
 const { ok } = require('../utils/respond');
@@ -21,7 +22,7 @@ exports.summary = asyncHandler(async (req, res) => {
   ]);
 
   const active = bookings.find((b) => !CLOSED.includes(b.status)) || bookings[0] || null;
-  let siteVisit = null; let quotation = null; let project = null;
+  let siteVisit = null; let quotation = null; let project = null; let budget = null;
   if (active) {
     const [v, q, p] = await Promise.all([
       SiteVisit.findOne({ booking: active._id, status: { $in: ['SCHEDULED', 'COMPLETED'] } }).sort({ scheduledAt: -1 }).populate('contractor', 'name').lean(),
@@ -31,13 +32,14 @@ exports.summary = asyncHandler(async (req, res) => {
     if (v) siteVisit = { scheduledAt: v.scheduledAt, status: v.status, expert: v.contractor?.name };
     if (q) quotation = { id: String(q._id), displayNumber: q.displayNumber, status: q.status, isLatest: q.isLatest, grandTotal: q.totals.grandTotal, sentAt: q.sentAt, validUntil: q.validUntil };
     if (p) project = { id: String(p._id), projectNumber: p.projectNumber, stage: p.stage, startedAt: p.startedAt };
+    if (active.estimate) budget = budgetSummary(await Estimate.findById(active.estimate).lean());
   }
 
   ok(res, {
     user: publicUser(req.user),
     activeBooking: active ? bookingView(active) : null,
     bookings: bookings.map((b) => ({ id: String(b._id), bookingNumber: b.bookingNumber, status: b.status, createdAt: b.createdAt, city: b.snapshot?.address?.city })),
-    siteVisit, quotation, project,
+    siteVisit, quotation, project, budget,
     openLead: openLead ? leadView(openLead) : null,
     estimate: estimate ? estimateView(estimate) : null,
     floorPlans: active?.floorPlan?.media?.length || 0,

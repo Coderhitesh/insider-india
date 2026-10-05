@@ -24,7 +24,7 @@ export default async function ProjectsPage({ searchParams }) {
         <nav aria-label="Filter projects" className="mb-12 flex flex-wrap gap-2">
           {PROJECT_CATEGORIES.map((c) => (
             <Link key={c.value || 'all'} href={c.value ? `/projects?category=${c.value}` : '/projects'} aria-current={category === c.value ? 'page' : undefined}
-              className={clsx('rounded-full border px-4 py-2 text-sm transition-colors', category === c.value ? 'border-charcoal bg-charcoal text-paper' : 'border-stone-deep hover:border-charcoal')}>
+              className={clsx('rounded-full border px-4 py-2 text-sm font-medium transition-colors', category === c.value ? 'border-wine bg-wine text-paper' : 'border-stone-deep hover:border-wine')}>
               {c.label}
             </Link>
           ))}

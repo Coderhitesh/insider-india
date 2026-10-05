@@ -25,10 +25,10 @@ export function QuotationsList() {
       {loading ? <Loading /> : error ? <LoadError error={error} onRetry={reload} /> : !data.items.length ? (
         <Empty title="No quotations yet" body="Your quotation is prepared after the site visit and measurements, then reviewed by our team before it reaches you." />
       ) : (
-        <ul className="divide-y divide-stone rounded-[3px] border border-stone bg-paper">
+        <ul className="divide-y divide-stone rounded-none border border-stone bg-paper">
           {data.items.map((q) => (
             <li key={q.id}>
-              <Link href={`/account/quotations/${q.id}`} className="flex items-center gap-4 p-5 hover:bg-linen/60">
+              <Link href={`/account/quotations/${q.id}`} className="flex items-center gap-4 p-5 hover:bg-blush/60">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-3"><span className="tabular font-semibold">{q.displayNumber}</span><Badge map={QUOTATION_STATUS} value={q.status} override={badgeFor(q)} /></div>
                   <p className="mt-1 text-sm text-graphite">Booking {q.bookingNumber}, sent {formatDate(q.sentAt)}{q.validUntil ? `, valid until ${formatDate(q.validUntil)}` : ''}</p>
@@ -130,7 +130,7 @@ export function QuotationDetail({ id }) {
                   const img = data.quotation.images?.[it.image] || data.quotation.images?.[it.referenceImage];
                   return (
                     <li key={it.id} className="flex gap-4 py-4">
-                      {img && <img src={img} alt="" className="size-16 shrink-0 rounded-[2px] object-cover" loading="lazy" />}
+                      {img && <img src={img} alt="" className="size-16 shrink-0 rounded-none object-cover" loading="lazy" />}
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap justify-between gap-x-6 gap-y-1">
                           <p className="font-medium">{it.name}</p>

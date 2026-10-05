@@ -6,6 +6,7 @@ const notifications = require('../../services/notifications/notificationService'
 const { audit } = require('../../services/auditService');
 const { logActivity } = require('../../services/activityService');
 const { bookingView, estimateView } = require('../../utils/serializers');
+const { budgetSummary } = require('../../services/bookingEstimateService');
 const { parseRange } = require('../../utils/dateRange');
 const { escapeRegex, splitList } = require('../../utils/text');
 const { sendCsv } = require('../../utils/csv');
@@ -108,6 +109,7 @@ exports.get = asyncHandler(async (req, res) => {
       cancelReason: booking.cancelReason,
     },
     estimate: estimate ? estimateView(estimate) : null,
+    budget: budgetSummary(estimate),
     activity: activity.map((a) => ({ id: String(a._id), type: a.type, message: a.message, actor: a.actor ? { name: a.actor.name, role: a.actor.role } : null, createdAt: a.createdAt })),
     notes: notes.map((n) => ({ id: String(n._id), text: n.text, visibility: n.visibility, createdBy: n.createdBy ? { name: n.createdBy.name, role: n.createdBy.role } : null, createdAt: n.createdAt })),
   });

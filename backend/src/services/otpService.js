@@ -6,6 +6,8 @@ const { hmac, safeEqualHex } = require('../utils/crypto');
 const { maskMobile } = require('../utils/phone');
 const ApiError = require('../utils/ApiError');
 const { OTP_CONFIG } = require('../config/defaults');
+const env = require('../config/env');
+const logger = require('../utils/logger');
 
 async function getConfig() {
   const cfg = { ...OTP_CONFIG, ...((await settings.get('otp.config', {})) || {}) };
@@ -41,8 +43,9 @@ async function sendOtp({ mobile, channel = 'SMS', purpose = 'LOGIN', ip }) {
     }
   }
 
-  const code = generateCode(cfg.length);
-  await Otp.findOneAndUpdate(
+  const fixed = env.otpFixedCode;
+  const code = fixed || generateCode(cfg.length);
+  await Otp.updateOne(
     { mobile, purpose },
     {
       $set: {
@@ -61,7 +64,9 @@ async function sendOtp({ mobile, channel = 'SMS', purpose = 'LOGIN', ip }) {
     { upsert: true },
   );
 
-  const result = await deliverOtp({ mobile, code, channel, expiryMinutes: cfg.expiryMinutes });
+  const result = fixed
+    ? (logger.warn(`[OTP:FIXED] to +91${mobile}: ${code} is the test code (OTP_FIXED_CODE is set; nothing was sent)`), { ok: true, provider: 'FIXED' })
+    : await deliverOtp({ mobile, code, channel, expiryMinutes: cfg.expiryMinutes });
   await Otp.updateOne(
     { mobile, purpose },
     { $push: { deliveries: { $each: [{ channel, status: result.ok ? 'SENT' : 'FAILED', provider: result.provider, providerRef: result.providerRef, error: result.error }], $slice: -20 } } },
@@ -77,9 +82,10 @@ async function sendOtp({ mobile, channel = 'SMS', purpose = 'LOGIN', ip }) {
   return {
     maskedMobile: maskMobile(mobile),
     channel,
-    length: cfg.length,
+    length: code.length,
     expiresIn: cfg.expiryMinutes * 60,
     resendIn: cfg.resendCooldownSeconds,
+    ...(fixed ? { testMode: true, testCode: fixed } : {}),
   };
 }
 
@@ -88,11 +94,11 @@ async function verifyOtp({ mobile, code, purpose = 'LOGIN' }) {
   const now = new Date();
 
   // Atomically reserve an attempt so parallel guesses can't exceed the limit.
-  const rec = await Otp.findOneAndUpdate(
+  const reserved = await Otp.updateOne(
     { mobile, purpose, consumedAt: null, codeHash: { $ne: null }, attempts: { $lt: cfg.maxAttempts } },
     { $inc: { attempts: 1 } },
-    { new: true },
-  ).select('+codeHash');
+  );
+  const rec = reserved.modifiedCount ? await Otp.findOne({ mobile, purpose }).select('+codeHash') : null;
 
   if (!rec) {
     const exists = await Otp.findOne({ mobile, purpose }).lean();

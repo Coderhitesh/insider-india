@@ -141,7 +141,7 @@ exports.update = asyncHandler(async (req, res) => {
   if (rescheduled) {
     const booking = await Booking.findById(v.booking);
     booking.siteVisitAt = v.scheduledAt;
-    await advance(booking, { event: 'SITE_VISIT_SCHEDULED', by: req.user._id, meta: { rescheduled: true } });
+    await advance(booking, { event: 'SITE_VISIT_RESCHEDULED', by: req.user._id, meta: { rescheduled: true } });
     await audit(req, { action: 'SITE_VISIT_RESCHEDULED', entityType: 'SiteVisit', entityId: v._id, before, after: { scheduledAt: v.scheduledAt }, reason: b.reason });
     await logActivity({ lead: v.lead, booking: v.booking, actor: req.user, type: 'SITE_VISIT_RESCHEDULED', message: `Rescheduled to ${formatDateIST(v.scheduledAt)} ${formatTimeIST(v.scheduledAt)}`, visibleToCustomer: true });
     notifySchedule(booking, v, true);

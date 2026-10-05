@@ -10,7 +10,7 @@ const F = {
   semi: path.join(FONT_DIR, 'NotoSans-SemiBold.ttf'),
   bold: path.join(FONT_DIR, 'NotoSans-Bold.ttf'),
 };
-const C = { ink: '#2B2724', muted: '#6F665E', wine: '#6E2233', brass: '#A8844B', sand: '#E9E1D3', ivory: '#F7F3EC', line: '#DDD3C3' };
+const C = { ink: '#1A0B0D', muted: '#6E5A5D', wine: '#C8102E', brass: '#C8102E', sand: '#FDEEEF', ivory: '#FFFFFF', line: '#F1DADD' };
 const UNIT = { FT: 'ft', INCH: 'in', SQFT: 'sq ft', RFT: 'rft', MM: 'mm', CM: 'cm', M: 'm', SQM: 'sq m', PCS: 'pc' };
 
 async function fetchLogo(url) {
@@ -52,15 +52,16 @@ async function renderQuotationPdf({ q, company, customer, booking, contractorNam
 
   // ── Header band ─────────────────────────────────────────
   doc.rect(0, 0, doc.page.width, 118).fill(C.ivory);
+  doc.rect(0, 0, doc.page.width, 8).fill(C.wine);
   if (logo) {
-    try { doc.image(logo, L, 34, { fit: [150, 48] }); } catch { doc.font('serif').fontSize(24).fillColor(C.ink).text(company.name, L, 38); }
+    try { doc.image(logo, L, 34, { fit: [150, 48] }); } catch { doc.font('bold').fontSize(20).fillColor(C.wine).text(company.name, L, 40); }
   } else {
-    doc.font('serif').fontSize(24).fillColor(C.ink).text(company.name, L, 38, { width: W * 0.6 });
+    doc.font('bold').fontSize(20).fillColor(C.wine).text(company.name, L, 40, { width: W * 0.6 });
   }
   const contact = [company.address, [company.phone, company.email].filter(Boolean).join('  ·  '), company.gstNumber ? `GSTIN ${company.gstNumber}` : ''].filter(Boolean);
   doc.font('sans').fontSize(7.5).fillColor(C.muted).text(contact.join('\n'), L, 86, { width: W * 0.6 });
 
-  doc.font('serif').fontSize(30).fillColor(C.wine).text('Quotation', L, 30, { width: W, align: 'right' });
+  doc.font('bold').fontSize(26).fillColor(C.wine).text('QUOTATION', L, 32, { width: W, align: 'right', characterSpacing: 2 });
   doc.font('semi').fontSize(9).fillColor(C.ink).text(q.displayNumber, L, 68, { width: W, align: 'right' });
   doc.font('sans').fontSize(8).fillColor(C.muted)
     .text(`Issued ${formatDateIST(q.sentAt || new Date())}${q.validUntil ? `  ·  Valid until ${formatDateIST(q.validUntil)}` : ''}`, L, 82, { width: W, align: 'right' });
@@ -108,7 +109,7 @@ async function renderQuotationPdf({ q, company, customer, booking, contractorNam
   let n = 0;
   for (const section of q.sections) {
     ensure(120); // keep section title + header + first row together
-    doc.font('serif').fontSize(15).fillColor(C.wine).text(section.title, L, doc.y);
+    doc.font('bold').fontSize(12.5).fillColor(C.wine).text(section.title.toUpperCase(), L, doc.y, { characterSpacing: 0.8 });
     if (section.notes) doc.font('sans').fontSize(7.5).fillColor(C.muted).text(section.notes, L, doc.y + 1, { width: W });
     doc.y += 6;
     tableHead();

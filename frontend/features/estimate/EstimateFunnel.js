@@ -25,6 +25,7 @@ const TITLES = {
   2: ['How many of these rooms need interiors?', 'Start from your home size and adjust.'],
   3: ['Which finishing elements do you need?', 'Select all that apply. You can skip this step.'],
   4: ['Where should we send your estimate?', 'We will verify your number with a one-time code.'],
+  '4in': ['Confirm your details', 'Your estimate will be saved to your account.'],
   5: ['Verify your mobile number'],
 };
 
@@ -118,7 +119,7 @@ export default function EstimateFunnel() {
           <div className="grid grid-cols-2 gap-3">
             {config.propertyCategories.map((c) => (
               <ChoiceCard key={c.value} name="category" value={c.value} checked={inputs.propertyCategory === c.value} title={c.label}
-                media={<Swatch tone={c.value === 'RESIDENTIAL' ? 'oak' : 'stone'} className="flex h-24 items-center justify-center rounded-[2px] text-paper"><Icon name={c.value === 'RESIDENTIAL' ? 'Home' : 'Store'} className="size-9" /></Swatch>}
+                media={<Swatch tone={c.value === 'RESIDENTIAL' ? 'oak' : 'stone'} className="flex h-24 items-center justify-center rounded-none text-paper"><Icon name={c.value === 'RESIDENTIAL' ? 'Home' : 'Store'} className="size-9" /></Swatch>}
                 onChange={() => setSize({ propertyCategory: c.value, bhk: c.value === 'RESIDENTIAL' ? inputs.bhk : null })} />
             ))}
           </div>
@@ -164,7 +165,7 @@ export default function EstimateFunnel() {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {config.addons.map((a) => (
               <ChoiceCard key={a.key} type="checkbox" name="addons" value={a.key} compact checked={sel.has(a.key)} title={a.label}
-                media={a.image ? <img src={a.image} alt="" className="h-20 w-full rounded-[2px] object-cover" /> : <Icon name={a.icon} className="size-7 text-wine" />}
+                media={a.image ? <img src={a.image} alt="" className="h-20 w-full rounded-none object-cover" /> : <Icon name={a.icon} className="size-7 text-wine" />}
                 onChange={() => { const n = new Set(sel); n.has(a.key) ? n.delete(a.key) : n.add(a.key); s.setInputs({ addons: [...n] }); }} />
             ))}
           </div>
@@ -179,7 +180,7 @@ export default function EstimateFunnel() {
       <form noValidate onSubmit={async (e) => {
         e.preventDefault();
         const errs = {};
-        const name = (signedIn ? user.name : s.contact.name || '').trim();
+        const name = ((signedIn && user.name) ? user.name : s.contact.name || '').trim();
         if (name.length < 2) errs.name = 'Enter your full name';
         if (!signedIn && !normalizeMobile(s.contact.mobile)) errs.mobile = 'Enter a valid 10-digit mobile number';
         setFieldErrors(errs);
@@ -189,12 +190,20 @@ export default function EstimateFunnel() {
         try {
           const res = await api('/leads', { method: 'POST', body: { flow: 'ESTIMATE', name, mobile: signedIn ? user.mobile : s.contact.mobile, estimateDraft: cleanInputs(), ...readAttribution() } });
           s.setLead(res.data.lead.id, res.data.leadToken);
+          if (signedIn && !user.name) { const a = useAuth.getState(); a.setSession({ accessToken: a.accessToken, user: { ...a.user, name } }); }
           if (res.data.lead.verified) await calculate(res.data.lead.id);
           else next();
         } catch (err) { setError(err.message); setFieldErrors(err.fieldErrors?.() || {}); } finally { setBusy(false); }
       }} className="space-y-6">
         {signedIn ? (
-          <p className="text-lg">Continuing as <strong>{user.name || 'you'}</strong> (+91 {user.mobile}).</p>
+          <>
+            <p className="text-lg">You are logged in as <strong>+91 {user.mobile}</strong>{user.name ? <> ({user.name})</> : null}. No verification code needed.</p>
+            {!user.name && (
+              <Field id="e-name" label="Your full name" error={fieldErrors.name}>
+                <Input id="e-name" autoComplete="name" value={s.contact.name} error={fieldErrors.name} onChange={(e) => s.setContact({ name: e.target.value })} />
+              </Field>
+            )}
+          </>
         ) : (
           <>
             <Field id="e-name" label="Full name" error={fieldErrors.name}>
@@ -223,6 +232,6 @@ export default function EstimateFunnel() {
     );
   }
 
-  const [title, description] = TITLES[step];
+  const [title, description] = TITLES[step === 4 && status === 'authenticated' && user?.role === 'CUSTOMER' ? '4in' : step];
   return <FunnelShell stepKey={`e${step}`} stepNumber={step} total={TOTAL} progressLabel="Budget calculator" title={title} description={description}>{body}</FunnelShell>;
 }

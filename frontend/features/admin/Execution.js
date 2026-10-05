@@ -63,21 +63,21 @@ export function ExecutionDetail({ id }) {
               {STAGES.map(([k, l], i) => {
                 const idx = STAGES.findIndex(([x]) => x === p.stage);
                 const st = !p.startedAt ? 'todo' : i < idx || p.stage === 'COMPLETED' ? 'done' : i === idx ? 'now' : 'todo';
-                return <li key={k} className={`rounded-[3px] border px-3 py-2 text-sm ${st === 'now' ? 'border-wine bg-wine-tint' : st === 'done' ? 'border-stone bg-linen' : 'border-stone text-graphite'}`}>{l}</li>;
+                return <li key={k} className={`rounded-none border px-3 py-2 text-sm ${st === 'now' ? 'border-wine bg-wine-tint' : st === 'done' ? 'border-stone bg-blush/50' : 'border-stone text-graphite'}`}>{l}</li>;
               })}
             </ol>
             {edit && p.startedAt && p.stage !== 'COMPLETED' && (
               <div className="mt-4 flex flex-wrap gap-2">
-                <select aria-label="Move to stage" className="h-9 rounded-[3px] border border-stone-deep bg-paper px-2 text-sm" value={stage.value} onChange={(e) => setStage({ ...stage, value: e.target.value })}>
+                <select aria-label="Move to stage" className="h-9 rounded-none border border-stone-deep bg-paper px-2 text-sm" value={stage.value} onChange={(e) => setStage({ ...stage, value: e.target.value })}>
                   <option value="">Move to stage…</option>{STAGES.filter(([k]) => k !== p.stage).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
                 </select>
-                <input aria-label="Note" className="h-9 flex-1 rounded-[3px] border border-stone-deep bg-paper px-3 text-sm" placeholder="Note (internal)" value={stage.note} onChange={(e) => setStage({ ...stage, note: e.target.value })} />
+                <input aria-label="Note" className="h-9 flex-1 rounded-none border border-stone-deep bg-paper px-3 text-sm" placeholder="Note (internal)" value={stage.note} onChange={(e) => setStage({ ...stage, note: e.target.value })} />
                 <Button size="sm" disabled={!stage.value} onClick={() => run(() => api(`/execution/${id}/stage`, { method: 'POST', body: { stage: stage.value, note: stage.note || undefined } }), 'Stage updated; customer notified').then(() => setStage({ value: '', note: '' }))}>Update</Button>
               </div>
             )}
           </Box>
           <Box title="Post a progress update">
-            <textarea aria-label="Update" rows={3} className="w-full rounded-[3px] border border-stone-deep bg-paper px-3 py-2 text-sm" placeholder="What happened on site?" value={post.text} onChange={(e) => setPost({ ...post, text: e.target.value })} />
+            <textarea aria-label="Update" rows={3} className="w-full rounded-none border border-stone-deep bg-paper px-3 py-2 text-sm" placeholder="What happened on site?" value={post.text} onChange={(e) => setPost({ ...post, text: e.target.value })} />
             <MediaUploader purpose="SITE_IMAGE" accept="image/jpeg,image/png,image/webp" value={post.media} onChange={(fn) => setPost((x) => ({ ...x, media: typeof fn === 'function' ? fn(x.media) : fn }))} label="Add site photos" />
             <div className="mt-3 flex items-center justify-between">
               <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={post.visibleToCustomer} onChange={(e) => setPost({ ...post, visibleToCustomer: e.target.checked })} className="accent-[var(--color-wine)]" />Visible to customer</label>
@@ -87,7 +87,7 @@ export function ExecutionDetail({ id }) {
               {p.updates.map((u) => (
                 <li key={u.id} className="py-3 text-sm">
                   <p className="whitespace-pre-line">{u.text}</p>
-                  {u.media.length > 0 && <div className="mt-2 flex gap-2">{u.media.map((m) => <a key={m.id} href={m.url} target="_blank" rel="noopener noreferrer"><img src={m.url} alt="" className="size-16 rounded-[2px] object-cover" /></a>)}</div>}
+                  {u.media.length > 0 && <div className="mt-2 flex gap-2">{u.media.map((m) => <a key={m.id} href={m.url} target="_blank" rel="noopener noreferrer"><img src={m.url} alt="" className="size-16 rounded-none object-cover" /></a>)}</div>}
                   <p className="mt-1 text-xs text-graphite">{fmtDateTime(u.at)}{u.visibleToCustomer ? '' : ' (internal)'}</p>
                 </li>
               ))}

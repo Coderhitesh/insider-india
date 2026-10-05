@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { FileText } from 'lucide-react';
+import { FileText, CheckCircle2, Circle, ArrowRight } from 'lucide-react';
+import BudgetCard from '@/components/ui/BudgetCard';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { Header, DataTable, Pill, Box, KV, Loader, Failed } from '@/components/admin/Kit';
@@ -55,6 +56,50 @@ export function BookingsList() {
   );
 }
 
+// Where this job is in the workflow, and exactly what to do next.
+function WorkflowGuide({ booking: b, visits, measurement: m, latest, onJump }) {
+  const visitDone = visits.some((v) => v.status === 'COMPLETED');
+  const sentStates = ['SENT_TO_CUSTOMER', 'ACCEPTED', 'REJECTED', 'REVISION_REQUESTED'];
+  const projectStates = ['PROJECT_STARTED', 'PROJECT_IN_PROGRESS', 'PROJECT_COMPLETED'];
+  const steps = [
+    { key: 'assign', label: 'Assign contractor', done: Boolean(b.assignedContractor), how: 'Pick a contractor in the Contractor box on the right and click Assign. The customer and contractor are notified.', action: ['Go to contractor', () => onJump('contractor-box')] },
+    { key: 'schedule', label: 'Schedule site visit', done: visits.some((v) => ['SCHEDULED', 'COMPLETED'].includes(v.status)), how: 'In Site visits click Schedule visit, choose date & time. The customer gets the visit details.', action: ['Go to site visits', () => onJump('site-visits')] },
+    { key: 'visit', label: 'Complete site visit', done: visitDone, how: 'After visiting the home click Complete, choose the site condition and upload photos.', action: ['Go to site visits', () => onJump('site-visits')] },
+    { key: 'measure', label: 'Finalise measurements', done: m?.status === 'FINAL', how: 'Open the measurement sheet, add each room and its measurements, then click Save and finalise.', action: ['Open measurement sheet', `/admin/bookings/${b.id}/measurements`] },
+    { key: 'quote', label: 'Create quotation', done: Boolean(latest), how: 'Click Create quotation. In the editor use “Add from measurements” to get every room and size, then enter rates (material + labour) and Save.', action: ['Go to quotations', () => onJump('quotations')] },
+    { key: 'submit', label: 'Submit for admin review', done: Boolean(latest && latest.status !== 'DRAFT'), how: 'When all items have rates, the contractor (or an admin) clicks Submit for admin review in the quotation editor.', action: latest ? ['Open quotation', `/admin/quotations/${latest.id}`] : null },
+    { key: 'send', label: 'Approve & send to customer', done: Boolean(latest && sentStates.includes(latest.status)), how: 'Admin checks every price, edits if needed (a reason is required), adds discounts or payment schedule, previews the PDF, then clicks Approve & send. The customer gets WhatsApp + dashboard notification with the PDF.', action: latest ? ['Open quotation', `/admin/quotations/${latest.id}`] : null },
+    { key: 'accept', label: 'Customer accepts', done: Boolean(latest && latest.status === 'ACCEPTED') || projectStates.includes(b.status), how: latest?.status === 'REVISION_REQUESTED' ? 'The customer asked for changes. Open the quotation and click Create revision, update it, then Approve & send again.' : latest?.status === 'REJECTED' ? 'The customer declined. Call them; if they want changes, Create revision and send again.' : 'Waiting for the customer to accept, request a revision or decline from their dashboard.', action: latest ? ['Open quotation', `/admin/quotations/${latest.id}`] : null },
+    { key: 'project', label: 'Start project', done: projectStates.includes(b.status), how: 'A project is created automatically on acceptance. Open Projects → Start project, then move it through the stages.', action: ['Open projects', '/admin/projects'] },
+  ];
+  if (b.status === 'CANCELLED') return null;
+  const next = steps.find((x) => !x.done);
+  return (
+    <section className="border-2 border-wine bg-paper" aria-labelledby="wf-title">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-wine px-5 py-3 text-paper">
+        <h2 id="wf-title" className="text-base">Workflow</h2>
+        <span className="text-sm font-semibold">{steps.filter((x) => x.done).length} of {steps.length} done</span>
+      </div>
+      <ol className="grid grid-cols-3 gap-px bg-stone-deep sm:grid-cols-9">
+        {steps.map((x, i) => (
+          <li key={x.key} className={`flex flex-col gap-1 bg-paper px-2.5 py-2 text-xs ${next?.key === x.key ? 'bg-blush font-semibold text-wine' : x.done ? 'text-charcoal' : 'text-graphite'}`}>
+            {x.done ? <CheckCircle2 className="size-4 text-success" aria-label="Done" /> : <Circle className={`size-4 ${next?.key === x.key ? 'text-wine' : 'text-stone-deep'}`} aria-label={next?.key === x.key ? 'Next' : 'To do'} />}
+            <span>{i + 1}. {x.label}</span>
+          </li>
+        ))}
+      </ol>
+      {next ? (
+        <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
+          <div className="max-w-2xl"><p className="font-semibold">Next: {next.label}</p><p className="mt-1 text-sm text-graphite">{next.how}</p></div>
+          {next.action && (typeof next.action[1] === 'string'
+            ? <Button size="sm" href={next.action[1]}>{next.action[0]}<ArrowRight className="size-4" /></Button>
+            : <Button size="sm" onClick={next.action[1]}>{next.action[0]}<ArrowRight className="size-4" /></Button>)}
+        </div>
+      ) : <p className="px-5 py-4 text-sm font-semibold text-success">All steps complete.</p>}
+    </section>
+  );
+}
+
 export function BookingDetail({ id }) {
   const router = useRouter();
   const user = useAuth((s) => s.user);
@@ -62,11 +107,14 @@ export function BookingDetail({ id }) {
   const { data, error, loading, reload } = useApi(`/admin/bookings/${id}`);
   const versions = useApi(can(user, 'quotations.view') ? `/quotations/booking/${id}` : null);
   const measurement = useApi(can(user, 'site_visit.view') ? `/measurements/booking/${id}` : null);
+  const visitsList = useApi(can(user, 'site_visit.view') ? `/site-visits?bookingId=${id}` : null);
   const [msg, setMsg] = useState(null);
   const [creating, setCreating] = useState(false);
   if (loading && !data) return <Loader />;
   if (error) return <Failed error={error} retry={reload} />;
-  const { booking: b, estimate, activity } = data;
+  const { booking: b, estimate, activity, budget } = data;
+  const jump = (anchor) => document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const refreshAll = () => { reload(); versions.reload(); measurement.reload(); visitsList.reload(); };
   const l = b.labels || {};
   const latest = versions.data?.items?.find((q) => q.isLatest);
   const m = measurement.data?.measurement;
@@ -95,15 +143,17 @@ export function BookingDetail({ id }) {
           : <Button size="sm" variant="ghost" onClick={() => setStatus('CANCELLED')}>Cancel booking</Button>)}
       </Header>
       {msg && <Notice tone={msg.tone} className="mb-4">{msg.text}</Notice>}
+      <div className="mb-6"><WorkflowGuide booking={b} visits={visitsList.data?.items || []} measurement={m} latest={latest} onJump={jump} /></div>
       <div className="grid gap-6 xl:grid-cols-3">
         <div className="space-y-6 xl:col-span-2">
+          {budget && <BudgetCard budget={budget} title={budget.source === 'AUTO_BOOKING' ? 'Indicative budget (auto, from booking answers)' : 'Indicative budget (customer estimate)'} showPackages />}
           <Box title="Customer & property">
             <KV rows={[
               ['Mobile', <a key="m" href={`tel:+91${b.mobile}`} className="underline">+91 {b.mobile}</a>],
               ['Address', [b.address?.formattedAddress, b.address?.pincode].filter(Boolean).join(', ')],
               ['Requirement', l.requirementType], ['Home type', l.propertyType], ['Configuration', l.bhk], ['Project type', l.projectType],
               ['Budget', l.budgetRange], ['Possession', l.possession], ['Services', b.services.join(', ')],
-              ['Package', b.package?.name || sel?.packageName], ['Estimate', sel?.available ? `${inr(sel.finalMin)} – ${inr(sel.finalMax)}` : null],
+              ['Package (indicative)', b.package?.name || sel?.packageName],
               ['Measurement assistance', b.floorPlan.measurementAssistance?.opted ? `Yes, ${inr(b.floorPlan.measurementAssistance.charge)}` : 'No'],
               b.cancelReason && ['Cancel reason', b.cancelReason],
             ]} />
@@ -112,14 +162,14 @@ export function BookingDetail({ id }) {
                 <p className="mb-2 text-xs font-medium text-graphite">Customer floor plans</p>
                 <ul className="flex flex-wrap gap-2">
                   {b.floorPlans.map((f) => (
-                    <li key={f.id}><a href={f.url || '#'} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-[3px] border border-stone px-3 py-2 text-sm hover:border-charcoal"><FileText className="size-4" />{f.originalName}</a></li>
+                    <li key={f.id}><a href={f.url || '#'} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-none border border-stone px-3 py-2 text-sm hover:border-wine"><FileText className="size-4" />{f.originalName}</a></li>
                   ))}
                 </ul>
               </div>
             )}
           </Box>
 
-          <SiteVisitPanel booking={b} onChange={reload} />
+          <div id="site-visits"><SiteVisitPanel booking={b} onChange={refreshAll} /></div>
 
           {can(user, 'site_visit.view') && (
             <Box title="Measurements" action={<Button size="sm" variant={m ? 'secondary' : 'primary'} href={`/admin/bookings/${id}/measurements`}>{m ? 'Open sheet' : 'Record measurements'}</Button>}>
@@ -129,7 +179,7 @@ export function BookingDetail({ id }) {
           )}
 
           {can(user, 'quotations.view') && (
-            <Box title="Quotations" action={!latest && can(user, 'quotations.create') && <Button size="sm" loading={creating} onClick={createQuotation} disabled={m?.status !== 'FINAL'}>Create quotation</Button>}>
+            <div id="quotations"><Box title="Quotations" action={!latest && can(user, 'quotations.create') && <Button size="sm" loading={creating} onClick={createQuotation} disabled={m?.status !== 'FINAL'}>Create quotation</Button>}>
               {versions.data?.items?.length ? (
                 <ul className="divide-y divide-stone text-sm">
                   {versions.data.items.map((q) => (
@@ -139,8 +189,8 @@ export function BookingDetail({ id }) {
                     </li>
                   ))}
                 </ul>
-              ) : <p className="text-sm text-graphite">{m?.status === 'FINAL' ? 'No quotation yet.' : 'Finalise measurements to create a quotation.'}</p>}
-            </Box>
+              ) : <p className="text-sm text-graphite">{m?.status === 'FINAL' ? 'No quotation yet. Click Create quotation, then use “Add from measurements” in the editor.' : 'Finalise measurements to create a quotation.'}</p>}
+            </Box></div>
           )}
 
           <Notes type="bookings" id={id} />
@@ -148,14 +198,14 @@ export function BookingDetail({ id }) {
         </div>
         <div className="space-y-6">
           {can(user, 'bookings.assign') && user.role !== 'CONTRACTOR' && (
-            <Box title="Contractor">
-              <AssignContractor endpoint={`/admin/bookings/${id}/assign-contractor`} contractors={ref.contractors} current={b.assignedContractor?.name} onDone={reload} />
+            <div id="contractor-box"><Box title="Contractor">
+              <AssignContractor endpoint={`/admin/bookings/${id}/assign-contractor`} contractors={ref.contractors} current={b.assignedContractor?.name} onDone={refreshAll} />
               {b.assignmentHistory?.length > 1 && (
                 <details className="mt-3 text-xs text-graphite"><summary className="cursor-pointer">Assignment history</summary>
                   <ul className="mt-2 space-y-1">{b.assignmentHistory.map((h, i) => <li key={i}>{h.contractor} — {fmtDateTime(h.assignedAt)} by {h.assignedBy}{h.unassignedAt ? `, until ${fmtDate(h.unassignedAt)}` : ''}</li>)}</ul>
                 </details>
               )}
-            </Box>
+            </Box></div>
           )}
           <Box title="Timeline">
             <ol className="space-y-3 text-sm">

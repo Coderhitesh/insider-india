@@ -3,7 +3,7 @@ const { Schema, model, Types } = require('mongoose');
 const mediaSchema = new Schema(
   {
     owner: { type: Types.ObjectId, ref: 'User', required: true, index: true },
-    provider: { type: String, enum: ['CLOUDINARY', 'S3'], required: true },
+    provider: { type: String, enum: ['CLOUDINARY', 'S3', 'LOCAL'], required: true },
     key: { type: String, required: true },
     url: String, // only for public media; private URLs are signed on demand
     isPrivate: { type: Boolean, default: true },

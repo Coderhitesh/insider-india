@@ -1,5 +1,13 @@
 const rateLimit = require('express-rate-limit');
 const ApiError = require('../utils/ApiError');
+const env = require('../config/env');
+const { safeEqualHex, hmac } = require('../utils/crypto');
+
+// Server-side rendering requests from the website all come from one IP; they carry INTERNAL_API_KEY instead.
+const isInternal = (req) => {
+  const key = req.get('x-internal-key');
+  return Boolean(env.internalApiKey && key && safeEqualHex(hmac(key), hmac(env.internalApiKey)));
+};
 
 const make = (windowMs, limit, message, keyGenerator) => rateLimit({
   windowMs,
@@ -7,6 +15,7 @@ const make = (windowMs, limit, message, keyGenerator) => rateLimit({
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   keyGenerator,
+  skip: isInternal,
   handler: (req, res, next) => next(ApiError.tooMany(message)),
 });
 

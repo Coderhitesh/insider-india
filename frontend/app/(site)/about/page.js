@@ -15,7 +15,7 @@ export default function AboutPage() {
       <PageHeader title="About INSIDER INDIA LLP" lede="We design and build homes the way we would want ours done: measured properly, priced openly, tracked from start to finish." crumbs={[{ name: 'About', path: '/about' }]} />
       <Section>
         <div className="grid gap-12 lg:grid-cols-12">
-          <div className="relative min-h-96 overflow-hidden rounded-[3px] lg:col-span-5">
+          <div className="relative min-h-96 overflow-hidden rounded-none lg:col-span-5">
             {IMAGES.about ? <Image src={IMAGES.about} alt="The INSIDER INDIA LLP team at work" fill sizes="(min-width:1024px) 40vw, 100vw" className="object-cover" /> : (
               <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 gap-2">
                 <Swatch tone="oak" className="col-span-2 row-span-3" /><Swatch tone="wine" /><Swatch tone="sand" /><Swatch tone="brass" />
