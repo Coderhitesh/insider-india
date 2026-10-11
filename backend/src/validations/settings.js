@@ -1,12 +1,13 @@
 const { z } = require('./common');
 
 const s = (max = 300) => z.string().trim().max(max).default('');
-const url = z.string().trim().max(1000).refine((v) => v === '' || /^https:\/\//.test(v), 'Must be an https URL').default('');
+const { toStoredPath } = require('../utils/fileUrl');
+const url = z.string().trim().max(1000).transform(toStoredPath).refine((v) => v === '' || /^https:\/\//.test(v) || v.startsWith('/'), 'Must be an https URL or site path').default('');
 const option = z.object({
   value: z.string().trim().min(1).max(60),
   label: z.string().trim().min(1).max(120),
   description: z.string().trim().max(300).optional(),
-  image: z.string().trim().max(1000).optional(),
+  image: z.string().trim().max(1000).transform(toStoredPath).optional(),
   min: z.number().min(0).optional(),
   max: z.number().min(0).optional(),
   active: z.boolean().default(true),

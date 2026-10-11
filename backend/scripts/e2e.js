@@ -160,9 +160,11 @@ function upload(token, purpose, buf, name, type) {
   const urlRes = await call('GET', `/uploads/${up.data.media.id}/url`, { token: tokA });
   check('signed file URL issued', urlRes.status === 200 && urlRes.data.url, urlRes.body);
   if (urlRes.data?.url) {
-    const f = await fetch(urlRes.data.url);
+    const abs = (u) => (u.startsWith('/') ? `${API}${u}` : u);
+    check('file URL stored/returned as a path', urlRes.data.url.startsWith('/api/v1/files/'));
+    const f = await fetch(abs(urlRes.data.url));
     check('signed file downloads', f.status === 200 && (await f.text()).startsWith('%PDF'));
-    check('tampered signature refused', (await fetch(urlRes.data.url.replace(/sig=./, 'sig=0'))).status === 403);
+    check('tampered signature refused', (await fetch(abs(urlRes.data.url).replace(/sig=[0-9a-f]+/, 'sig=deadbeef'))).status === 403);
   }
 
   section('Session: refresh rotation & reuse detection');
@@ -294,7 +296,7 @@ function upload(token, purpose, buf, name, type) {
   check('customer sees quotation (no cost split / internal notes)', cq.status === 200 && cq.data.quotation.sections[0].items[0].materialPrice === undefined && cq.data.quotation.priceChanges === undefined, cq.body?.data?.quotation?.sections?.[0]?.items?.[0]);
   const pdf = await call('GET', `/quotations/${qId}/pdf`, { token: tokA });
   if (check('PDF link issued', pdf.status === 200, pdf.body)) {
-    const f = await fetch(pdf.data.url); const b = Buffer.from(await f.arrayBuffer());
+    const f = await fetch(pdf.data.url.startsWith('/') ? `${API}${pdf.data.url}` : pdf.data.url); const b = Buffer.from(await f.arrayBuffer());
     check('PDF downloads (valid PDF, > 5 KB)', f.status === 200 && b.slice(0, 4).toString() === '%PDF' && b.length > 5000, b.length);
   }
   check('other customer cannot see it', (await call('GET', `/quotations/${qId}`, { token: tokB })).status === 404);

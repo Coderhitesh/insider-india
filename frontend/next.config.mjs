@@ -39,6 +39,11 @@ const nextConfig = {
       ...(apiUrl ? [{ protocol: apiUrl.protocol.replace(':', ''), hostname: apiUrl.hostname, port: apiUrl.port, pathname: '/api/v1/files/**' }] : []),
     ],
   },
+  // Uploaded files are stored as paths ("/api/v1/files/…"); serve them through this site from the API.
+  async rewrites() {
+    const target = (process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+    return [{ source: '/api/v1/files/:path*', destination: `${target}/api/v1/files/:path*` }];
+  },
   async headers() {
     return [{
       source: '/:path*',

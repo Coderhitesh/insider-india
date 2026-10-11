@@ -39,6 +39,10 @@ app.get('/health', (req, res) => {
   res.status(db ? 200 : 503).json({ success: db, status: db ? 'ok' : 'degraded', uptime: Math.round(process.uptime()) });
 });
 
+// Older records may still hold absolute local file URLs (http://host:port/api/v1/files/…); responses carry paths only.
+const { toStoredPath } = require('./utils/fileUrl');
+app.set('json replacer', (key, value) => (typeof value === 'string' ? toStoredPath(value) : value));
+
 app.use('/api', apiLimiter);
 app.use('/api/v1', routes);
 

@@ -1,4 +1,6 @@
 const path = require('path');
+const fs = require('fs/promises');
+const { localPublicFile } = require('../utils/fileUrl');
 const PDFDocument = require('pdfkit');
 const { formatINR, amountInWords, formatDateIST } = require('../utils/money');
 const logger = require('../utils/logger');
@@ -14,6 +16,14 @@ const C = { ink: '#1A0B0D', muted: '#6E5A5D', wine: '#C8102E', brass: '#C8102E',
 const UNIT = { FT: 'ft', INCH: 'in', SQFT: 'sq ft', RFT: 'rft', MM: 'mm', CM: 'cm', M: 'm', SQM: 'sq m', PCS: 'pc' };
 
 async function fetchLogo(url) {
+  // Logo uploaded to local storage: read it from disk (stored as "/api/v1/files/public/…").
+  const local = localPublicFile(url);
+  if (local) {
+    try {
+      const buf = await fs.readFile(local);
+      return /\.(png|jpe?g)$/i.test(local) && buf.length < 2 * 1024 * 1024 ? buf : null;
+    } catch { return null; }
+  }
   if (!url || !/^https:\/\//.test(url)) return null;
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(5000) });

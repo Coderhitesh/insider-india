@@ -154,3 +154,10 @@ See [WORKFLOW.md](WORKFLOW.md) — booking → contractor → site visit → mea
 - Real credentials belong in `backend/.env` / `frontend/.env.local` (gitignored), never in `.env.example`.
 - `SEED_SUPER_ADMIN_PASSWORD` must be at least 10 characters; otherwise the seed skips creating the admin.
 - If an Atlas URI only has the host, data goes to the `insider_india` database (override with `MONGODB_DB`).
+
+## Uploaded file URLs
+
+Local uploads are stored in the database as a path only — `/api/v1/files/public/…` — never with a host or port.
+The website serves these paths through a Next.js rewrite to the API (`API_URL` / `NEXT_PUBLIC_API_URL`), so a domain
+or port change never breaks images. Older records holding `http://host:port/api/v1/files/…` are converted to paths
+automatically when the API starts (or run `npm run fix:file-urls` in `backend/`), and API responses always return paths.

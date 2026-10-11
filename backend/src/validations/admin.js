@@ -4,7 +4,9 @@ const { PROJECT_CATEGORIES } = require('../models/Project');
 
 const str = (max = 200) => z.string().trim().max(max);
 const optStr = (max = 200) => str(max).optional();
-const url = z.string().trim().max(1000).refine((v) => v === '' || /^https:\/\//.test(v) || v.startsWith('/'), 'Must be an https URL or site path');
+const { toStoredPath } = require('../utils/fileUrl');
+// Uploaded files are saved as a path only ("/api/v1/files/…"); a pasted local API URL is reduced to its path.
+const url = z.string().trim().max(1000).transform(toStoredPath).refine((v) => v === '' || /^https:\/\//.test(v) || v.startsWith('/'), 'Must be an https URL or site path');
 const money = z.coerce.number().min(0).max(1e9);
 const permissionKey = z.enum(PERMISSIONS.map((p) => p.key));
 const password = z.string().min(10, 'Password must be at least 10 characters').max(200)

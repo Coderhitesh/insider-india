@@ -3,6 +3,7 @@ const path = require('path');
 const crypto = require('crypto');
 const env = require('../../config/env');
 const { hmac } = require('../../utils/crypto');
+const { toStoredPath } = require('../../utils/fileUrl');
 
 // Development storage on local disk. Files are served by GET /api/v1/files/*:
 // public/ keys directly, private/ keys only with a valid, expiring signature.
@@ -20,7 +21,8 @@ class LocalStorageProvider {
     const file = path.join(this.root, key);
     await fs.mkdir(path.dirname(file), { recursive: true });
     await fs.writeFile(file, buffer);
-    return { key, url: isPrivate ? null : `${env.apiPublicUrl}/api/v1/files/${key}`, size: buffer.length, meta: {} };
+    // Only the path is stored — no host — so images keep working on any domain/port.
+    return { key, url: isPrivate ? null : `/api/v1/files/${key}`, size: buffer.length, meta: {} };
   }
 
   async delete(media) {
@@ -28,9 +30,9 @@ class LocalStorageProvider {
   }
 
   async getUrl(media, { expiresInSeconds = 900 } = {}) {
-    if (!media.isPrivate) return media.url || `${env.apiPublicUrl}/api/v1/files/${media.key}`;
+    if (!media.isPrivate) return toStoredPath(media.url) || `/api/v1/files/${media.key}`;
     const exp = Math.floor(Date.now() / 1000) + expiresInSeconds;
-    return `${env.apiPublicUrl}/api/v1/files/${media.key}?exp=${exp}&sig=${LocalStorageProvider.sign(media.key, exp)}`;
+    return `/api/v1/files/${media.key}?exp=${exp}&sig=${LocalStorageProvider.sign(media.key, exp)}`;
   }
 }
 
