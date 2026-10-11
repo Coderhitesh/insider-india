@@ -17,10 +17,10 @@ export function Badge({ map, value, override }) {
 
 export function Panel({ title, action, children, className }) {
   return (
-    <section className={clsx('border border-stone-deep bg-paper p-5 sm:p-6', className)}>
+    <section className={clsx('soft-card p-5 sm:p-6', className)}>
       {(title || action) && (
         <div className="mb-4 flex items-baseline justify-between gap-4">
-          {title && <h2 className="flex items-center gap-2 font-sans text-base font-bold tracking-normal [font-stretch:100%]"><span aria-hidden="true" className="size-2 bg-wine" />{title}</h2>}
+          {title && <h2 className="ui-title flex items-center gap-2 text-base"><span aria-hidden="true" className="h-4 w-1 rounded-full bg-wine" />{title}</h2>}
           {action}
         </div>
       )}
@@ -33,7 +33,10 @@ export function Panel({ title, action, children, className }) {
 export function PageTitle({ title, code = false, children }) {
   return (
     <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-      <h1 className={code ? 'tabular font-sans text-2xl font-semibold tracking-normal sm:text-3xl' : 'text-d3'}>{title}</h1>
+      <div>
+        <p className="eyebrow">My account</p>
+        <h1 className={code ? 'ui-title mt-2 text-2xl font-semibold tabular-nums sm:text-3xl' : 'mt-2 text-[clamp(1.9rem,3.2vw,2.6rem)] leading-tight'}>{title}</h1>
+      </div>
       {children}
     </div>
   );
@@ -41,8 +44,8 @@ export function PageTitle({ title, code = false, children }) {
 
 export function Empty({ title, body, href, cta }) {
   return (
-    <div className="rounded-none border border-dashed border-stone-deep p-8">
-      <p className="text-lg font-medium">{title}</p>
+    <div className="rounded-2xl border border-dashed border-stone-deep bg-paper p-8">
+      <p className="font-display text-2xl">{title}</p>
       {body && <p className="mt-1 max-w-md text-graphite">{body}</p>}
       {href && <Button href={href} className="mt-5">{cta}</Button>}
     </div>
@@ -52,7 +55,7 @@ export function Empty({ title, body, href, cta }) {
 export function Loading({ rows = 3 }) {
   return (
     <div className="space-y-3" role="status" aria-label="Loading">
-      {Array.from({ length: rows }).map((_, i) => <div key={i} className="h-20 animate-pulse rounded-none bg-stone/50" />)}
+      {Array.from({ length: rows }).map((_, i) => <div key={i} className="h-20 animate-pulse rounded-xl bg-stone/50" />)}
     </div>
   );
 }

@@ -10,14 +10,6 @@ const FUNNEL_OPTIONS = {
     opt('KITCHEN_WARDROBE_STORAGE', 'Kitchen, Wardrobe & Storage', { description: 'Modular kitchens, wardrobes and storage solutions.' }),
     opt('CIVIL_FULL_HOME', 'Civil Work + Full Home Interior', { description: 'Structural and civil changes along with complete interiors.' }),
   ]),
-  budgetRanges: ordered([
-    opt('5_10L', '₹5L – ₹10L', { min: 500000, max: 1000000 }),
-    opt('10_15L', '₹10L – ₹15L', { min: 1000000, max: 1500000 }),
-    opt('15_25L', '₹15L – ₹25L', { min: 1500000, max: 2500000 }),
-    opt('25_40L', '₹25L – ₹40L', { min: 2500000, max: 4000000 }),
-    opt('40L_PLUS', '₹40L+', { min: 4000000 }),
-    opt('NOT_SURE', 'Not Sure Yet'),
-  ]),
   possessionOptions: ordered([
     opt('HAVE_POSSESSION', 'Yes, I already have possession'),
     opt('WITHIN_1M', 'Within 1 month'),

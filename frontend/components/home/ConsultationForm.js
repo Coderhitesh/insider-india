@@ -12,7 +12,7 @@ import { useAuth } from '@/store/auth';
 import { readAttribution } from '@/components/providers/Providers';
 
 // Starts the booking funnel with name + mobile; the funnel continues from the next question.
-export default function ConsultationForm({ inverse = false, id = 'cta' }) {
+export default function ConsultationForm({ inverse = false, id = 'cta', variant = 'default' }) {
   const router = useRouter();
   const user = useAuth((s) => s.user);
   const setLead = useBookingStore((s) => s.setLead);
@@ -40,6 +40,33 @@ export default function ConsultationForm({ inverse = false, id = 'cta' }) {
       setLoading(false);
     }
   };
+
+  if (variant === 'card') {
+    const inp = 'h-11 rounded-md text-sm';
+    return (
+      <form onSubmit={submit} noValidate className="grid gap-3 sm:grid-cols-2">
+        <Field id={`${id}-name`} error={errors.name} className={user ? 'sm:col-span-2' : ''}>
+          <label htmlFor={`${id}-name`} className="sr-only">Full name</label>
+          <Input id={`${id}-name`} placeholder="Full name" autoComplete="name" className={inp} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} error={errors.name} />
+        </Field>
+        {!user && (
+          <Field id={`${id}-mobile`} error={errors.mobile}>
+            <label htmlFor={`${id}-mobile`} className="sr-only">Mobile number</label>
+            <Input id={`${id}-mobile`} type="tel" inputMode="numeric" placeholder="Mobile number" autoComplete="tel-national" maxLength={14} className={inp} value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} error={errors.mobile} />
+          </Field>
+        )}
+        <Field id={`${id}-city`} className="sm:col-span-2">
+          <label htmlFor={`${id}-city`} className="sr-only">City</label>
+          <Input id={`${id}-city`} placeholder="City" autoComplete="address-level2" className={inp} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+        </Field>
+        <div className="sm:col-span-2">
+          {error && <Notice tone="error" className="mb-3">{error}</Notice>}
+          <Button type="submit" loading={loading} className="h-11 w-full">Get a free consultation <span aria-hidden="true">→</span></Button>
+          <p className="mt-2 text-center text-[0.7rem] text-graphite">We verify your number with a one-time code in the next step.</p>
+        </div>
+      </form>
+    );
+  }
 
   const labelCls = inverse ? '[&_label]:text-paper [&_p]:text-paper/85' : '';
   return (

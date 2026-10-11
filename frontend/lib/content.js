@@ -1,14 +1,27 @@
 // Editorial content and image slots. No statistics, testimonials or claims live here —
 // those come from the Admin panel. Add real photography by placing files in /public/images
 // and setting the paths below (or use Cloudinary/S3 URLs).
+const img = (path) => `${path}?v=${process.env.NEXT_PUBLIC_IMG_V || '1'}`;
+
+// Default photography (public/images/home). Replace a file with an HD photo of the same name to upgrade it.
 export const IMAGES = {
-  hero: null, // e.g. '/images/hero-living.jpg'
-  interiors: null,
-  kitchen: null,
-  wardrobes: null,
-  renovation: null,
-  commercial: null,
-  about: null,
+  hero: img('/images/home/hero-living.jpg'),
+  interiors: img('/images/home/proj-1.jpg'),
+  kitchen: img('/images/home/proj-2.jpg'),
+  wardrobes: img('/images/home/proj-4.jpg'),
+  renovation: img('/images/home/sol-renovation.jpg'),
+  commercial: img('/images/home/proj-5.jpg'),
+  about: img('/images/home/hero-living.jpg'),
+  band: img('/images/home/band-dining.jpg'),
+  review: img('/images/home/review.jpg'),
+};
+// Second photo per service page (the "what is included" panel).
+export const IMAGES_ALT = {
+  interiors: img('/images/home/sol-interiors.jpg'),
+  kitchen: img('/images/home/sol-kitchen.jpg'),
+  wardrobes: img('/images/home/sol-wardrobes.jpg'),
+  renovation: img('/images/home/proj-3.jpg'),
+  commercial: img('/images/home/sol-commercial.jpg'),
 };
 
 export const NAV = [
@@ -22,11 +35,19 @@ export const NAV = [
   { href: '/how-it-works', label: 'How it works' },
 ];
 
-// Shorter list for the desktop header; the full list lives in the mobile menu and footer.
-export const HEADER_NAV = NAV.filter((n) => !['/commercial-interiors', '/how-it-works'].includes(n.href));
+// Desktop header (home redesign). The full list lives in the mobile menu and footer.
+export const HEADER_NAV = [
+  { href: '/', label: 'Home' },
+  { href: '/services', label: 'Solutions' },
+  { href: '/projects', label: 'Projects' },
+  { href: '/how-it-works', label: 'How It Works' },
+  { href: '/packages', label: 'Packages' },
+  { href: '/about', label: 'About' },
+  { href: '/contact', label: 'Contact' },
+];
 
 export const PROCESS = [
-  { title: 'Tell us your requirements', body: 'Share your home, the rooms you want done and a rough budget. It takes a few minutes.' },
+  { title: 'Tell us your requirements', body: 'Share your home and the rooms you want done. It takes a few minutes.' },
   { title: 'Get an indicative estimate', body: 'See a package-based budget range straight away — useful for planning, not a final price.' },
   { title: 'Book a site visit', body: 'An expert is assigned to your home and schedules a visit at a time that suits you.' },
   { title: 'Measurements & design consultation', body: 'We measure every room, study the site condition and talk through layouts, materials and finishes.' },

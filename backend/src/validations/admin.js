@@ -40,7 +40,6 @@ const updateLead = z.object({
   name: str(120).min(2).optional(),
   city: optStr(80),
   requirementType: optStr(60),
-  budgetRange: optStr(60),
   possession: optStr(60),
   projectType: optStr(60),
   reason: optStr(500),

@@ -5,7 +5,6 @@ function isStepComplete(lead, step) {
   switch (step) {
     case 'BASIC_INFO': return Boolean(lead.name && lead.mobile);
     case 'REQUIREMENT': return Boolean(lead.requirementType);
-    case 'BUDGET': return Boolean(lead.budgetRange);
     case 'POSSESSION': return Boolean(lead.possession);
     case 'OTP': return Boolean(lead.user && lead.verifiedAt);
     case 'LOCATION': return Boolean(addr.formattedAddress && addr.pincode);

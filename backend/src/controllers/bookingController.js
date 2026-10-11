@@ -33,7 +33,6 @@ exports.create = asyncHandler(async (req, res) => {
   const addr = lead.property.address.toObject ? lead.property.address.toObject() : lead.property.address;
   const labels = {
     requirementType: options.labelOf(opts, 'requirementTypes', lead.requirementType),
-    budgetRange: options.labelOf(opts, 'budgetRanges', lead.budgetRange),
     possession: options.labelOf(opts, 'possessionOptions', lead.possession),
     propertyType: options.labelOf(opts, 'propertyTypes', lead.property.propertyType),
     bhk: options.labelOf(opts, 'bhkOptions', lead.property.bhk),
@@ -69,7 +68,6 @@ exports.create = asyncHandler(async (req, res) => {
         mobile: lead.mobile,
         address: addr,
         requirementType: lead.requirementType,
-        budgetRange: lead.budgetRange,
         possession: lead.possession,
         propertyType: lead.property.propertyType,
         bhk: lead.property.bhk,

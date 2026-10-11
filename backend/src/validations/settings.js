@@ -34,7 +34,7 @@ const SETTINGS_SCHEMAS = {
     })).max(12),
   }),
   'funnel.options': z.object({
-    cities: optionList, requirementTypes: optionList, budgetRanges: optionList, possessionOptions: optionList,
+    cities: optionList, requirementTypes: optionList, possessionOptions: optionList,
     propertyTypes: optionList, bhkOptions: optionList, projectTypes: optionList,
   }),
   'estimate.config': z.object({

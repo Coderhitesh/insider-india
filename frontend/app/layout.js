@@ -8,6 +8,9 @@ import { SITE_URL } from '@/lib/config';
 
 // Archivo variable (weight 100–900, width 62–125%) — one family; headings use its expanded width.
 const archivo = localFont({ src: '../public/fonts/Archivo.woff2', variable: '--font-archivo', weight: '100 900', style: 'normal', display: 'swap', declarations: [{ prop: 'font-stretch', value: '62% 125%' }] });
+// Public site: DM Serif Display for headings, Outfit for text (admin keeps Archivo).
+const serif = localFont({ src: '../public/fonts/DMSerifDisplay.woff2', variable: '--font-serif', weight: '400', style: 'normal', display: 'swap' });
+const outfit = localFont({ src: '../public/fonts/Outfit.woff2', variable: '--font-outfit', weight: '100 900', style: 'normal', display: 'swap' });
 
 export async function generateMetadata() {
   const { company } = await getSite();
@@ -26,7 +29,7 @@ export const viewport = { themeColor: '#c8102e', width: 'device-width', initialS
 export default async function RootLayout({ children }) {
   const { company } = await getSite();
   return (
-    <html lang="en-IN" className={archivo.variable}>
+    <html lang="en-IN" className={`${archivo.variable} ${serif.variable} ${outfit.variable}`}>
       <body className="flex min-h-dvh flex-col">
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:bg-paper focus:px-4 focus:py-2">Skip to content</a>
         <Providers>{children}</Providers>

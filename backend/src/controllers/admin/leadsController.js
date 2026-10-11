@@ -31,7 +31,6 @@ async function buildFilter(q, user) {
     and.push({ $or: [{ city: rx }, { 'property.address.city': rx }] });
   }
   if (q.bhk) and.push({ 'property.bhk': q.bhk });
-  if (q.budget) and.push({ budgetRange: q.budget });
   if (q.service) and.push({ services: q.service });
   if (q.package) {
     const ids = await Estimate.distinct('_id', { selectedPackage: q.package });
@@ -65,7 +64,6 @@ function listItem(l, opts) {
     status: l.status,
     city: l.property?.address?.city || l.city || null,
     bhk: options.labelOf(opts, 'bhkOptions', l.property?.bhk),
-    budget: options.labelOf(opts, 'budgetRanges', l.budgetRange),
     requirement: options.labelOf(opts, 'requirementTypes', l.requirementType),
     services: (l.services || []).map((s) => s.title).filter(Boolean),
     verified: Boolean(l.verifiedAt),
@@ -135,7 +133,6 @@ exports.get = asyncHandler(async (req, res) => {
       ...leadView(lead),
       labels: {
         requirementType: options.labelOf(opts, 'requirementTypes', l.requirementType),
-        budgetRange: options.labelOf(opts, 'budgetRanges', l.budgetRange),
         possession: options.labelOf(opts, 'possessionOptions', l.possession),
         propertyType: options.labelOf(opts, 'propertyTypes', l.property?.propertyType),
         bhk: options.labelOf(opts, 'bhkOptions', l.property?.bhk),
@@ -154,7 +151,7 @@ exports.get = asyncHandler(async (req, res) => {
   });
 });
 
-const OPTION_FIELDS = { requirementType: 'requirementTypes', budgetRange: 'budgetRanges', possession: 'possessionOptions', projectType: 'projectTypes' };
+const OPTION_FIELDS = { requirementType: 'requirementTypes', possession: 'possessionOptions', projectType: 'projectTypes' };
 
 exports.update = asyncHandler(async (req, res) => {
   const lead = await Lead.findById(req.params.id);

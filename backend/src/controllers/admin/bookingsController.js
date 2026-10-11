@@ -35,7 +35,6 @@ function buildFilter(q, user) {
   }
   if (q.city) and.push({ 'snapshot.address.city': new RegExp(`^${escapeRegex(q.city)}$`, 'i') });
   if (q.bhk) and.push({ 'snapshot.bhk': q.bhk });
-  if (q.budget) and.push({ 'snapshot.budgetRange': q.budget });
   if (q.service) and.push({ 'snapshot.services.service': q.service });
   if (q.package) and.push({ package: q.package });
   if (q.contractor && !isContractor(user)) and.push({ assignedContractor: q.contractor === 'unassigned' ? null : q.contractor });
@@ -60,7 +59,7 @@ exports.list = asyncHandler(async (req, res) => {
       { label: 'Booking ID', value: 'bookingNumber' }, { label: 'Status', value: 'status' }, { label: 'Customer', value: 'customerName' },
       { label: 'Mobile', value: 'mobile' }, { label: 'City', value: (r) => r.address?.city }, { label: 'Pincode', value: (r) => r.address?.pincode },
       { label: 'Requirement', value: (r) => r.labels.requirementType }, { label: 'BHK', value: (r) => r.labels.bhk },
-      { label: 'Property', value: (r) => r.labels.propertyType }, { label: 'Budget', value: (r) => r.labels.budgetRange },
+      { label: 'Property', value: (r) => r.labels.propertyType },
       { label: 'Services', value: 'services' }, { label: 'Floor Plan', value: (r) => (r.floorPlan.hasFloorPlan ? 'Uploaded' : r.floorPlan.measurementAssistance?.opted ? 'Assistance opted' : 'None') },
       { label: 'Contractor', value: (r) => r.assignedContractor?.name }, { label: 'Created', value: 'createdAt' },
     ]);

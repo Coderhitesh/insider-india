@@ -19,7 +19,6 @@ const option = (field, msg) => z.object({ [field]: z.string().trim().min(1, msg)
 const stepSchemas = {
   BASIC_INFO: z.object({ name: z.string().trim().min(2, 'Enter your full name').max(120), mobile: mobile.optional(), city: str(80).optional() }),
   REQUIREMENT: option('requirementType', 'Select what you are looking for'),
-  BUDGET: option('budgetRange', 'Select your budget'),
   POSSESSION: option('possession', 'Select possession timeline'),
   LOCATION: z.object({
     formattedAddress: z.string().trim().min(5, 'Enter your property address').max(500),

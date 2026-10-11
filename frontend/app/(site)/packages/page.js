@@ -5,6 +5,9 @@ import { Section } from '@/components/ui/Section';
 import { getPackages } from '@/lib/server-api';
 import { pageMetadata } from '@/lib/seo';
 import { formatShort } from '@/lib/format';
+import CalcBanner from '@/components/landing/CalcBanner';
+import { Arrow } from '@/components/landing/media';
+import { IMAGES } from '@/lib/content';
 
 export const revalidate = 300;
 export const metadata = pageMetadata({ title: 'Interior packages & pricing', description: 'Compare Economical, Premium Elegance, Luxer Silver and Luxer Gold packages with indicative ranges by home size.', path: '/packages' });
@@ -18,22 +21,23 @@ export default async function PackagesPage() {
 
   return (
     <>
-      <PageHeader title="Packages" lede="Each package sets the level of design, materials, hardware and warranty. Your quotation confirms exactly what goes into your home." crumbs={[{ name: 'Packages', path: '/packages' }]} />
+      <PageHeader eyebrow="Our packages" title="Four packages, one honest process" lede="Each package sets the level of design, materials, hardware and warranty. Your quotation confirms exactly what goes into your home." crumbs={[{ name: 'Packages', path: '/packages' }]} image={IMAGES.wardrobes} imageAlt="Walk-in wardrobe" />
       <Section labelledBy="boards-title">
         <h2 id="boards-title" className="sr-only">Package overview</h2>
         <PackageBoards packages={packages} full />
       </Section>
 
       {packages.length > 0 && (
-        <Section tone="paper" labelledBy="compare-title">
-          <h2 id="compare-title" className="text-d2">Compare side by side</h2>
-          <div className="mt-10 overflow-x-auto">
+        <Section tone="soft" labelledBy="compare-title">
+          <p className="eyebrow">Compare</p>
+          <h2 id="compare-title" className="mt-2 text-[clamp(1.9rem,3.2vw,2.6rem)] leading-[1.08]">Compare side by side</h2>
+          <div className="soft-card mt-8 overflow-x-auto p-2 sm:p-4">
             <table className="w-full min-w-[44rem] border-collapse text-left text-sm">
               <caption className="sr-only">Package comparison: indicative ranges and inclusions</caption>
               <thead>
-                <tr className="border-b border-charcoal">
+                <tr className="border-b-2 border-wine">
                   <th scope="col" className="w-1/5 py-4 pr-4 font-medium text-graphite">&nbsp;</th>
-                  {packages.map((p) => <th key={p.id} scope="col" className="py-4 pr-4 font-display text-xl font-medium">{p.name}</th>)}
+                  {packages.map((p) => <th key={p.id} scope="col" className="py-4 pr-4 font-display text-xl font-normal">{p.name}</th>)}
                 </tr>
               </thead>
               <tbody className="tabular">
@@ -53,18 +57,19 @@ export default async function PackagesPage() {
                 {allFeatures.map((f) => (
                   <tr key={f} className="border-b border-stone">
                     <th scope="row" className="py-3 pr-4 font-normal text-graphite">{f}</th>
-                    {packages.map((p) => <td key={p.id} className="py-3 pr-4">{p.features.includes(f) ? <span aria-label="Included">●</span> : <span className="text-stone-deep" aria-label="Not listed">—</span>}</td>)}
+                    {packages.map((p) => <td key={p.id} className="py-3 pr-4">{p.features.includes(f) ? <span aria-label="Included" className="inline-flex size-5 items-center justify-center rounded-full bg-wine text-[0.65rem] text-paper">✓</span> : <span className="text-stone-deep" aria-label="Not listed">—</span>}</td>)}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
           <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-            <Button href="/estimate" size="lg">Get a range for my home</Button>
-            <Button href="/book-consultation" size="lg" variant="secondary">Book a consultation</Button>
+            <Button href="/estimate" size="lg" className="h-13 px-7">Get a range for my home <Arrow /></Button>
+            <Button href="/book-consultation" size="lg" variant="secondary" className="h-13 border-[1.5px] bg-paper px-7">Book a Consultation <Arrow /></Button>
           </div>
         </Section>
       )}
+      <div className="py-8"><CalcBanner /></div>
     </>
   );
 }

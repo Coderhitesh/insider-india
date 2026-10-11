@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+import { IMAGES } from '@/lib/content';
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ChoiceCard from '@/components/ui/ChoiceCard';
@@ -7,7 +9,6 @@ import Counter from '@/components/ui/Counter';
 import Notice from '@/components/ui/Notice';
 import Spinner from '@/components/ui/Spinner';
 import Button from '@/components/ui/Button';
-import Swatch from '@/components/ui/Swatch';
 import { Field, Input } from '@/components/ui/Field';
 import { FunnelShell, StepFooter } from '@/features/funnel/FunnelShell';
 import OtpVerify from '@/features/auth/OtpVerify';
@@ -119,7 +120,7 @@ export default function EstimateFunnel() {
           <div className="grid grid-cols-2 gap-3">
             {config.propertyCategories.map((c) => (
               <ChoiceCard key={c.value} name="category" value={c.value} checked={inputs.propertyCategory === c.value} title={c.label}
-                media={<Swatch tone={c.value === 'RESIDENTIAL' ? 'oak' : 'stone'} className="flex h-24 items-center justify-center rounded-none text-paper"><Icon name={c.value === 'RESIDENTIAL' ? 'Home' : 'Store'} className="size-9" /></Swatch>}
+                media={<span className="relative block h-28 sm:h-36"><Image src={c.value === 'RESIDENTIAL' ? IMAGES.interiors : IMAGES.commercial} alt="" fill sizes="(min-width:640px) 340px, 45vw" className="object-cover" /><span className="absolute bottom-2 left-2 flex size-9 items-center justify-center rounded-full bg-white text-wine shadow"><Icon name={c.value === 'RESIDENTIAL' ? 'Home' : 'Store'} className="size-4" /></span></span>}
                 onChange={() => setSize({ propertyCategory: c.value, bhk: c.value === 'RESIDENTIAL' ? inputs.bhk : null })} />
             ))}
           </div>

@@ -104,7 +104,7 @@ function upload(token, purpose, buf, name, type) {
   const leadId = lc.data.lead.id; const lt = lc.data.leadToken;
   check('lead unreadable without token', (await call('GET', `/leads/${leadId}`)).status === 403);
   check('invalid option rejected', (await call('PATCH', `/leads/${leadId}`, { leadToken: lt, body: { step: 'REQUIREMENT', data: { requirementType: 'NOPE' } } })).status === 422);
-  for (const [step, data] of [['REQUIREMENT', { requirementType: 'FULL_HOME' }], ['BUDGET', { budgetRange: '15_25L' }], ['POSSESSION', { possession: 'HAVE_POSSESSION' }]]) {
+  for (const [step, data] of [['REQUIREMENT', { requirementType: 'FULL_HOME' }], ['POSSESSION', { possession: 'HAVE_POSSESSION' }]]) {
     const r = await call('PATCH', `/leads/${leadId}`, { leadToken: lt, body: { step, data } });
     check(`step ${step} saved`, r.status === 200, r.body);
   }
@@ -151,7 +151,7 @@ function upload(token, purpose, buf, name, type) {
   check('direct booking gets an indicative budget (auto from BHK + services)', bud && bud.source === 'AUTO_BOOKING' && bud.available && bud.min > 0 && bud.max >= bud.min && bud.packages.length >= 4, bud);
   check('budget carries the "not final" note', /not the final/i.test(bud?.note || ''), bud?.note);
   check('duplicate submit is idempotent', (await call('POST', '/bookings', { token: tokA, body: { leadId } })).data?.booking?.id === bookingId);
-  check('closed lead cannot be edited', (await call('PATCH', `/leads/${leadId}`, { token: tokA, body: { step: 'BUDGET', data: { budgetRange: '5_10L' } } })).status === 409);
+  check('closed lead cannot be edited', (await call('PATCH', `/leads/${leadId}`, { token: tokA, body: { step: 'POSSESSION', data: { possession: 'WITHIN_3M' } } })).status === 409);
   const cbd = await call('GET', `/bookings/${bookingId}`, { token: tokA });
   check('customer booking view includes budget', cbd.data?.budget?.packageName === bud?.packageName, cbd.data?.budget);
   const sum = await call('GET', '/account/summary', { token: tokA });

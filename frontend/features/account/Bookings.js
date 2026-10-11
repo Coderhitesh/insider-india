@@ -89,7 +89,6 @@ export function BookingDetail({ id }) {
               <Row label="Configuration">{l.bhk}</Row>
               <Row label="Project type">{l.projectType}</Row>
               <Row label="Services">{b.services.join(', ')}</Row>
-              <Row label="Budget">{l.budgetRange}</Row>
               <Row label="Possession">{l.possession}</Row>
               <Row label="Floor plan">{b.floorPlan.hasFloorPlan ? `${b.floorPlan.files} file(s) — see Documents` : b.floorPlan.measurementAssistance?.opted ? `Expert measurement assistance (${formatINR(b.floorPlan.measurementAssistance.charge)})` : 'Not provided'}</Row>
               <Row label="Expert">{b.assignedContractor?.name || 'Being assigned'}</Row>

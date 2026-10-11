@@ -109,3 +109,44 @@
   .draw-line { stroke-dashoffset: 0; }
   .fade-late { opacity: 1; }
 }
+
+/* ── Public site skin (home redesign): serif headings, Outfit text, soft corners ── */
+.site-skin {
+  font-family: var(--font-outfit), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: #fff;
+}
+.site-skin h1, .site-skin h2, .site-skin h3, .site-skin .font-display {
+  font-family: var(--font-serif), Georgia, "Times New Roman", serif;
+  font-stretch: 100%;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+}
+.site-skin .ui-title {
+  text-wrap: pretty;
+  font-family: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.site-skin .btn { border-radius: 6px; }
+.site-skin .tabular, .site-skin .price { font-family: var(--font-outfit), ui-sans-serif, system-ui, sans-serif; font-weight: 700; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: .6rem;
+  font-size: .68rem; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; color: var(--color-wine);
+}
+.eyebrow::before {
+  content: ""; width: 2.6rem; height: 7px;
+  background: linear-gradient(currentColor, currentColor) left center / 100% 1.5px no-repeat,
+              linear-gradient(currentColor, currentColor) left center / 1.5px 100% no-repeat;
+}
+.hero-wash { background: radial-gradient(120% 90% at 0% 0%, #fbf3ef 0%, #fff8f6 45%, #fff 100%); }
+.soft-card { border: 1px solid #f1e3e5; border-radius: 12px; background: #fff; box-shadow: 0 1px 2px rgb(26 11 13 / .04), 0 8px 24px -12px rgb(154 12 34 / .12); }
+.red-panel { background: linear-gradient(135deg, #b30d29 0%, #9a0c22 55%, #7d0a1c 100%); }
+
+/* Site-wide form controls & surfaces in the soft style (admin untouched) */
+.site-skin input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.site-skin textarea, .site-skin select { border-radius: 8px; }
+.site-skin .rounded-none { border-radius: 10px; }
+.site-skin .grid-paper { background-image: none; background-color: #fdf8f7; }
+.site-skin .grid-paper-invert { background-image: none; }
+.site-skin .budget-card { border-radius: 14px; overflow: hidden; }
+.site-skin .budget-card > div:first-child { background: linear-gradient(135deg, #b30d29 0%, #9a0c22 55%, #7d0a1c 100%); }

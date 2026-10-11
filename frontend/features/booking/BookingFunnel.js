@@ -20,11 +20,10 @@ import { useAuth } from '@/store/auth';
 import { useBookingStore } from '@/store/booking';
 import { readAttribution } from '@/components/providers/Providers';
 
-const ORDER = ['BASIC_INFO', 'REQUIREMENT', 'BUDGET', 'POSSESSION', 'OTP', 'LOCATION', 'PROPERTY_TYPE', 'BHK', 'PROJECT_TYPE', 'SERVICES', 'FLOOR_PLAN', 'REVIEW'];
+const ORDER = ['BASIC_INFO', 'REQUIREMENT', 'POSSESSION', 'OTP', 'LOCATION', 'PROPERTY_TYPE', 'BHK', 'PROJECT_TYPE', 'SERVICES', 'FLOOR_PLAN', 'REVIEW'];
 const COPY = {
   BASIC_INFO: ["Let's start with you", 'We save your answers as you go, so you can pick up where you left off.'],
   REQUIREMENT: ['What are you looking for?'],
-  BUDGET: ['What is your approximate interior budget?', 'A rough range is fine. It helps us suggest the right package.'],
   POSSESSION: ['When will you get possession of your property?'],
   OTP: ['Verify your mobile number', 'This keeps your request secure and lets you track it in your dashboard.'],
   LOCATION: ['Where is your property located?'],
@@ -43,7 +42,6 @@ function initialDraft(step, lead, user) {
   switch (step) {
     case 'BASIC_INFO': return { name: lead.name || '', mobile: lead.mobile || '', city: lead.city || '' };
     case 'REQUIREMENT': return { value: lead.requirementType };
-    case 'BUDGET': return { value: lead.budgetRange };
     case 'POSSESSION': return { value: lead.possession };
     case 'PROPERTY_TYPE': return { value: lead.property?.propertyType };
     case 'BHK': return { value: lead.property?.bhk };
@@ -225,9 +223,6 @@ export default function BookingFunnel() {
     case 'REQUIREMENT':
       body = <form onSubmit={submitChoice('REQUIREMENT', 'requirementType')}>{radioGrid('requirementTypes', { cols: 'sm:grid-cols-3', compact: false, media: (o) => <Swatch tone={{ FULL_HOME: 'oak', KITCHEN_WARDROBE_STORAGE: 'charcoal', CIVIL_FULL_HOME: 'terracotta' }[o.value] || 'sand'} className="h-12 rounded-none sm:h-20" /> })}{errorNotice}<StepFooter onBack={back} loading={saving} /></form>;
       break;
-    case 'BUDGET':
-      body = <form onSubmit={submitChoice('BUDGET', 'budgetRange')}>{radioGrid('budgetRanges', { cols: 'grid-cols-2 sm:grid-cols-3' })}{errorNotice}<StepFooter onBack={back} loading={saving} /></form>;
-      break;
     case 'POSSESSION':
       body = <form onSubmit={submitChoice('POSSESSION', 'possession')}>{radioGrid('possessionOptions', { cols: 'sm:grid-cols-2' })}{errorNotice}<StepFooter onBack={back} loading={saving} /></form>;
       break;
@@ -291,7 +286,6 @@ export default function BookingFunnel() {
       const rows = [
         ['BASIC_INFO', 'You', `${lead.name}, ${lead.maskedMobile}${lead.city ? `, ${lead.city}` : ''}`],
         ['REQUIREMENT', 'Requirement', label(options, 'requirementTypes', lead.requirementType)],
-        ['BUDGET', 'Budget', label(options, 'budgetRanges', lead.budgetRange)],
         ['POSSESSION', 'Possession', label(options, 'possessionOptions', lead.possession)],
         ['LOCATION', 'Location', [lead.property?.address?.formattedAddress, lead.property?.address?.pincode].filter(Boolean).join(', ')],
         ['PROPERTY_TYPE', 'Home type', label(options, 'propertyTypes', lead.property?.propertyType)],

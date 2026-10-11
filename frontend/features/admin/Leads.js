@@ -27,7 +27,6 @@ export function LeadsList() {
     { name: 'range' },
     { name: 'city', label: 'City', options: opt(o?.cities) },
     { name: 'bhk', label: 'BHK', options: opt(o?.bhkOptions) },
-    { name: 'budget', label: 'Budget', options: opt(o?.budgetRanges) },
     { name: 'service', label: 'Service', options: ref.services.map((s) => [s.id, s.title]) },
     { name: 'package', label: 'Package', options: ref.packages.map((p) => [p.id, p.name]) },
     ...(user.role !== 'CONTRACTOR' ? [{ name: 'contractor', label: 'Contractor', options: [['unassigned', 'Unassigned'], ...ref.contractors.map((c) => [c.id, c.name])] }] : []),
@@ -75,7 +74,6 @@ export function LeadsList() {
           { key: 'flow', label: 'Source', render: (r) => (r.flow === 'ESTIMATE' ? 'Estimate' : 'Booking') },
           { key: 'city', label: 'City' },
           { key: 'bhk', label: 'BHK' },
-          { key: 'budget', label: 'Budget' },
           { key: 'requirement', label: 'Requirement', defaultHidden: true },
           { key: 'services', label: 'Services', defaultHidden: true, render: (r) => r.services.join(', ') || '—' },
           { key: 'contractor', label: 'Contractor', render: (r) => r.assignedContractor?.name || <span className="text-graphite">Unassigned</span> },
@@ -128,7 +126,7 @@ export function LeadDetail({ id }) {
             {l.nextStep !== 'SUBMITTED' && l.nextStep !== 'REVIEW' && <Notice className="mb-4">Funnel stopped at step {l.nextStepIndex}: {nice(l.nextStep)}</Notice>}
             <KV rows={[
               ['Mobile', `+91 ${l.mobile}${l.verified ? ' (verified)' : ''}`], ['City', l.city], ['Source', l.flow === 'ESTIMATE' ? 'Estimate calculator' : 'Booking funnel'],
-              ['Requirement', l.labels.requirementType], ['Budget', l.labels.budgetRange], ['Possession', l.labels.possession],
+              ['Requirement', l.labels.requirementType], ['Possession', l.labels.possession],
               ['Address', [l.property.address?.formattedAddress, l.property.address?.pincode].filter(Boolean).join(', ')],
               ['Home type', l.labels.propertyType], ['Configuration', l.labels.bhk], ['Project type', l.labels.projectType],
               ['Services', l.services.map((s) => s.title).join(', ')],

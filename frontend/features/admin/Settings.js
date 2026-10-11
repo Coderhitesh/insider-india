@@ -30,7 +30,6 @@ const SCHEMAS = {
   'funnel.options': ['Funnel options', [
     { name: 'cities', label: 'Cities (step 1)', ...optionRows() },
     { name: 'requirementTypes', label: 'Requirement types (step 2)', ...optionRows([{ name: 'description', label: 'Description' }]) },
-    { name: 'budgetRanges', label: 'Budget ranges (step 3)', ...optionRows([{ name: 'min', label: 'Min ₹', type: 'number' }, { name: 'max', label: 'Max ₹', type: 'number' }]) },
     { name: 'possessionOptions', label: 'Possession (step 4)', ...optionRows() },
     { name: 'propertyTypes', label: 'Property types (step 7)', ...optionRows([{ name: 'image', label: 'Image', type: 'image' }]) },
     { name: 'bhkOptions', label: 'Configurations (step 8)', ...optionRows() },

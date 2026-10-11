@@ -11,13 +11,10 @@ const SERVICE_TO_ADDON = {
 };
 
 // Pick the package whose range best matches the customer's budget answer; else the recommended one.
-function pickPackage(results, packages, budget) {
+// Recommended package (or the first available one).
+function pickPackage(results, packages) {
   const available = results.filter((r) => r.available);
   if (!available.length) return results[0] || null;
-  if (budget?.min || budget?.max) {
-    const target = budget.max ? (budget.min + budget.max) / 2 : budget.min * 1.15;
-    return available.reduce((best, r) => (Math.abs((r.finalMin + r.finalMax) / 2 - target) < Math.abs((best.finalMin + best.finalMax) / 2 - target) ? r : best));
-  }
   const rec = packages.find((p) => p.isRecommended);
   return available.find((r) => rec && String(r.package) === String(rec._id)) || available[0];
 }
@@ -29,13 +26,12 @@ function pickPackage(results, packages, budget) {
 async function autoEstimateForLead(lead) {
   try {
     if (lead.propertyCategory === 'COMMERCIAL' || !lead.property?.bhk) return null;
-    const [cfg, funnel] = await Promise.all([options.getEstimateConfig(), options.getFunnelOptions({ activeOnly: false })]);
+    const cfg = await options.getEstimateConfig();
     const counters = cfg.defaultCounters?.[lead.property.bhk] || { kitchens: 1, bedrooms: 2, washrooms: 2 };
     const addons = [...new Set((lead.services || []).map((s) => SERVICE_TO_ADDON[s.slug]).filter(Boolean))];
     const input = { propertyCategory: 'RESIDENTIAL', bhk: lead.property.bhk, ...counters, addons };
     const { input: clean, results, packages, disclaimer } = await engine.calculateAll(input);
-    const budget = (funnel.budgetRanges || []).find((b) => b.value === lead.budgetRange);
-    const sel = pickPackage(results, packages, budget);
+    const sel = pickPackage(results, packages);
     return Estimate.create({
       estimateNumber: await nextNumber('EST'),
       user: lead.user,

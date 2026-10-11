@@ -5,7 +5,7 @@ import RangeText from './RangeText';
 export default function BudgetCard({ budget, title = 'Approximate budget', compact = false, showPackages = false }) {
   if (!budget) return null;
   return (
-    <div className="border-2 border-wine">
+    <div className="budget-card border-2 border-wine">
       <div className="bg-wine px-5 py-4 text-paper">
         <p className="text-sm font-semibold text-paper/85">{title}{budget.packageName ? ` — ${budget.packageName}` : ''}</p>
         <p className={`tabular mt-1 font-display leading-tight ${compact ? 'text-2xl' : 'text-3xl sm:text-4xl'}`}>

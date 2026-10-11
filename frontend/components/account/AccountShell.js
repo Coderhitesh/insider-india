@@ -51,15 +51,19 @@ export default function AccountShell({ children }) {
 
   const isActive = (href) => pathname === href || pathname.startsWith(`${href}/`);
   return (
-    <div className="container-x grid gap-8 py-8 lg:grid-cols-[13rem_1fr] lg:gap-12 lg:py-12">
-      <nav aria-label="Account" className="-mx-5 overflow-x-auto border-b border-stone px-5 lg:mx-0 lg:overflow-visible lg:border-0 lg:px-0">
-        <p className="mb-4 hidden text-sm text-graphite lg:block">Signed in as<br /><span className="text-charcoal">{user.name || `+91 ${user.mobile}`}</span></p>
+    <div className="bg-[#fdf8f7]">
+    <div className="container-x grid gap-6 py-8 lg:grid-cols-[15rem_1fr] lg:gap-10 lg:py-12">
+      <nav aria-label="Account" className="-mx-5 overflow-x-auto border-b border-stone px-5 lg:sticky lg:top-24 lg:mx-0 lg:h-max lg:overflow-visible lg:rounded-2xl lg:border-0 lg:bg-paper lg:p-3 lg:shadow-[0_8px_24px_-12px_rgb(154_12_34/.15)]">
+        <div className="mb-3 hidden items-center gap-3 rounded-xl bg-blush/70 p-3 lg:flex">
+          <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-wine text-sm font-semibold text-paper">{(user.name || 'U').trim().charAt(0).toUpperCase()}</span>
+          <span className="min-w-0 text-xs text-graphite">Signed in as<br /><span className="block truncate text-sm font-medium text-charcoal">{user.name || `+91 ${user.mobile}`}</span></span>
+        </div>
         <ul className="flex gap-1 lg:flex-col">
           {NAV.map(([href, label, Icon]) => (
             <li key={href}>
               <Link href={href} aria-current={isActive(href) ? 'page' : undefined}
-                className={clsx('flex items-center gap-3 whitespace-nowrap px-3 py-2.5 text-sm transition-colors lg:rounded-none',
-                  isActive(href) ? 'border-b-2 border-wine font-semibold text-wine lg:border-b-0 lg:bg-wine lg:text-paper' : 'text-graphite hover:text-wine')}>
+                className={clsx('flex items-center gap-3 whitespace-nowrap px-3 py-2.5 text-sm transition-colors lg:rounded-lg',
+                  isActive(href) ? 'border-b-2 border-wine font-medium text-wine lg:border-b-0 lg:bg-wine lg:text-paper' : 'text-graphite hover:bg-blush/60 hover:text-wine')}>
                 <Icon className="size-4" aria-hidden="true" />{label}
                 {href === '/account/notifications' && unread > 0 && <span className="ml-auto rounded-full bg-wine px-1.5 text-[0.7rem] text-paper ring-1 ring-paper" aria-label={`${unread} unread`}>{unread}</span>}
               </Link>
@@ -68,6 +72,7 @@ export default function AccountShell({ children }) {
         </ul>
       </nav>
       <div className="min-w-0">{children}</div>
+    </div>
     </div>
   );
 }

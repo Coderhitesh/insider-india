@@ -14,7 +14,7 @@ const SIZES = { sm: 'h-9 px-4 text-sm', md: 'h-12 px-6 text-[0.95rem]', lg: 'h-1
 
 export default function Button({ href, variant = 'primary', size = 'md', loading = false, className, children, disabled, ...props }) {
   const cls = clsx(
-    'inline-flex items-center justify-center gap-2 font-semibold tracking-[0.01em] transition-colors duration-150 select-none disabled:cursor-not-allowed',
+    'btn inline-flex items-center justify-center gap-2 font-semibold tracking-[0.01em] transition-colors duration-150 select-none disabled:cursor-not-allowed',
     VARIANTS[variant], variant !== 'link' && SIZES[size], className,
   );
   if (href) return <Link href={href} className={cls} {...props}>{children}</Link>;

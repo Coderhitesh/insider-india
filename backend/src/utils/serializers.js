@@ -25,7 +25,6 @@ function leadView(lead) {
     city: l.city,
     verified: Boolean(l.user && l.verifiedAt),
     requirementType: l.requirementType || null,
-    budgetRange: l.budgetRange || null,
     possession: l.possession || null,
     propertyCategory: l.propertyCategory,
     property: {
@@ -82,7 +81,6 @@ function bookingView(b, { customer = true } = {}) {
     mobile: b.snapshot?.mobile,
     address: b.snapshot?.address,
     requirementType: b.snapshot?.requirementType,
-    budgetRange: b.snapshot?.budgetRange,
     possession: b.snapshot?.possession,
     propertyType: b.snapshot?.propertyType,
     bhk: b.snapshot?.bhk,

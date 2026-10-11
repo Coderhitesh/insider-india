@@ -32,20 +32,17 @@ export default async function ProjectPage({ params }) {
 
   return (
     <>
-      <PageHeader title={p.title} lede={p.summary} crumbs={[{ name: 'Projects', path: '/projects' }, { name: p.title, path: `/project/${p.slug}` }]} />
-      {p.coverImage && (
-        <div className="container-x pt-10"><div className="relative aspect-[16/9] overflow-hidden rounded-none"><Image src={p.coverImage} alt={p.title} fill priority sizes="100vw" className="object-cover" /></div></div>
-      )}
+      <PageHeader eyebrow={cat || 'Project'} title={p.title} lede={p.summary} image={p.coverImage || undefined} imageAlt={p.title} crumbs={[{ name: 'Projects', path: '/projects' }, { name: p.title, path: `/project/${p.slug}` }]} />
       <Section>
         <div className="grid gap-12 lg:grid-cols-12">
-          <dl className="grid h-max grid-cols-2 gap-6 lg:col-span-4 lg:grid-cols-1">
-            {facts.map(([k, v]) => <div key={k} className="border-t border-stone pt-3"><dt className="text-sm text-graphite">{k}</dt><dd className="mt-1 font-medium">{v}</dd></div>)}
+          <dl className="soft-card grid h-max grid-cols-2 gap-5 p-5 lg:col-span-4 lg:grid-cols-1">
+            {facts.map(([k, v]) => <div key={k} className="border-l-2 border-wine pl-3"><dt className="text-xs uppercase tracking-wider text-graphite">{k}</dt><dd className="mt-1 font-medium">{v}</dd></div>)}
           </dl>
           {p.description && <div className="measure whitespace-pre-line text-lg lg:col-span-7 lg:col-start-6">{p.description}</div>}
         </div>
         {(before.length > 0 && after.length > 0) && (
           <div className="mt-20">
-            <h2 className="text-d3">Before and after</h2>
+            <p className="eyebrow">Transformation</p><h2 className="mt-2 text-[clamp(1.8rem,3vw,2.4rem)]">Before and after</h2>
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
               {[['Before', before[0]], ['After', after[0]]].map(([label, img]) => (
                 <figure key={label}>
@@ -74,9 +71,9 @@ export default async function ProjectPage({ params }) {
         </div>
       </Section>
       {related?.length > 0 && (
-        <Section tone="paper">
-          <h2 className="text-d3">More {cat?.toLowerCase()} projects</h2>
-          <ul className="mt-10 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">{related.map((r) => <li key={r.id}><ProjectCard project={r} /></li>)}</ul>
+        <Section tone="soft">
+          <p className="eyebrow">Related</p><h2 className="mt-2 text-[clamp(1.8rem,3vw,2.4rem)]">More {cat?.toLowerCase()} projects</h2>
+          <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{related.map((r) => <li key={r.id}><ProjectCard project={r} /></li>)}</ul>
         </Section>
       )}
     </>

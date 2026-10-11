@@ -1,3 +1,21 @@
+import { readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import { createHash } from 'node:crypto';
+
+// Version stamp for photos in public/images: changes whenever a file there is replaced,
+// so the browser and the Next image cache never serve an old copy. Restart `npm run dev` after replacing.
+const imgVersion = (() => {
+  const h = createHash('sha1');
+  const walk = (dir) => {
+    for (const f of readdirSync(dir, { withFileTypes: true })) {
+      const p = join(dir, f.name);
+      if (f.isDirectory()) walk(p); else { const st = statSync(p); h.update(`${p}:${st.size}:${st.mtimeMs}`); }
+    }
+  };
+  try { walk(join(process.cwd(), 'public', 'images')); } catch { /* no images folder */ }
+  return h.digest('hex').slice(0, 10);
+})();
+
 // Files served by the API itself (LOCAL storage in development).
 const apiUrl = (() => { try { return new URL(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'); } catch { return null; } })();
 
@@ -6,8 +24,14 @@ const extraHosts = (process.env.NEXT_PUBLIC_IMAGE_HOSTS || '').split(',').map((h
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   poweredByHeader: false,
+  env: { NEXT_PUBLIC_IMG_V: imgVersion },
   images: {
     formats: ['image/avif', 'image/webp'],
+    qualities: [75, 90],
+    localPatterns: [
+      { pathname: '/images/**', search: `?v=${imgVersion}` },
+      { pathname: '/**', search: '' },
+    ],
     remotePatterns: [
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: '**.amazonaws.com' },

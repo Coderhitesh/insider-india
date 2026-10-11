@@ -99,7 +99,6 @@ const applyStep = {
     }
   },
   async REQUIREMENT(lead, d) { await assertOption('requirementTypes', 'requirementType', d.requirementType, 'requirement'); lead.requirementType = d.requirementType; },
-  async BUDGET(lead, d) { await assertOption('budgetRanges', 'budgetRange', d.budgetRange, 'budget'); lead.budgetRange = d.budgetRange; },
   async POSSESSION(lead, d) { await assertOption('possessionOptions', 'possession', d.possession, 'possession timeline'); lead.possession = d.possession; },
   async LOCATION(lead, d) {
     let addr = {

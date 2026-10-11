@@ -25,20 +25,20 @@ export default function Header({ company }) {
   }, [open]);
 
   const account = status === 'authenticated'
-    ? <Link href={user?.role === 'CUSTOMER' ? '/account/dashboard' : '/admin'} className="inline-flex items-center gap-2 text-sm hover:text-wine"><UserRound className="size-4" />{user?.name?.split(' ')[0] || 'Account'}</Link>
-    : <Link href="/login" className="text-sm hover:text-wine">Log in</Link>;
+    ? <Link href={user?.role === 'CUSTOMER' ? '/account/dashboard' : '/admin'} aria-label="Your account" className="inline-flex items-center gap-2 text-sm hover:text-wine"><UserRound className="size-[18px]" /><span className="hidden 2xl:inline">{user?.name?.split(' ')[0] || 'Account'}</span></Link>
+    : <Link href="/login" aria-label="Log in" className="inline-flex items-center gap-2 text-sm hover:text-wine"><UserRound className="size-[18px]" /><span className="hidden 2xl:inline">Log in</span></Link>;
 
   return (
-    <header className="sticky top-0 z-40 border-b-2 border-wine bg-paper/95 backdrop-blur-sm supports-[backdrop-filter]:bg-paper/90">
-      <div className="container-x flex h-18 items-center justify-between gap-6">
+    <header className="sticky top-0 z-40 border-b border-stone bg-paper/95 backdrop-blur-sm supports-[backdrop-filter]:bg-paper/90">
+      <div className="container-x flex h-[72px] items-center justify-between gap-6">
         <Logo company={company} />
         {!funnel && (
           <nav aria-label="Main" className="hidden xl:block">
-            <ul className="flex items-center gap-6 whitespace-nowrap text-[0.92rem]">
+            <ul className="flex items-center gap-7 whitespace-nowrap text-[0.9rem]">
               {HEADER_NAV.map((n) => (
                 <li key={n.href}>
                   <Link href={n.href} aria-current={pathname === n.href ? 'page' : undefined}
-                    className={clsx('relative py-2 font-medium transition-colors hover:text-wine', pathname === n.href && 'text-wine after:absolute after:inset-x-0 after:-bottom-[21px] after:h-[3px] after:bg-wine')}>
+                    className={clsx('relative py-2 transition-colors hover:text-wine', pathname === n.href ? 'font-medium text-wine after:absolute after:inset-x-0 after:-bottom-0.5 after:h-[2px] after:rounded-full after:bg-wine' : 'text-charcoal/80')}>
                     {n.label}
                   </Link>
                 </li>
@@ -46,10 +46,10 @@ export default function Header({ company }) {
             </ul>
           </nav>
         )}
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-3 sm:gap-4">
           <div className="hidden whitespace-nowrap sm:block">{account}</div>
-          {!funnel && <span className="hidden 2xl:block"><Button href="/estimate" variant="secondary" size="sm">Get free estimate</Button></span>}
-          {!funnel && <span className="hidden sm:block"><Button href="/book-consultation" size="sm" className="whitespace-nowrap">Book a consultation</Button></span>}
+          {!funnel && <span className="hidden lg:block"><Button href="/estimate" variant="secondary" size="sm" className="h-10 whitespace-nowrap border-[1.5px] px-4">Get Free Estimate</Button></span>}
+          {!funnel && <span className="hidden sm:block"><Button href="/book-consultation" size="sm" className="h-10 whitespace-nowrap px-4">Book a Consultation</Button></span>}
           {!funnel && (
             <button type="button" className="-mr-2 p-2 xl:hidden" aria-label="Open menu" aria-expanded={open} aria-controls="mobile-nav" onClick={() => setOpen(true)}>
               <Menu className="size-6" />
@@ -61,14 +61,14 @@ export default function Header({ company }) {
 
       {open && (
         <div id="mobile-nav" role="dialog" aria-modal="true" aria-label="Menu" className="fixed inset-0 z-50 flex flex-col bg-paper">
-          <div className="container-x flex h-18 items-center justify-between border-b-2 border-wine">
+          <div className="container-x flex h-[72px] items-center justify-between border-b border-stone">
             <Logo company={company} />
             <button type="button" className="-mr-2 p-2" aria-label="Close menu" onClick={() => setOpen(false)}><X className="size-6" /></button>
           </div>
           <nav aria-label="Mobile" className="container-x flex-1 overflow-y-auto py-6">
             <ul className="divide-y divide-stone">
               {NAV.map((n) => (
-                <li key={n.href}><Link href={n.href} className="flex items-center justify-between py-4 font-display text-2xl hover:text-wine">{n.label}<span aria-hidden="true" className="h-px w-8 bg-wine" /></Link></li>
+                <li key={n.href}><Link href={n.href} className="flex items-center justify-between py-4 font-display text-2xl hover:text-wine">{n.label}<span aria-hidden="true" className="text-wine">→</span></Link></li>
               ))}
               <li className="py-4">{account}</li>
             </ul>

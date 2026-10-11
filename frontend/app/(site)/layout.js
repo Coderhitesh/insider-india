@@ -5,10 +5,10 @@ import { getSite } from '@/lib/server-api';
 export default async function SiteLayout({ children }) {
   const { company } = await getSite();
   return (
-    <>
+    <div className="site-skin flex flex-1 flex-col">
       <Header company={company} />
       <main id="main" className="flex-1">{children}</main>
       <Footer company={company} />
-    </>
+    </div>
   );
 }
