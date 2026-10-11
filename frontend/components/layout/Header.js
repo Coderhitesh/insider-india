@@ -30,7 +30,7 @@ export default function Header({ company }) {
 
   return (
     <header className="sticky top-0 z-40 border-b border-stone bg-paper/95 backdrop-blur-sm supports-[backdrop-filter]:bg-paper/90">
-      <div className="container-x flex h-[72px] items-center justify-between gap-6">
+      <div className="container-x flex h-[72px] items-center justify-between gap-2">
         <Logo company={company} />
         {!funnel && (
           <nav aria-label="Main" className="hidden xl:block">
