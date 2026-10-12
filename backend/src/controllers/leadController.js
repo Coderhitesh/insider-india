@@ -3,7 +3,7 @@ const { loadLeadForAccess } = require('../services/leadAccess');
 const options = require('../services/optionsService');
 const geo = require('../services/geoService');
 const { logActivity } = require('../services/activityService');
-const { stepSchemas } = require('../validations/lead');
+const { stepSchemas, LEGACY_STEPS } = require('../validations/lead');
 const { nextNumber } = require('../utils/sequence');
 const { normalizeMobile } = require('../utils/phone');
 const { hmac, randomToken } = require('../utils/crypto');
@@ -153,6 +153,11 @@ exports.updateStep = asyncHandler(async (req, res) => {
 
   if (lead.booking || !LEAD_OPEN_STATUS.includes(lead.status)) {
     throw ApiError.conflict('This request has already been submitted', 'LEAD_CLOSED', { bookingId: lead.booking ? String(lead.booking) : null });
+  }
+  // Removed step (budget question) sent by an older website build: nothing to save, just carry on.
+  if (LEGACY_STEPS.includes(step)) {
+    await withServices(lead);
+    return ok(res, { lead: leadView(lead) }, 'Saved');
   }
   if (!PRE_OTP_STEPS.includes(step) && !(lead.user && lead.verifiedAt && req.user)) {
     throw ApiError.forbidden('Please verify your mobile number to continue', 'OTP_REQUIRED');

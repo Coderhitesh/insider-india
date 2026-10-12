@@ -16,6 +16,8 @@ const createLead = z.object({
 
 const option = (field, msg) => z.object({ [field]: z.string().trim().min(1, msg).max(60) });
 
+const LEGACY_STEPS = ['BUDGET'];
+
 const stepSchemas = {
   BASIC_INFO: z.object({ name: z.string().trim().min(2, 'Enter your full name').max(120), mobile: mobile.optional(), city: str(80).optional() }),
   REQUIREMENT: option('requirementType', 'Select what you are looking for'),
@@ -48,8 +50,9 @@ const stepSchemas = {
 };
 
 const updateStep = z.object({
-  step: z.enum(Object.keys(stepSchemas)),
+  // BUDGET was removed from the funnel; still accepted (ignored) so an older cached website never shows an error.
+  step: z.enum([...Object.keys(stepSchemas), ...LEGACY_STEPS]),
   data: z.record(z.any()),
 });
 
-module.exports = { createLead, stepSchemas, updateStep };
+module.exports = { createLead, stepSchemas, updateStep, LEGACY_STEPS };

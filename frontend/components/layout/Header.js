@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
@@ -28,7 +29,37 @@ export default function Header({ company }) {
     ? <Link href={user?.role === 'CUSTOMER' ? '/account/dashboard' : '/admin'} aria-label="Your account" className="inline-flex items-center gap-2 text-sm hover:text-wine"><UserRound className="size-[18px]" /><span className="hidden 2xl:inline">{user?.name?.split(' ')[0] || 'Account'}</span></Link>
     : <Link href="/login" aria-label="Log in" className="inline-flex items-center gap-2 text-sm hover:text-wine"><UserRound className="size-[18px]" /><span className="hidden 2xl:inline">Log in</span></Link>;
 
+  // Rendered into <body>: the header's backdrop-blur makes it the containing block for `position: fixed`
+  // children, which squeezed the menu into the 72px header strip on phones.
+  const menu = open && typeof document !== 'undefined' && createPortal(
+    <div id="mobile-nav" role="dialog" aria-modal="true" aria-label="Menu" className="site-skin fixed inset-0 z-[60] flex flex-col bg-paper">
+      <div className="container-x flex h-[72px] shrink-0 items-center justify-between border-b border-stone">
+        <Logo company={company} />
+        <button type="button" className="-mr-2 p-2" aria-label="Close menu" onClick={() => setOpen(false)}><X className="size-6" /></button>
+      </div>
+      <nav aria-label="Mobile" className="container-x flex-1 overflow-y-auto py-4">
+        <ul className="divide-y divide-stone">
+          {[{ href: '/', label: 'Home' }, ...NAV, { href: '/about', label: 'About' }, { href: '/contact', label: 'Contact' }].map((n) => (
+            <li key={n.href}>
+              <Link href={n.href} aria-current={pathname === n.href ? 'page' : undefined}
+                className={clsx('flex items-center justify-between py-3.5 font-display text-[1.6rem] leading-tight hover:text-wine', pathname === n.href && 'text-wine')}>
+                {n.label}<span aria-hidden="true" className="text-lg text-wine">→</span>
+              </Link>
+            </li>
+          ))}
+          <li className="py-4">{account}</li>
+        </ul>
+      </nav>
+      <div className="container-x grid shrink-0 grid-cols-2 gap-3 border-t border-stone py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <Button href="/estimate" variant="secondary" className="whitespace-nowrap px-2 text-[0.8rem] min-[380px]:text-sm">Free estimate</Button>
+        <Button href="/book-consultation" className="whitespace-nowrap px-2 text-[0.8rem] min-[380px]:text-sm">Book consultation</Button>
+      </div>
+    </div>,
+    document.body,
+  );
+
   return (
+    <>
     <header className="sticky top-0 z-40 border-b border-stone bg-paper/95 backdrop-blur-sm supports-[backdrop-filter]:bg-paper/90">
       <div className="container-x flex h-[72px] items-center justify-between gap-2">
         <Logo company={company} />
@@ -59,26 +90,8 @@ export default function Header({ company }) {
         </div>
       </div>
 
-      {open && (
-        <div id="mobile-nav" role="dialog" aria-modal="true" aria-label="Menu" className="fixed inset-0 z-50 flex flex-col bg-paper">
-          <div className="container-x flex h-[72px] items-center justify-between border-b border-stone">
-            <Logo company={company} />
-            <button type="button" className="-mr-2 p-2" aria-label="Close menu" onClick={() => setOpen(false)}><X className="size-6" /></button>
-          </div>
-          <nav aria-label="Mobile" className="container-x flex-1 overflow-y-auto py-6">
-            <ul className="divide-y divide-stone">
-              {NAV.map((n) => (
-                <li key={n.href}><Link href={n.href} className="flex items-center justify-between py-4 font-display text-2xl hover:text-wine">{n.label}<span aria-hidden="true" className="text-wine">→</span></Link></li>
-              ))}
-              <li className="py-4">{account}</li>
-            </ul>
-          </nav>
-          <div className="container-x grid grid-cols-2 gap-3 border-t border-stone py-4">
-            <Button href="/estimate" variant="secondary">Get free estimate</Button>
-            <Button href="/book-consultation">Book consultation</Button>
-          </div>
-        </div>
-      )}
     </header>
+    {menu}
+    </>
   );
 }
