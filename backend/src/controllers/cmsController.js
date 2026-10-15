@@ -1,4 +1,4 @@
-const { Project, Testimonial, Faq } = require('../models');
+const { Project, Testimonial, Faq, Brand } = require('../models');
 const { parsePagination, pageMeta } = require('../utils/pagination');
 const { ok } = require('../utils/respond');
 const ApiError = require('../utils/ApiError');
@@ -47,5 +47,11 @@ exports.faqs = asyncHandler(async (req, res) => {
   if (req.query.category) filter.category = String(req.query.category).toUpperCase();
   const items = await Faq.find(filter).sort({ order: 1 }).select('question answer category').lean();
   cache(res);
+  ok(res, { items: items.map(clean) });
+});
+
+exports.brands = asyncHandler(async (req, res) => {
+  const items = await Brand.find({ isPublished: true }).sort({ order: 1, createdAt: -1 }).limit(100).select('name logo website').lean();
+  cache(res, 60);
   ok(res, { items: items.map(clean) });
 });

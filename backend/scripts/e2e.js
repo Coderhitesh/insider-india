@@ -5,13 +5,13 @@
  *
  * Requirements: API running with LOG SMS/WhatsApp providers (OTP codes are read from logs/combined.log)
  * and a storage provider that works in your environment (LOCAL is simplest).
- *   API_URL=http://localhost:5000 ADMIN_EMAIL=... ADMIN_PASSWORD=... npm run test:e2e
+ *   API_URL=http://localhost:5991 ADMIN_EMAIL=... ADMIN_PASSWORD=... npm run test:e2e
  * Creates real test data (mobiles 7xxxxxxxxx). Do not run against production.
  */
 const fs = require('fs');
 const path = require('path');
 
-const API = (process.env.API_URL || 'http://localhost:5000').replace(/\/$/, '');
+const API = (process.env.API_URL || 'http://localhost:5991').replace(/\/$/, '');
 const LOG = process.env.LOG_FILE || path.resolve(__dirname, '../logs/combined.log');
 const ADMIN = { email: process.env.ADMIN_EMAIL, password: process.env.ADMIN_PASSWORD };
 const rnd = () => `7${String(Math.floor(Math.random() * 1e9)).padStart(9, '0')}`;

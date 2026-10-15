@@ -24,6 +24,7 @@ module.exports = {
   Project: require('./Project'),
   Testimonial: require('./Testimonial'),
   Faq: require('./Faq'),
+  Brand: require('./Brand'),
   SiteVisit: require('./SiteVisit'),
   Measurement: require('./Measurement'),
   Quotation: require('./Quotation'),

@@ -243,9 +243,18 @@ const faqBase = z.object({
 });
 const faqSchemas = { create: faqBase, update: faqBase.partial() };
 
+const brandBase = z.object({
+  name: str(100).min(2),
+  logo: url,
+  website: url.optional(),
+  isPublished: z.boolean().default(true),
+  order: z.coerce.number().int().optional(),
+});
+const brandSchemas = { create: brandBase, update: brandBase.partial() };
+
 module.exports = {
   listQuery, updateLead, assign, bookingStatus, note, updateCustomer,
   createContractor, updateContractor, createStaff, updateStaff, resetPassword, createRole, updateRole,
   packageSchemas, serviceSchemas, ruleSchemas, templateSchemas, sendNotification,
-  projectSchemas, testimonialSchemas, faqSchemas,
+  projectSchemas, testimonialSchemas, faqSchemas, brandSchemas,
 };

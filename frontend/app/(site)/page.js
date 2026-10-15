@@ -8,10 +8,11 @@ import CalcBanner from '@/components/landing/CalcBanner';
 import WhyUs from '@/components/landing/WhyUs';
 import Reviews from '@/components/landing/Reviews';
 import Faq from '@/components/landing/Faq';
-import { getSite, getPackages, getProjects, getTestimonials, getFaqs, getServices } from '@/lib/server-api';
+import BrandSlider from '@/components/landing/BrandSlider';
+import { getSite, getPackages, getProjects, getTestimonials, getFaqs, getServices, getBrands } from '@/lib/server-api';
 import { pageMetadata } from '@/lib/seo';
 
-export const revalidate = 300;
+export const revalidate = 60;
 const HOME_TITLE = 'INSIDER INDIA LLP — Interiors designed around the way you live';
 export const metadata = {
   ...pageMetadata({
@@ -37,13 +38,14 @@ function heroStats(stats, packages) {
 }
 
 export default async function Home() {
-  const [{ stats, company }, packages, projects, testimonials, faqs, services] = await Promise.all([
-    getSite(), getPackages(), getProjects({ featured: true, limit: 6 }), getTestimonials(), getFaqs(), getServices(),
+  const [{ stats, company }, packages, projects, testimonials, faqs, services, brands] = await Promise.all([
+    getSite(), getPackages(), getProjects({ featured: true, limit: 6 }), getTestimonials(), getFaqs(), getServices(), getBrands(),
   ]);
 
   return (
     <>
       <Hero stats={heroStats(stats, packages)} />
+      <BrandSlider items={brands} />
       <Solutions services={services} />
       <Band />
       <Process />

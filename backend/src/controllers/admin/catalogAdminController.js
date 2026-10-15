@@ -1,4 +1,4 @@
-const { Package, Service, EstimateRule, NotificationTemplate, Project, Testimonial, Faq, Estimate, Booking, Lead, User, Notification, Media, AuditLog } = require('../../models');
+const { Package, Service, EstimateRule, NotificationTemplate, Project, Testimonial, Faq, Brand, Estimate, Booking, Lead, User, Notification, Media, AuditLog } = require('../../models');
 const { crud } = require('./crudFactory');
 const v = require('../../validations/admin');
 const StorageService = require('../../services/storage/StorageService');
@@ -52,6 +52,11 @@ exports.testimonials = crud({
 exports.faqs = crud({
   Model: Faq, entityType: 'Faq', createSchema: v.faqSchemas.create, updateSchema: v.faqSchemas.update,
   searchFields: ['question', 'answer'], filters: (q) => (q.category ? { category: String(q.category).toUpperCase() } : {}),
+});
+
+exports.brands = crud({
+  Model: Brand, entityType: 'Brand', createSchema: v.brandSchemas.create, updateSchema: v.brandSchemas.update,
+  searchFields: ['name'],
 });
 
 // ── Manual in-app notification ────────────────────────────────

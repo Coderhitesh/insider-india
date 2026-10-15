@@ -17,7 +17,7 @@ const imgVersion = (() => {
 })();
 
 // Files served by the API itself (LOCAL storage in development).
-const apiUrl = (() => { try { return new URL(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'); } catch { return null; } })();
+const apiUrl = (() => { try { return new URL(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5991'); } catch { return null; } })();
 
 const extraHosts = (process.env.NEXT_PUBLIC_IMAGE_HOSTS || '').split(',').map((h) => h.trim()).filter(Boolean);
 
@@ -41,7 +41,7 @@ const nextConfig = {
   },
   // Uploaded files are stored as paths ("/api/v1/files/…"); serve them through this site from the API.
   async rewrites() {
-    const target = (process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+    const target = (process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5991').replace(/\/$/, '');
     return [{ source: '/api/v1/files/:path*', destination: `${target}/api/v1/files/:path*` }];
   },
   async headers() {

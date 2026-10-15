@@ -12,5 +12,6 @@ router.get('/projects/slugs', cms.slugs);
 router.get('/projects/:slug', cms.projectBySlug);
 router.get('/testimonials', cms.testimonials);
 router.get('/faqs', cms.faqs);
+router.get('/brands', cms.brands);
 
 module.exports = router;

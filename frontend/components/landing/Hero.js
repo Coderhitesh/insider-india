@@ -1,7 +1,17 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import Button from '@/components/ui/Button';
 import { HOME_IMG, Eyebrow, Arrow } from './media';
+import HeroSlider from './HeroSlider';
+
+// Apne real images yaha daalo
+const TOP_SLIDES = [
+  { src: HOME_IMG.hero, alt: 'A warm living room with a sectional sofa and marble coffee table' },
+  // { src: HOME_IMG.kitchen, alt: 'Modular kitchen' },
+];
+const BOTTOM_SLIDES = [
+  { src: HOME_IMG.hero, alt: 'Modern interior' },
+  // { src: HOME_IMG.wardrobe, alt: 'Wardrobe design' },
+];
 
 // Light botanical sprig, drawn in grey behind the headline.
 function Sprig({ className }) {
@@ -47,8 +57,10 @@ export default function Hero({ stats }) {
         </div>
 
         <div className="relative [container-type:inline-size] lg:self-stretch">
-          <div className="relative aspect-[320/278] w-full sm:aspect-[16/10] lg:h-full lg:min-h-[520px] lg:aspect-auto">
-            <Image src={HOME_IMG.hero} alt="A warm living room with a sectional sofa and marble coffee table" fill priority quality={90} sizes="(min-width:1024px) 54vw, 100vw" className="object-cover object-[55%_50%]" />
+          <div className="relative grid w-full gap-1 lg:h-full lg:min-h-[520px] lg:grid-rows-2">
+            <HeroSlider slides={TOP_SLIDES} interval={4000} priority className="aspect-[16/9] lg:aspect-auto" />
+            <HeroSlider slides={BOTTOM_SLIDES} interval={5000} className="aspect-[16/9] lg:aspect-auto" />
+
             {/* soft wave where the photo meets the text column */}
             <svg aria-hidden="true" viewBox="0 0 120 600" preserveAspectRatio="none" className="absolute inset-y-0 -left-px hidden h-full w-24 text-[#fff8f6] lg:block">
               <path fill="currentColor" d="M0 0h70C30 140 20 300 60 430c18 60 40 120 60 170H0z" />

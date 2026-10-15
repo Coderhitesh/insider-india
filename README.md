@@ -18,7 +18,7 @@ cd backend
 cp .env.example .env        # fill MONGODB_URI, JWT_*, ENCRYPTION_KEY, SEED_SUPER_ADMIN_*
 npm install
 npm run seed                # idempotent — safe to re-run, never overwrites admin edits
-npm run dev                 # http://localhost:5000/health
+npm run dev                 # http://localhost:5991/health
 ```
 Node ≥ 20, MongoDB ≥ 6.
 
@@ -144,7 +144,7 @@ Server-side proxy (Places API New) — key never reaches the browser. Restrict `
 See [WORKFLOW.md](WORKFLOW.md) — booking → contractor → site visit → measurements → quotation → review → customer → project.
 
 ## Testing
-- **API end-to-end:** `cd backend && API_URL=http://localhost:5000 ADMIN_EMAIL=... ADMIN_PASSWORD=... npm run test:e2e` — 125 checks across funnels, OTP, uploads, estimate, permissions, site visit, measurements, quotation review/PDF/revisions, acceptance, projects, settings and audit. Needs `SMS_PROVIDER=LOG`/`WHATSAPP_PROVIDER=LOG` (OTP codes are read from `logs/combined.log`) and working storage (`STORAGE_PROVIDER=LOCAL` is simplest). Creates test data — never run against production.
+- **API end-to-end:** `cd backend && API_URL=http://localhost:5991 ADMIN_EMAIL=... ADMIN_PASSWORD=... npm run test:e2e` — 125 checks across funnels, OTP, uploads, estimate, permissions, site visit, measurements, quotation review/PDF/revisions, acceptance, projects, settings and audit. Needs `SMS_PROVIDER=LOG`/`WHATSAPP_PROVIDER=LOG` (OTP codes are read from `logs/combined.log`) and working storage (`STORAGE_PROVIDER=LOCAL` is simplest). Creates test data — never run against production.
 - Verified on a local Mongo-compatible server (FerretDB); dashboard, OTP and seed code avoid `$lookup`/`$cond`/projection-on-update so they run on MongoDB Atlas and compatible servers alike.
 
 ## Local storage (development)

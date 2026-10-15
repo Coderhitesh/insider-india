@@ -96,8 +96,8 @@ export function Content() {
   const [tab, setTab] = useState('projects');
   return (
     <>
-      <Header title="Website content" subtitle="Projects, testimonials and FAQs. Unpublished items never appear on the site." />
-      <Tabs tabs={[['projects', 'Projects'], ['testimonials', 'Testimonials'], ['faqs', 'FAQs']]} value={tab} onChange={setTab} />
+      <Header title="Website content" subtitle="Projects, testimonials, brand partners and FAQs. Unpublished items never appear on the site." />
+      <Tabs tabs={[['projects', 'Projects'], ['testimonials', 'Testimonials'], ['brands', 'Brand partners'], ['faqs', 'FAQs']]} value={tab} onChange={setTab} />
       {tab === 'projects' && (
         <CrudResource embedded endpoint="/admin/projects" title="Projects" managePerm="content.manage" reorder
           filters={[{ name: 'category', label: 'Category', options: CATS }]}
@@ -136,6 +136,21 @@ export function Content() {
             { name: 'quote', label: 'Quote', type: 'textarea', hint: 'Use real customer words only, with their permission.' },
             { name: 'rating', label: 'Rating (1–5)', type: 'number', min: 1, max: 5, nullable: true }, { name: 'photo', label: 'Photo', type: 'image' },
             { name: 'isPublished', label: 'Published', type: 'switch', help: 'Visible on site' },
+          ]} />
+      )}
+      {tab === 'brands' && (
+        <CrudResource embedded endpoint="/admin/brands" title="Brand partners" managePerm="content.manage" reorder
+          columns={[
+            { key: 'name', label: 'Brand', render: (r) => <span className="flex items-center gap-3">{r.logo && <img src={r.logo} alt="" className="h-8 w-14 object-contain" />}{r.name}</span> },
+            { key: 'website', label: 'Website' }, { key: 'isPublished', label: 'Status', render: published },
+          ]}
+          defaults={{ name: '', logo: '', website: '', isPublished: true }}
+          toForm={({ id, createdAt, updatedAt, order, ...r }) => r}
+          fromForm={(f) => ({ ...f, website: f.website || undefined })}
+          fields={[
+            { name: 'name', label: 'Brand name' }, { name: 'logo', label: 'Logo', type: 'image', hint: 'Transparent PNG/SVG works best' },
+            { name: 'website', label: 'Website link (optional)' },
+            { name: 'isPublished', label: 'Published', type: 'switch', help: 'Show in home page slider' },
           ]} />
       )}
       {tab === 'faqs' && (

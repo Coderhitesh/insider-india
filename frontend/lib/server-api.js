@@ -24,6 +24,7 @@ export async function getSite() {
 export const getPackages = async () => (await getJSON('/catalog/packages', { fallback: {} }))?.packages || [];
 export const getServices = async () => (await getJSON('/catalog/services', { fallback: {} }))?.services || [];
 export const getTestimonials = async () => (await getJSON('/catalog/testimonials', { fallback: {} }))?.items || [];
+export const getBrands = async () => (await getJSON('/catalog/brands', { revalidate: 60, fallback: {} }))?.items || [];
 export const getFaqs = async (category) => (await getJSON(`/catalog/faqs${category ? `?category=${category}` : ''}`, { fallback: {} }))?.items || [];
 export async function getProjects({ category, featured, page = 1, limit = 12 } = {}) {
   const qs = new URLSearchParams({ page: String(page), limit: String(limit) });

@@ -97,6 +97,7 @@ mount('notification-templates', catalog.templates, 'notifications.send', 'notifi
 mount('projects', catalog.projects, 'content.manage', 'content.manage');
 mount('testimonials', catalog.testimonials, 'content.manage', 'content.manage');
 mount('faqs', catalog.faqs, 'content.manage', 'content.manage');
+mount('brands', catalog.brands, 'content.manage', 'content.manage');
 
 // Notifications, audit, uploads
 router.post('/notifications/send', P('notifications.send'), validate({ body: v.sendNotification }), catalog.sendNotification);
