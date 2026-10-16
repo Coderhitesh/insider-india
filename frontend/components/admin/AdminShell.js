@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import {
   LayoutDashboard, Inbox, CalendarCheck, CalendarClock, FileText, Hammer, Users, HardHat, ShieldCheck, KeyRound, Package, Wrench,
-  Calculator, Images, Bell, Settings, ScrollText, FolderOpen, BarChart3, Menu, X, LogOut,
+  Calculator, Images, Bell, Settings, ScrollText, FolderOpen, BarChart3, Menu, X, LogOut, Gift,
 } from 'lucide-react';
 import Spinner from '@/components/ui/Spinner';
 import { useAuth } from '@/store/auth';
@@ -25,6 +25,7 @@ const GROUPS = [
   ['People', [
     ['/admin/customers', 'Customers', Users, ['customers.view']],
     ['/admin/contractors', 'Contractors', HardHat, ['contractors.view']],
+    ['/admin/referrals', 'Refer & Earn', Gift, ['referrals.view']],
     ['/admin/users', 'Staff users', ShieldCheck, ['users.view']],
     ['/admin/roles', 'Roles & permissions', KeyRound, ['roles.manage']],
   ]],

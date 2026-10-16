@@ -1,4 +1,4 @@
-const { ExecutionProject, Booking, User } = require('../models');
+const { ExecutionProject, Booking, User, Payment } = require('../models');
 const { advance } = require('../services/bookingSync');
 const { assertUsable, signedList } = require('../services/mediaService');
 const { isContractor } = require('../services/scopeService');
@@ -55,6 +55,14 @@ const notifyCustomer = (p, stageLabel) => notifications.send({
   variables: { stage: stageLabel, link: `${env.frontendUrl}/account/projects/${p._id}` }, link: `/account/projects/${p._id}`,
 });
 
+// Received totals per project (for list views).
+async function paidMap(ids) {
+  const rows = await Payment.find({ project: { $in: ids }, status: 'RECEIVED' }).select('project amount').lean();
+  const m = new Map();
+  rows.forEach((r) => m.set(String(r.project), (m.get(String(r.project)) || 0) + r.amount));
+  return m;
+}
+
 // ── Staff ─────────────────────────────────────────────────────
 exports.list = asyncHandler(async (req, res) => {
   const filter = isContractor(req.user) ? { contractor: req.user._id } : {};
@@ -64,7 +72,14 @@ exports.list = asyncHandler(async (req, res) => {
     ExecutionProject.find(filter).sort({ updatedAt: -1 }).skip(pg.skip).limit(pg.limit).populate(populate).populate('customer', 'name').lean(),
     ExecutionProject.countDocuments(filter),
   ]);
-  ok(res, { items: items.map((p) => ({ id: String(p._id), projectNumber: p.projectNumber, bookingNumber: p.booking?.bookingNumber, customer: p.customer?.name, contractor: p.contractor?.name, projectManager: p.projectManager?.name, stage: p.stage, stageLabel: STAGE_LABEL[p.stage], grandTotal: p.grandTotal, startedAt: p.startedAt, updatedAt: p.updatedAt })) }, 'OK', 200, pageMeta(pg, total));
+  const paid = isContractor(req.user) ? new Map() : await paidMap(items.map((p) => p._id));
+  ok(res, { items: items.map((p) => {
+    const received = paid.get(String(p._id)) || 0;
+    return {
+      id: String(p._id), projectNumber: p.projectNumber, bookingNumber: p.booking?.bookingNumber, customer: p.customer?.name, contractor: p.contractor?.name, projectManager: p.projectManager?.name, stage: p.stage, stageLabel: STAGE_LABEL[p.stage], grandTotal: p.grandTotal, startedAt: p.startedAt, updatedAt: p.updatedAt,
+      ...(isContractor(req.user) ? {} : { paid: received, balance: Math.max(0, Math.round((p.grandTotal || 0) - received)) }),
+    };
+  }) }, 'OK', 200, pageMeta(pg, total));
 });
 
 exports.get = asyncHandler(async (req, res) => {
@@ -149,7 +164,8 @@ exports.postUpdate = asyncHandler(async (req, res) => {
 // ── Customer ─────────────────────────────────────────────────
 exports.mine = asyncHandler(async (req, res) => {
   const items = await ExecutionProject.find({ customer: req.user._id }).sort({ createdAt: -1 }).populate('booking', 'bookingNumber').lean();
-  ok(res, { items: items.map((p) => ({ id: String(p._id), projectNumber: p.projectNumber, bookingNumber: p.booking?.bookingNumber, stage: p.stage, stageLabel: STAGE_LABEL[p.stage], stageIndex: PROJECT_STAGES.indexOf(p.stage) + 1, stageCount: PROJECT_STAGES.length, startedAt: p.startedAt, completedAt: p.completedAt })) });
+  const paid = await paidMap(items.map((p) => p._id));
+  ok(res, { items: items.map((p) => ({ id: String(p._id), projectNumber: p.projectNumber, bookingNumber: p.booking?.bookingNumber, stage: p.stage, stageLabel: STAGE_LABEL[p.stage], stageIndex: PROJECT_STAGES.indexOf(p.stage) + 1, stageCount: PROJECT_STAGES.length, startedAt: p.startedAt, completedAt: p.completedAt, grandTotal: p.grandTotal, paid: paid.get(String(p._id)) || 0, balance: Math.max(0, Math.round((p.grandTotal || 0) - (paid.get(String(p._id)) || 0))) })) });
 });
 
 exports.customerGet = asyncHandler(async (req, res) => {

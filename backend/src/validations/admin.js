@@ -158,7 +158,12 @@ const serviceSchemas = { create: serviceBase, update: serviceBase.partial() };
 const ruleBase = z.object({
   key: z.string().trim().regex(/^[a-z][a-z0-9_]{1,50}$/, 'Use lower_snake_case'),
   label: str(100).min(2),
-  type: z.enum(['ROOM', 'ADDON']),
+  type: z.enum(['ROOM', 'ADDON', 'UNIT']),
+  appliesTo: z.enum(['RESIDENTIAL', 'COMMERCIAL', 'BOTH']).default('RESIDENTIAL'),
+  commercialTypes: z.array(str(40)).max(20).default([]),
+  unitLabel: optStr(40),
+  defaultQty: z.coerce.number().int().min(0).max(1000).default(0),
+  maxQty: z.coerce.number().int().min(1).max(5000).default(50),
   room: z.enum(['kitchens', 'bedrooms', 'washrooms']).nullable().optional(),
   mode: z.enum(['FLAT', 'PERCENT']).default('FLAT'),
   min: money.default(0),
@@ -243,18 +248,9 @@ const faqBase = z.object({
 });
 const faqSchemas = { create: faqBase, update: faqBase.partial() };
 
-const brandBase = z.object({
-  name: str(100).min(2),
-  logo: url,
-  website: url.optional(),
-  isPublished: z.boolean().default(true),
-  order: z.coerce.number().int().optional(),
-});
-const brandSchemas = { create: brandBase, update: brandBase.partial() };
-
 module.exports = {
   listQuery, updateLead, assign, bookingStatus, note, updateCustomer,
   createContractor, updateContractor, createStaff, updateStaff, resetPassword, createRole, updateRole,
   packageSchemas, serviceSchemas, ruleSchemas, templateSchemas, sendNotification,
-  projectSchemas, testimonialSchemas, faqSchemas, brandSchemas,
+  projectSchemas, testimonialSchemas, faqSchemas,
 };

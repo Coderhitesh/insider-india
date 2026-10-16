@@ -24,9 +24,11 @@ module.exports = {
   Project: require('./Project'),
   Testimonial: require('./Testimonial'),
   Faq: require('./Faq'),
-  Brand: require('./Brand'),
   SiteVisit: require('./SiteVisit'),
   Measurement: require('./Measurement'),
   Quotation: require('./Quotation'),
   ExecutionProject: require('./ExecutionProject'),
+  Payment: require('./Payment'),
+  Referrer: require('./Referrer'),
+  Referral: require('./Referral'),
 };

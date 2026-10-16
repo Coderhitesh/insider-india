@@ -161,3 +161,28 @@ Local uploads are stored in the database as a path only — `/api/v1/files/publi
 The website serves these paths through a Next.js rewrite to the API (`API_URL` / `NEXT_PUBLIC_API_URL`), so a domain
 or port change never breaks images. Older records holding `http://host:port/api/v1/files/…` are converted to paths
 automatically when the API starts (or run `npm run fix:file-urls` in `backend/`), and API responses always return paths.
+
+## Home banner, commercial estimates, payments
+
+- **Home banner** — Admin → Settings → Home banner: images for the top and bottom sliders on the right of the hero (empty = built-in photo).
+- **Commercial estimate** — after the carpet area the customer picks the space type (office, retail, restaurant, clinic, other) and sets quantities
+  (workstations/chairs, cabins, conference rooms, cafeteria, reception, washrooms…). Price = package ₹/sq ft × area + per-unit items + add-ons.
+  Rates: Admin → Packages (₹ per sq ft) and Admin → Estimate rules (type "Per unit", applies to Commercial). Starting values are flagged "Demo value".
+- **Payments** — Admin → Projects → a project → Payments: record cash / UPI / bank transfer / cheque / card, link to a milestone, void wrong
+  entries (kept + audited), send a reminder. Balance = accepted quotation total − received. Customers see the same in their dashboard and can
+  pay online when Razorpay is on (Admin → Settings → Online payments). Razorpay webhook: `<API domain>/api/v1/payments/razorpay/webhook`
+  (events payment.captured, order.paid, payment.failed; set the same webhook secret in settings). Permissions: `payments.view`, `payments.manage`.
+
+## Refer & Earn
+
+Off by default — turn on in **Admin → Settings → Refer & Earn** (slabs, level rewards, qualifying advance %, max % of a project payable by credit, terms).
+
+**Rewards are wallet credit, not cash.** An approved reward is added to the referrer's wallet. They use it on their own next project: the credit is deducted from the project amount (recorded as a "Referral credit" payment) and they pay the rest.
+
+- Customer: `/refer-and-earn` (public info) → `/account/referrals` (join, Referral ID, share link / WhatsApp, submit referral, status timeline, wallet + history). On their project page → Payments → "Use credit".
+- Staff: project → Payments → "Use credit" (same rules). Void the credit entry to return it to the wallet.
+- Share link `…/book-consultation?ref=II-XXXXXX` is remembered 30 days (first code wins); the lead becomes a referral once the customer verifies OTP.
+- Admin: **People → Refer & Earn** (`/admin/referrals`, `/admin/referrers` with wallet balance). Permissions `referrals.view`, `referrals.manage`.
+- Flow: Submitted → Verified (staff) → Contacted → Site visit → Quotation shared → Agreement signed → Advance received (automatic from booking/quotation/payments) → Approve (staff) = credit added to wallet.
+- Guards: self/staff/existing-customer/duplicate referrals blocked; first valid referral wins; one booking credits one referral; booking must be after the referral; reward locked at qualification, level re-checked at approval; amount change needs a note; credit only on the referrer's own project, ≤ wallet, ≤ project balance, ≤ max %; parallel double-spend blocked; credit never counts as a qualifying advance for another referral; referred project cancelled/refunded → reward on hold and credit removed (if already used → wallet negative + recovery review); suspended referrer cannot submit or use credit.
+- Confirm before launch: slab B amounts (marked "pending approval" in the PDF).

@@ -13,6 +13,7 @@ import { api } from '@/lib/api';
 import { useApi } from '@/lib/useApi';
 import { useAuth } from '@/store/auth';
 import { can, isContractor, fmtDate, fmtDateTime, inr } from '@/lib/admin';
+import ProjectPayments from './ProjectPayments';
 
 const STAGES = [['DESIGN', 'Design'], ['DESIGN_APPROVAL', 'Design approval'], ['MATERIAL_SELECTION', 'Material selection'], ['PRODUCTION', 'Production'], ['SITE_EXECUTION', 'Site execution'], ['QUALITY_CHECK', 'Quality check'], ['HANDOVER', 'Handover'], ['COMPLETED', 'Completed']];
 
@@ -27,7 +28,10 @@ export function ExecutionList() {
           { key: 'projectNumber', label: 'Project' }, { key: 'bookingNumber', label: 'Booking' }, { key: 'customer', label: 'Customer' },
           { key: 'stage', label: 'Stage', render: (r) => (r.startedAt ? r.stageLabel : <Pill tone="amber">Not started</Pill>) },
           { key: 'projectManager', label: 'Project manager', render: (r) => r.projectManager || '—' }, { key: 'contractor', label: 'Contractor' },
-          { key: 'grandTotal', label: 'Value', className: 'text-right', render: (r) => inr(r.grandTotal) }, { key: 'updatedAt', label: 'Updated', render: (r) => fmtDate(r.updatedAt) },
+          { key: 'grandTotal', label: 'Value', className: 'text-right', render: (r) => inr(r.grandTotal) },
+          { key: 'paid', label: 'Received', className: 'text-right', render: (r) => (r.paid === undefined ? '—' : inr(r.paid)) },
+          { key: 'balance', label: 'Balance', className: 'text-right', render: (r) => (r.balance === undefined ? '—' : r.balance > 0 ? <span className="font-semibold text-wine">{inr(r.balance)}</span> : <Pill tone="green">Paid</Pill>) },
+          { key: 'updatedAt', label: 'Updated', render: (r) => fmtDate(r.updatedAt) },
         ]} />
     </>
   );
@@ -97,19 +101,19 @@ export function ExecutionDetail({ id }) {
         <div className="space-y-6">
           <Box title="Team"><KV rows={[['Project manager', p.projectManager?.name], ['Contractor', p.contractor?.name], ['Started', fmtDate(p.startedAt)], ['Value', inr(p.grandTotal)]]} /></Box>
           <Box title="Milestones">{p.milestones.length ? <ul className="space-y-1 text-sm">{p.milestones.map((m) => <li key={m._id} className="flex justify-between gap-2"><span>{m.title}</span><span className={m.status === 'DONE' ? 'text-success' : 'text-graphite'}>{m.status === 'DONE' ? 'Done' : fmtDate(m.dueDate)}</span></li>)}</ul> : <p className="text-sm text-graphite">None yet.</p>}</Box>
-          <Box title="Payments">{p.paymentSchedule.length ? <ul className="space-y-1 text-sm">{p.paymentSchedule.map((x) => <li key={x._id} className="flex justify-between gap-2"><span>{x.label}</span><span className="tabular">{inr(x.amount)} <Pill value={x.status === 'PAID' ? 'COMPLETED' : 'SCHEDULED'}>{x.status === 'PAID' ? 'Paid' : 'Pending'}</Pill></span></li>)}</ul> : <p className="text-sm text-graphite">No schedule.</p>}</Box>
+          {!isContractor(user) && can(user, 'payments.view') && <ProjectPayments projectId={id} canManage={can(user, 'payments.manage')} />}
         </div>
       </div>
       <Drawer open={Boolean(plan)} onClose={() => setPlan(null)} title="Plan & payments"
         footer={<><Button variant="ghost" onClick={() => setPlan(null)}>Cancel</Button><Button onClick={() => run(() => api(`/execution/${id}`, { method: 'PATCH', body: {
           ...(plan.projectManager ? { projectManager: plan.projectManager } : {}),
           milestones: plan.milestones.map(({ _id, title, dueDate, status }) => ({ ...(_id ? { _id } : {}), title, dueDate: dueDate || null, status })),
-          paymentSchedule: plan.paymentSchedule.map(({ _id, label, percent, amount, dueOn, status, reference }) => ({ ...(_id ? { _id } : {}), label, percent: percent || undefined, amount: Number(amount) || 0, dueOn: dueOn || null, status, reference: reference || undefined })),
+          paymentSchedule: plan.paymentSchedule.map(({ _id, label, percent, amount, dueOn }) => ({ ...(_id ? { _id } : {}), label, percent: percent || undefined, amount: Number(amount) || Math.round(((p.grandTotal || 0) * (Number(percent) || 0)) / 100), dueOn: dueOn || null, status: 'PENDING' })),
           reason: plan.reason || undefined } }), 'Saved').then(() => setPlan(null))}>Save</Button></>}>
         {plan && <Fields value={plan} onChange={setPlan} fields={[
           { name: 'projectManager', label: 'Project manager', type: 'select', options: (staff.data?.items || []).map((u) => ({ value: u.id, label: u.name })), hint: staff.data ? 'Leave to keep current' : 'Requires permission to view staff' },
           { name: 'milestones', label: 'Milestones', type: 'rows', addLabel: 'Add milestone', newRow: { title: '', dueDate: null, status: 'PENDING' }, fields: [{ name: 'title', label: 'Title' }, { name: 'dueDate', label: 'Due', type: 'date' }, { name: 'status', label: 'Status', type: 'select', placeholder: false, options: ['PENDING', 'DONE'] }] },
-          { name: 'paymentSchedule', label: 'Payment schedule', type: 'rows', addLabel: 'Add payment', newRow: { label: '', amount: 0, status: 'PENDING' }, fields: [{ name: 'label', label: 'Milestone' }, { name: 'amount', label: 'Amount ₹', type: 'number' }, { name: 'dueOn', label: 'Due', type: 'date' }, { name: 'status', label: 'Status', type: 'select', placeholder: false, options: ['PENDING', 'PAID'] }, { name: 'reference', label: 'Payment reference' }] },
+          { name: 'paymentSchedule', label: `Payment schedule — contract value ${inr(p.grandTotal)}. Paid status comes from recorded payments.`, type: 'rows', addLabel: 'Add milestone', newRow: { label: '', percent: null, amount: null }, fields: [{ name: 'label', label: 'Milestone', hint: 'e.g. Advance, After design, Before handover' }, { name: 'percent', label: '%', type: 'number', nullable: true }, { name: 'amount', label: 'Amount ₹ (blank = from %)', type: 'number', nullable: true }, { name: 'dueOn', label: 'Due', type: 'date' }] },
           { name: 'reason', label: 'Reason (audit log)' },
         ]} />}
       </Drawer>

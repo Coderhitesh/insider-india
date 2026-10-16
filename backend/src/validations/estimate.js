@@ -8,6 +8,9 @@ const base = z.object({
   bedrooms: z.coerce.number().int().min(0).max(20).default(0),
   washrooms: z.coerce.number().int().min(0).max(20).default(0),
   addons: z.array(z.string().trim().max(60)).max(30).default([]),
+  // Commercial: space type + counted items (workstations, cabins, cafeteria …) keyed by rule key.
+  commercialType: z.string().trim().max(40).optional(),
+  units: z.record(z.string().regex(/^[a-z][a-z0-9_]{1,50}$/), z.coerce.number().int().min(0).max(5000)).default({}),
 });
 
 const refine = (v, ctx) => {

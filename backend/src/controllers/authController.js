@@ -96,6 +96,7 @@ exports.verifyOtp = asyncHandler(async (req, res) => {
       lead.lastActivityAt = now;
       await lead.save();
       await logActivity({ lead: lead._id, actor: user, type: 'OTP_VERIFIED', message: 'Mobile number verified' });
+      if (lead.referralCode) await require('../services/referralService').attachFromLead(lead, user);
     }
   }
 

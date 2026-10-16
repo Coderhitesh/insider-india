@@ -8,7 +8,7 @@ const settings = require('../services/settingsService');
 const M = require('../models');
 const { PERMISSIONS, DEFAULT_ROLE_PERMISSIONS, ROLES } = require('../config/constants');
 const D = require('../config/defaults');
-const { PACKAGES, SERVICES, ESTIMATE_RULES, NOTIFICATION_TEMPLATES, FAQS } = require('./data');
+const { PACKAGES, SERVICES, ESTIMATE_RULES, COMMERCIAL_RULES, COMMERCIAL_AREA_RATES, NOTIFICATION_TEMPLATES, FAQS } = require('./data');
 const { normalizeMobile } = require('../utils/phone');
 
 const log = (...a) => console.log('[seed]', ...a);
@@ -74,9 +74,9 @@ async function run() {
     log('SEED_SUPER_ADMIN_EMAIL not set — skipping super admin');
   }
 
-  log('packages +', await upsertMany(M.Package, PACKAGES, (p) => ({ slug: p.slug })));
+  log('packages +', await upsertMany(M.Package, PACKAGES.map((p) => ({ ...p, areaRate: COMMERCIAL_AREA_RATES[p.slug] })), (p) => ({ slug: p.slug })));
   log('services +', await upsertMany(M.Service, SERVICES, (s) => ({ slug: s.slug })));
-  log('estimate rules +', await upsertMany(M.EstimateRule, ESTIMATE_RULES, (r) => ({ key: r.key })));
+  log('estimate rules +', await upsertMany(M.EstimateRule, [...ESTIMATE_RULES, ...COMMERCIAL_RULES], (r) => ({ key: r.key })));
   if (!(await M.Faq.exists({}))) log('faqs (unpublished drafts) +', (await M.Faq.insertMany(FAQS)).length);
   log('notification templates +', await upsertMany(M.NotificationTemplate, NOTIFICATION_TEMPLATES, (t) => ({ event: t.event, channel: t.channel })));
 

@@ -13,7 +13,7 @@ const asyncHandler = require('../utils/asyncHandler');
 exports.config = asyncHandler(async (req, res) => {
   const [cfg, addons, otp] = await Promise.all([
     options.getEstimateConfig(),
-    EstimateRule.find({ isActive: true, type: 'ADDON' }).sort({ order: 1 }).select('key label icon image description').lean(),
+    EstimateRule.find({ isActive: true, type: { $in: ['ADDON', 'UNIT'] } }).sort({ order: 1 }).select('key label type appliesTo commercialTypes unitLabel defaultQty maxQty icon image description').lean(),
     otpService.getConfig(),
   ]);
   res.set('Cache-Control', 'public, max-age=60');
@@ -23,7 +23,10 @@ exports.config = asyncHandler(async (req, res) => {
     defaultCounters: cfg.defaultCounters,
     counterLimits: cfg.counterLimits,
     areaLimits: cfg.areaLimits,
-    addons: addons.map((a) => ({ key: a.key, label: a.label, icon: a.icon, image: a.image, description: a.description })),
+    commercialTypes: (cfg.commercialTypes || []).filter((o) => o.active !== false),
+    // appliesTo: RESIDENTIAL | COMMERCIAL | BOTH (older rules have none → residential)
+    addons: addons.filter((a) => a.type === 'ADDON').map((a) => ({ key: a.key, label: a.label, icon: a.icon, image: a.image, description: a.description, appliesTo: a.appliesTo || 'RESIDENTIAL', commercialTypes: a.commercialTypes || [] })),
+    units: addons.filter((a) => a.type === 'UNIT').map((a) => ({ key: a.key, label: a.label, icon: a.icon, description: a.description, unitLabel: a.unitLabel || 'nos', defaultQty: a.defaultQty || 0, maxQty: a.maxQty || 50, appliesTo: a.appliesTo || 'COMMERCIAL', commercialTypes: a.commercialTypes || [] })),
     disclaimer: cfg.disclaimer,
     otpLength: otp.length,
   });
@@ -60,7 +63,13 @@ exports.create = asyncHandler(async (req, res) => {
       throw new ApiError(422, `Number of ${k} must be between ${lim.min} and ${lim.max}`, 'VALIDATION_ERROR', [{ field: k, message: 'Out of range' }]);
     }
   }
-  if (input.propertyCategory === 'COMMERCIAL') delete input.bhk;
+  if (input.propertyCategory === 'COMMERCIAL') {
+    delete input.bhk;
+    const types = (cfg.commercialTypes || []).filter((o) => o.active !== false);
+    if (types.length && !types.some((t) => t.value === input.commercialType)) {
+      throw new ApiError(422, 'Select the type of commercial space', 'VALIDATION_ERROR', [{ field: 'commercialType', message: 'Select a type' }]);
+    }
+  }
 
   let lead;
   if (leadId) {

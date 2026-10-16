@@ -34,6 +34,40 @@ const SETTINGS_SCHEMAS = {
       visible: z.boolean(),
     })).max(12),
   }),
+  'site.hero': z.object({
+    intervalSeconds: z.coerce.number().int().min(2).max(30).default(5),
+    top: z.array(z.object({ image: z.string().trim().min(1).max(1000).transform(toStoredPath), alt: z.string().trim().max(160).default('') })).max(10).default([]),
+    bottom: z.array(z.object({ image: z.string().trim().min(1).max(1000).transform(toStoredPath), alt: z.string().trim().max(160).default('') })).max(10).default([]),
+  }),
+  'referral.config': z.object({
+    enabled: z.boolean(),
+    programName: s(80),
+    slabs: z.array(z.object({
+      key: z.string().trim().regex(/^[A-Z0-9_]{1,10}$/, 'Use capital letters/numbers'),
+      label: z.string().trim().min(1).max(80),
+      from: z.coerce.number().min(0).max(1e10),
+      fromInclusive: z.boolean().default(true),
+      rewards: z.array(z.coerce.number().min(0).max(1e8)).min(1).max(10),
+    })).min(1).max(10)
+      .refine((a) => a.every((x, i) => i === 0 || x.from >= a[i - 1].from), 'Slabs must be in increasing order of value')
+      .refine((a) => new Set(a.map((x) => x.key)).size === a.length, 'Slab keys must be unique')
+      .refine((a) => a[0].from === 0, 'The first slab must start at ₹0'),
+    afterLastLevel: z.enum(['REPEAT_LAST', 'NONE']),
+    countingPeriod: z.enum(['LIFETIME', 'FINANCIAL_YEAR', 'CALENDAR_YEAR']),
+    payoutTrigger: z.enum(['ADVANCE', 'AGREEMENT']),
+    minAdvancePercent: z.coerce.number().min(0).max(100),
+    valueBasis: z.enum(['EXCL_GST', 'INCL_GST']),
+    maxRedeemPercent: z.coerce.number().min(1).max(100).default(100),
+    payoutWorkingDays: z.coerce.number().int().min(0).max(120).default(15),
+    tdsPercent: z.coerce.number().min(0).max(50).default(0),
+    duplicateWindowDays: z.coerce.number().int().min(0).max(3650),
+    maxSubmissionsPerDay: z.coerce.number().int().min(1).max(200),
+    terms: z.string().trim().max(10000).default(''),
+  }),
+  'providers.payment': z.object({
+    active: z.enum(['NONE', 'RAZORPAY']),
+    razorpay: z.object({ keyId: s(100), keySecret: s(200), webhookSecret: s(200) }),
+  }),
   'funnel.options': z.object({
     cities: optionList, requirementTypes: optionList, possessionOptions: optionList,
     propertyTypes: optionList, bhkOptions: optionList, projectTypes: optionList,
@@ -43,6 +77,7 @@ const SETTINGS_SCHEMAS = {
     includedRooms: z.record(rooms),
     defaultCounters: z.record(rooms),
     counterLimits: z.object({ kitchens: limit, bedrooms: limit, washrooms: limit }),
+    commercialTypes: optionList.optional(),
     areaLimits: limit,
     roundTo: z.number().int().min(0).max(1000000),
     disclaimer: z.string().trim().min(20).max(1000),
@@ -94,7 +129,7 @@ const SETTINGS_SCHEMAS = {
   }),
 };
 
-const SUPER_ADMIN_KEYS = ['storage', 'providers.sms', 'providers.whatsapp', 'providers.email', 'otp.config'];
-const PUBLIC_KEYS = ['company.profile', 'site.stats', 'funnel.options'];
+const SUPER_ADMIN_KEYS = ['storage', 'providers.sms', 'providers.whatsapp', 'providers.email', 'providers.payment', 'otp.config'];
+const PUBLIC_KEYS = ['company.profile', 'site.stats', 'site.hero', 'funnel.options'];
 
 module.exports = { SETTINGS_SCHEMAS, SUPER_ADMIN_KEYS, PUBLIC_KEYS };

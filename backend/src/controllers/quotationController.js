@@ -254,12 +254,19 @@ exports.send = asyncHandler(async (req, res) => {
 });
 
 exports.revise = asyncHandler(async (req, res) => {
-  await need(req, 'quotations.review');
+  // Admins can revise any sent quotation. The assigned contractor can revise when the customer asked for changes;
+  // a contractor's revision is always a DRAFT that goes back through admin review before the customer sees it.
+  const byContractor = isContractor(req.user);
+  await need(req, byContractor ? 'quotations.edit' : 'quotations.review');
   const prev = await loadStaff(req);
   requireLatest(prev);
   if (!['SENT_TO_CUSTOMER', 'REJECTED', 'REVISION_REQUESTED'].includes(prev.status)) {
     throw ApiError.conflict('Only quotations already sent to the customer can be revised. Edit the current version instead.', 'INVALID_STATUS');
   }
+  if (byContractor && prev.status !== 'REVISION_REQUESTED') {
+    throw ApiError.conflict('You can revise a quotation when the customer asks for changes. Ask an admin for other revisions.', 'INVALID_STATUS');
+  }
+  const toContractor = byContractor || Boolean(req.body.returnToContractor);
   const now = new Date();
   const o = prev.toObject();
   const strip = (arr) => arr.map(({ _id, ...rest }) => rest);
@@ -272,8 +279,9 @@ exports.revise = asyncHandler(async (req, res) => {
     paymentSchedule: o.paymentSchedule, contractorNotes: o.contractorNotes, customerNotes: o.customerNotes,
     adminNotes: [o.adminNotes, req.body.note && `Revision V${o.version + 1}: ${req.body.note}`].filter(Boolean).join('\n\n'),
     contractorGrandTotal: o.contractorGrandTotal,
-    status: req.body.returnToContractor ? 'DRAFT' : 'UNDER_ADMIN_REVIEW',
-    submittedAt: req.body.returnToContractor ? undefined : now,
+    revisionRequest: prev.customerResponse?.note ? { note: prev.customerResponse.note, at: prev.customerResponse.at, fromVersion: o.version } : undefined,
+    status: toContractor ? 'DRAFT' : 'UNDER_ADMIN_REVIEW',
+    submittedAt: toContractor ? undefined : now,
     createdBy: req.user._id,
   });
   svc.compute(next);
@@ -290,7 +298,7 @@ exports.revise = asyncHandler(async (req, res) => {
   await advance(booking, { status: 'QUOTATION_IN_PROGRESS', force: true, event: 'QUOTATION_DRAFTED', visible: false, by: req.user._id, leadStatus: 'QUOTATION_DRAFT', meta: { version: next.version } });
   await audit(req, { action: 'QUOTATION_REVISION_CREATED', entityType: 'Quotation', entityId: next._id, before: { version: o.version, status: o.status }, after: { version: next.version }, reason: req.body.note });
   await logActivity({ lead: o.lead, booking: o.booking, quotation: next._id, actor: req.user, type: 'QUOTATION_REVISION_CREATED', message: `${next.displayNumber} created from V${o.version}` });
-  if (req.body.returnToContractor && next.contractor) {
+  if (toContractor && !byContractor && next.contractor) {
     notifications.send({ user: next.contractor, event: 'QUOTATION_RETURNED', channels: [CHANNELS.IN_APP], variables: { quotationNumber: next.displayNumber, note: req.body.note || 'Revision requested' }, link: `/admin/quotations/${next._id}` });
   }
   created(res, { quotation: svc.staffView(next) }, `Revision ${next.displayNumber} created`);
@@ -401,7 +409,16 @@ async function respond(req, { to, stamp, event, bookingStatus, leadStatus, staff
     variables: { quotationNumber: q.displayNumber, customerName: booking.snapshot?.name || req.user.name, note: req.body.note || '' },
     link: `/admin/quotations/${q._id}`,
   });
-  if (q.contractor) notifications.send({ user: q.contractor, event: staffEvent, channels: [CHANNELS.IN_APP], variables: { quotationNumber: q.displayNumber, customerName: booking.snapshot?.name || '', note: req.body.note || '' } });
+  if (q.contractor) {
+    notifications.send({
+      user: q.contractor, event: staffEvent, channels: [CHANNELS.IN_APP],
+      variables: {
+        quotationNumber: q.displayNumber, customerName: booking.snapshot?.name || '', note: req.body.note || '',
+        ...(to === 'REVISION_REQUESTED' ? { title: `Customer asked to recheck ${q.displayNumber}`, body: `${req.body.note || 'Changes requested'} — open the quotation and click Revise quotation.` } : {}),
+      },
+      link: `/admin/quotations/${q._id}`,
+    });
+  }
   return q;
 }
 

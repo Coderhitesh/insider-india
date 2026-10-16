@@ -41,6 +41,7 @@ exports.create = asyncHandler(async (req, res) => {
       existing.name = b.name || existing.name;
       if (b.city) existing.city = b.city;
       if (b.estimateDraft) existing.estimateDraft = b.estimateDraft;
+      if (b.referralCode && !existing.referralCode) existing.referralCode = b.referralCode;
       existing.lastActivityAt = new Date();
       await existing.save();
       await withServices(existing);
@@ -65,9 +66,11 @@ exports.create = asyncHandler(async (req, res) => {
     utm: b.utm,
     referrer: b.referrer,
     landingPage: b.landingPage,
+    referralCode: b.referralCode,
     resumeTokenHash: leadToken ? hmac(`lead:${leadToken}`) : undefined,
   });
 
+  if (verified && b.referralCode) await require('../services/referralService').attachFromLead(lead, req.user);
   await logActivity({ lead: lead._id, actor: req.user, type: 'LEAD_CREATED', message: `Lead created via ${b.flow === 'ESTIMATE' ? 'estimate calculator' : 'booking funnel'}` });
   created(res, { lead: leadView(lead), leadToken }, 'Saved');
 });

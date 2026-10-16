@@ -7,6 +7,7 @@ import { Badge, Panel, PageTitle, Empty, Loading, LoadError, Row, BackLink } fro
 import { useApi } from '@/lib/useApi';
 import { PROJECT_STAGES } from '@/lib/status';
 import { formatDate, formatINR } from '@/lib/format';
+import ProjectPayments from './ProjectPayments';
 
 export function ProjectsList() {
   const { data, error, loading, reload } = useApi('/account/projects');
@@ -23,6 +24,7 @@ export function ProjectsList() {
                 <div className="flex-1">
                   <p className="tabular font-semibold">{p.projectNumber}</p>
                   <p className="text-sm text-graphite">Booking {p.bookingNumber}. {p.startedAt ? `Stage ${p.stageIndex} of ${p.stageCount}: ${p.stageLabel}` : 'Starting soon'}</p>
+                  {p.grandTotal > 0 && <p className="mt-0.5 text-sm">{p.balance > 0 ? <>Balance <strong className="tabular text-wine">{formatINR(p.balance)}</strong> of {formatINR(p.grandTotal)}</> : <span className="text-success">Fully paid</span>}</p>}
                 </div>
                 <ChevronRight className="size-4 text-graphite" aria-hidden="true" />
               </Link>
@@ -118,19 +120,7 @@ export function ProjectDetail({ id }) {
             {upcoming.length ? <dl>{upcoming.slice(0, 6).map((m) => <Row key={m._id} label={m.title}>{m.dueDate ? formatDate(m.dueDate) : 'Date to be confirmed'}</Row>)}</dl>
               : <p className="text-sm text-graphite">Your project manager will share milestones once design begins.</p>}
           </Panel>
-          {p.paymentSchedule.length > 0 && (
-            <Panel title="Payment schedule">
-              <dl>
-                {p.paymentSchedule.map((x) => (
-                  <Row key={x._id || x.label} label={`${x.label}${x.percent ? ` (${x.percent}%)` : ''}`}>
-                    <span className="tabular block">{formatINR(x.amount)}</span>
-                    <span className={clsx('block text-xs', x.status === 'PAID' ? 'text-success' : 'text-graphite')}>{x.status === 'PAID' ? `Paid${x.paidAt ? ` ${formatDate(x.paidAt)}` : ''}` : x.dueOn ? `Due ${formatDate(x.dueOn)}` : 'Pending'}</span>
-                  </Row>
-                ))}
-              </dl>
-              {p.grandTotal ? <p className="mt-3 text-sm text-graphite">Project value {formatINR(p.grandTotal)}</p> : null}
-            </Panel>
-          )}
+          <ProjectPayments projectId={id} />
         </div>
       </div>
     </>

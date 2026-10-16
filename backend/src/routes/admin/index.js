@@ -81,6 +81,25 @@ router.post('/settings/providers/:kind/test', requireSuperAdmin, validate({ body
 router.get('/settings/:key', P('settings.view'), settings.get);
 router.put('/settings/:key', P('settings.manage'), validate({ body: z.object({ value: z.any(), reason: z.string().max(500).optional() }) }), settings.update);
 
+// Refer & Earn
+const referrals = require('../../controllers/referralController');
+const rv = require('../../validations/referral');
+const rid = validate({ params: idParam });
+router.get('/referrals', P('referrals.view'), referrals.list);
+router.get('/referrals/:id', P('referrals.view'), rid, referrals.get);
+router.post('/referrals/:id/verify', P('referrals.manage'), validate({ params: idParam, body: rv.verify }), referrals.verify);
+router.post('/referrals/:id/reject', P('referrals.manage'), validate({ params: idParam, body: rv.reason }), referrals.reject);
+router.post('/referrals/:id/contacted', P('referrals.manage'), validate({ params: idParam, body: rv.note }), referrals.markContacted);
+router.post('/referrals/:id/link', P('referrals.manage'), validate({ params: idParam, body: rv.link }), referrals.link);
+router.post('/referrals/:id/approve', P('referrals.manage'), validate({ params: idParam, body: rv.approve }), referrals.approve);
+router.post('/referrals/:id/pay', P('referrals.payout'), validate({ params: idParam, body: rv.pay }), referrals.pay);
+router.post('/referrals/:id/withhold', P('referrals.manage'), validate({ params: idParam, body: rv.reason }), referrals.withhold);
+router.post('/referrals/:id/reopen', P('referrals.manage'), validate({ params: idParam, body: rv.reason }), referrals.reopen);
+router.post('/referrals/:id/recovery-reviewed', P('referrals.manage'), validate({ params: idParam, body: rv.reason }), referrals.clearRecovery);
+router.get('/referrers', P('referrals.view'), referrals.referrers);
+router.get('/referrers/:id', P('referrals.view'), rid, (req, res, next) => (req.query.reveal === 'true' ? P('referrals.payout')(req, res, next) : next()), referrals.referrer);
+router.patch('/referrers/:id', P('referrals.manage'), validate({ params: idParam, body: rv.referrerUpdate }), referrals.updateReferrer);
+
 // CRUD collections
 function mount(path, h, viewPerm, managePerm) {
   router.get(`/${path}`, P(viewPerm), h.list);
@@ -97,7 +116,6 @@ mount('notification-templates', catalog.templates, 'notifications.send', 'notifi
 mount('projects', catalog.projects, 'content.manage', 'content.manage');
 mount('testimonials', catalog.testimonials, 'content.manage', 'content.manage');
 mount('faqs', catalog.faqs, 'content.manage', 'content.manage');
-mount('brands', catalog.brands, 'content.manage', 'content.manage');
 
 // Notifications, audit, uploads
 router.post('/notifications/send', P('notifications.send'), validate({ body: v.sendNotification }), catalog.sendNotification);

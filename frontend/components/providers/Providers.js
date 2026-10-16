@@ -6,8 +6,22 @@ import { useAuth } from '@/store/auth';
 
 const UTM_KEYS = ['source', 'medium', 'campaign', 'term', 'content'];
 
+const REF_KEY = 'ii-ref';
+const REF_DAYS = 30;
+
+/** Refer & Earn code from a share link (?ref=II-XXXXXX), kept for 30 days on this device. */
+export function readReferralCode() {
+  try {
+    const r = JSON.parse(localStorage.getItem(REF_KEY) || 'null');
+    return r && r.exp > Date.now() ? r.code : undefined;
+  } catch { return undefined; }
+}
+
 export function readAttribution() {
-  try { return JSON.parse(sessionStorage.getItem('ii-attr') || '{}'); } catch { return {}; }
+  let attr = {};
+  try { attr = JSON.parse(sessionStorage.getItem('ii-attr') || '{}'); } catch { /* storage unavailable */ }
+  const referralCode = readReferralCode();
+  return referralCode ? { ...attr, referralCode } : attr;
 }
 
 export default function Providers({ children }) {
@@ -17,6 +31,11 @@ export default function Providers({ children }) {
       useAuth.getState().setLoading();
       refreshSession();
     }
+    // Referral link: the first referrer's code is kept (a later link does not replace it while valid).
+    try {
+      const ref = new URLSearchParams(window.location.search).get('ref');
+      if (ref && /^II-[A-Z0-9]{6}$/i.test(ref) && !readReferralCode()) localStorage.setItem(REF_KEY, JSON.stringify({ code: ref.toUpperCase(), exp: Date.now() + REF_DAYS * 864e5 }));
+    } catch { /* storage unavailable */ }
     // Capture first-touch attribution for lead tracking.
     try {
       if (!sessionStorage.getItem('ii-attr')) {

@@ -8,8 +8,9 @@ function isStepComplete(lead, step) {
     case 'POSSESSION': return Boolean(lead.possession);
     case 'OTP': return Boolean(lead.user && lead.verifiedAt);
     case 'LOCATION': return Boolean(addr.formattedAddress && addr.pincode);
-    case 'PROPERTY_TYPE': return Boolean(lead.property?.propertyType);
-    case 'BHK': return Boolean(lead.property?.bhk);
+    // Commercial spaces (from the estimator) have no home type / BHK — those steps are skipped.
+    case 'PROPERTY_TYPE': return lead.propertyCategory === 'COMMERCIAL' || Boolean(lead.property?.propertyType);
+    case 'BHK': return lead.propertyCategory === 'COMMERCIAL' || Boolean(lead.property?.bhk);
     case 'PROJECT_TYPE': return Boolean(lead.projectType);
     case 'SERVICES': return (lead.services || []).length > 0;
     case 'FLOOR_PLAN': {

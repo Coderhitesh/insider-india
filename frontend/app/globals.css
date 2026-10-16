@@ -150,10 +150,3 @@
 .site-skin .grid-paper-invert { background-image: none; }
 .site-skin .budget-card { border-radius: 14px; overflow: hidden; }
 .site-skin .budget-card > div:first-child { background: linear-gradient(135deg, #b30d29 0%, #9a0c22 55%, #7d0a1c 100%); }
-
-/* Brand partner slider */
-@keyframes brand-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-.brand-track { animation: brand-scroll var(--marquee-time, 30s) linear infinite; }
-.brand-marquee:hover .brand-track { animation-play-state: paused; }
-.brand-marquee { mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
-@media (prefers-reduced-motion: reduce) { .brand-track { animation: none; } .brand-marquee { overflow-x: auto; } }

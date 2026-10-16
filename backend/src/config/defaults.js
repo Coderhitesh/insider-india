@@ -64,6 +64,14 @@ const ESTIMATE_CONFIG = {
     CUSTOM: { kitchens: 1, bedrooms: 2, washrooms: 2 },
     COMMERCIAL: { kitchens: 0, bedrooms: 0, washrooms: 1 },
   },
+  // Commercial space types asked after the carpet area; UNIT/ADDON rules can be limited to some of them.
+  commercialTypes: ordered([
+    opt('OFFICE', 'Office / Co-working', { icon: 'Building2' }),
+    opt('RETAIL', 'Retail / Showroom', { icon: 'Store' }),
+    opt('RESTAURANT', 'Restaurant / Café', { icon: 'Coffee' }),
+    opt('CLINIC', 'Clinic / Salon', { icon: 'Stethoscope' }),
+    opt('OTHER', 'Other', { icon: 'LayoutGrid' }),
+  ]),
   counterLimits: { kitchens: { min: 0, max: 4 }, bedrooms: { min: 0, max: 10 }, washrooms: { min: 0, max: 10 } },
   areaLimits: { min: 100, max: 200000 },
   roundTo: 10000,
@@ -117,4 +125,45 @@ const SITE_STATS = {
   ],
 };
 
-module.exports = { OPERATIONS_CONFIG, MAPS_CONFIG, FUNNEL_OPTIONS, ESTIMATE_CONFIG, OTP_CONFIG, PRICING_CONFIG, COMPANY_PROFILE, SITE_STATS };
+// Home page hero: two image sliders on the right (top + bottom). Empty lists fall back to the built-in photos.
+const SITE_HERO = { intervalSeconds: 5, top: [], bottom: [] };
+
+// Online payments. NONE = only offline payments (cash/UPI/bank/cheque) are recorded by staff.
+const PAYMENT_PROVIDER = { active: 'NONE', razorpay: { keyId: '', keySecret: '', webhookSecret: '' } };
+
+// Refer & Earn. Off until management approves the terms. Slabs are chosen on the eligible project value
+// (accepted quotation, excluding GST by default); `from` is the lower bound, `fromInclusive` whether it is included.
+const REFERRAL_CONFIG = {
+  enabled: false,
+  programName: 'Refer & Earn',
+  slabs: [
+    { key: 'A', label: 'Up to ₹15 lakh', from: 0, fromInclusive: true, rewards: [25000, 45000, 55000] },
+    { key: 'B', label: 'Above ₹15 lakh, below ₹20 lakh', from: 1500000, fromInclusive: false, rewards: [30000, 50000, 60000] },
+    { key: 'C', label: '₹20 lakh and above', from: 2000000, fromInclusive: true, rewards: [35000, 55000, 65000] },
+  ],
+  afterLastLevel: 'REPEAT_LAST', // REPEAT_LAST | NONE
+  countingPeriod: 'LIFETIME', // LIFETIME | FINANCIAL_YEAR | CALENDAR_YEAR
+  payoutTrigger: 'ADVANCE', // ADVANCE (qualifying advance received) | AGREEMENT (quotation accepted)
+  minAdvancePercent: 10,
+  valueBasis: 'EXCL_GST', // EXCL_GST | INCL_GST
+  // Rewards are not paid in cash: they are added to the referrer's wallet as credit for their own next project.
+  maxRedeemPercent: 100, // max % of a project's value that can be paid with referral credit
+  payoutWorkingDays: 15, // legacy (cash payouts) — unused
+  tdsPercent: 0, // legacy — unused
+  duplicateWindowDays: 180,
+  maxSubmissionsPerDay: 10,
+  terms: [
+    'Refer genuine new customers for interior design, renovation, modular kitchens, furniture or turnkey projects.',
+    'Submit the referral before the customer starts discussions with us. The customer must be new to us — not already in our records, an existing customer for the same project, or in active discussion.',
+    'The first valid referral we accept for a customer gets the credit. Duplicate, self, disputed or fraudulent referrals are rejected.',
+    'A referral qualifies after verification, a signed agreement (accepted quotation) and receipt of the qualifying advance. The reward slab is based on the final accepted project value, excluding GST, refunds, cancelled work and unapproved variations.',
+    'Rewards are not paid in cash and cannot be withdrawn or transferred. Approved rewards are added to your Refer & Earn wallet as credit.',
+    'Use your wallet credit against your own next project with us: the credit is deducted from your project amount and you pay the remaining balance.',
+    'Your second and third successful referrals earn the higher level rewards. One project counts once. Past rewards are not increased later.',
+    'If the referred project is cancelled or its advance is refunded, the reward is withheld and the credit is removed from your wallet. Credit already used may be adjusted against your project balance.',
+    'Share a customer’s details only with their permission. Do not promise discounts, collect payments on our behalf or misrepresent our services.',
+    'We may change or end the program with notice; accepted referrals follow the terms in force when they were accepted.',
+  ].join('\n'),
+};
+
+module.exports = { REFERRAL_CONFIG, OPERATIONS_CONFIG, MAPS_CONFIG, FUNNEL_OPTIONS, ESTIMATE_CONFIG, OTP_CONFIG, PRICING_CONFIG, COMPANY_PROFILE, SITE_STATS, SITE_HERO, PAYMENT_PROVIDER };

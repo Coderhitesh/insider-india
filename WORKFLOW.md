@@ -13,7 +13,7 @@ Har booking page (`/admin/bookings/<id>`) ke top par **Workflow** box dikhata ha
 | 7 | Admin review ke liye bhejna | Contractor | Editor → **Submit for admin review**. Ab contractor edit nahi kar sakta, customer ko abhi nahi dikhta. |
 | 8 | Admin review | Admin | Rates check karo; price badloge to **reason** maangega (audit log + price-change history). Discount, GST, validity, payment schedule (100% total) daalo → **Preview PDF**. Galti ho to **Return to contractor**. |
 | 9 | Customer ko bhejna | Admin | **Approve & send to customer** → PDF banta hai, customer ko WhatsApp + dashboard notification. |
-| 10 | Customer ka jawab | Customer | Dashboard → Quotations → **Accept** / **Request revision** / **Decline**. Revision par admin **Create revision** (V2, V3…) → update → Approve & send dobara. Purane versions safe rehte hain. |
+| 10 | Customer ka jawab | Customer | Dashboard → Quotations → **Accept** / **Request revision** / **Decline**. **Recheck / revision:** contractor quotation kholke **Revise quotation** dabata hai → naya version (V2, V3…) DRAFT banta hai jisme customer ka note dikhta hai → changes karke **Submit for admin review** → admin check karke **Approve & send** → customer ko naya version. (Admin chahe to khud **Create revision** bhi kar sakta hai, ya "Send to contractor" tick karke contractor ko bhej sakta hai.) Purane versions safe rehte hain. |
 | 11 | Project | Admin | Accept hote hi project ban jaata hai → Console → Projects → **Start project** → stages (Design → … → Handover) → milestones, payments, site photo updates. Customer dashboard mein sab dikhta hai. |
 
 ## Budget kahan dikhta hai
@@ -22,3 +22,11 @@ Har booking page (`/admin/bookings/<id>`) ke top par **Workflow** box dikhata ha
 
 ## OTP (provider lagne tak)
 `backend/.env` mein `OTP_FIXED_CODE=1234` → har OTP **1234**, kuch send nahi hota, OTP screen par "Testing mode" hint. Provider (MSG91/Meta WhatsApp…) Admin → Settings mein lagao, phir `OTP_FIXED_CODE` hata do. Production (`NODE_ENV=production`) mein ye tabhi chalega jab `ALLOW_FIXED_OTP=true` ho — live site par kabhi mat rakhna (koi bhi kisi bhi customer number se login kar lega).
+
+## Refer & Earn (staff)
+
+1. **To verify** tile → open referral → check "Checks" → Verify (tick override + note if flagged as possible duplicate) or Reject. Verifying creates a CRM lead.
+2. Status then follows the customer's booking, quotation and payments automatically. If they booked with another number, use **Link booking** (audited).
+3. **Pending approval** → Approve & credit (change amount only with a reason). The amount goes to the referrer's wallet — no cash payout.
+4. When the referrer books their own project: project → Payments → **Use credit** (or they apply it themselves from their dashboard). They pay the remaining balance normally.
+5. Referred project cancelled / refunded after the credit was used → "Recovery review" → adjust in their project balance, then Close recovery review.

@@ -156,4 +156,44 @@ const FAQS = [
   ['Do I need a password to log in?', 'No. You log in with a one-time verification code sent to your mobile number by SMS or WhatsApp.'],
 ].map(([question, answer], i) => ({ question, answer, category: 'PROCESS', isPublished: false, order: i + 1 }));
 
-module.exports = { PACKAGES, SERVICES, ESTIMATE_RULES, NOTIFICATION_TEMPLATES, FAQS };
+// Commercial estimate: per-sq-ft base by package (carpet area × rate) for the basic fit-out of the space;
+// furniture and rooms (workstations, cabins, cafeteria …) are added per unit on top. Starting values — edit in Admin → Packages.
+const COMMERCIAL_AREA_RATES = {
+  economical: { minPerSqft: 600, maxPerSqft: 900 },
+  'premium-elegance': { minPerSqft: 900, maxPerSqft: 1300 },
+  'luxer-silver': { minPerSqft: 1300, maxPerSqft: 1800 },
+  'luxer-gold': { minPerSqft: 1800, maxPerSqft: 2600 },
+};
+
+// Commercial rules (UNIT = counted, priced per unit). Starting values — edit in Admin → Estimate rules.
+const U = (key, label, unitLabel, min, max, extra = {}) => ({ key, label, type: 'UNIT', appliesTo: 'COMMERCIAL', unitLabel, min, max, maxQty: 500, isDemoValue: true, ...extra });
+const A = (key, label, icon, min, max, extra = {}) => ({ key, label, type: 'ADDON', appliesTo: 'COMMERCIAL', icon, min, max, isDemoValue: true, ...extra });
+const COMMERCIAL_RULES = [
+  U('c_workstations', 'Workstations / chairs', 'seats', 12000, 25000, { icon: 'Armchair', defaultQty: 10, commercialTypes: ['OFFICE', 'OTHER'], order: 101 }),
+  U('c_cabins', 'Manager cabins', 'cabins', 80000, 200000, { icon: 'DoorClosed', defaultQty: 1, commercialTypes: ['OFFICE', 'CLINIC', 'OTHER'], order: 102 }),
+  U('c_conference', 'Conference rooms', 'rooms', 200000, 500000, { icon: 'Presentation', commercialTypes: ['OFFICE', 'OTHER'], order: 103 }),
+  U('c_meeting', 'Meeting / discussion rooms', 'rooms', 100000, 250000, { icon: 'Users', commercialTypes: ['OFFICE', 'OTHER'], order: 104 }),
+  U('c_reception', 'Reception area', 'areas', 150000, 400000, { icon: 'ConciergeBell', defaultQty: 1, order: 105 }),
+  U('c_cafeteria', 'Cafeteria / pantry', 'areas', 150000, 500000, { icon: 'Coffee', commercialTypes: ['OFFICE', 'CLINIC', 'OTHER'], order: 106 }),
+  U('c_washrooms', 'Washrooms', 'washrooms', 60000, 150000, { icon: 'Bath', defaultQty: 1, order: 107 }),
+  U('c_server_room', 'Server / IT room', 'rooms', 100000, 300000, { icon: 'Server', commercialTypes: ['OFFICE'], order: 108 }),
+  U('c_storage', 'Store room', 'rooms', 40000, 100000, { icon: 'Boxes', order: 109 }),
+  U('c_display_units', 'Display units / shelving', 'units', 30000, 100000, { icon: 'LayoutGrid', defaultQty: 4, commercialTypes: ['RETAIL'], order: 110 }),
+  U('c_cash_counter', 'Cash / billing counter', 'counters', 50000, 150000, { icon: 'Receipt', defaultQty: 1, commercialTypes: ['RETAIL', 'RESTAURANT'], order: 111 }),
+  U('c_trial_rooms', 'Trial rooms', 'rooms', 40000, 100000, { icon: 'Shirt', commercialTypes: ['RETAIL'], order: 112 }),
+  U('c_dining_seats', 'Dining seats', 'seats', 8000, 20000, { icon: 'Utensils', defaultQty: 20, commercialTypes: ['RESTAURANT'], order: 113 }),
+  U('c_bar_counter', 'Bar / service counter', 'counters', 100000, 300000, { icon: 'Wine', commercialTypes: ['RESTAURANT'], order: 114 }),
+  U('c_kitchen', 'Commercial kitchen', 'kitchens', 300000, 800000, { icon: 'CookingPot', commercialTypes: ['RESTAURANT'], order: 115 }),
+  U('c_consult_rooms', 'Consultation / treatment rooms', 'rooms', 150000, 300000, { icon: 'Stethoscope', commercialTypes: ['CLINIC'], order: 116 }),
+  U('c_waiting', 'Waiting area', 'areas', 100000, 250000, { icon: 'Sofa', commercialTypes: ['CLINIC', 'RETAIL', 'OTHER'], order: 117 }),
+  A('c_glass_partitions', 'Glass partitions', 'PanelsTopLeft', 100000, 400000, { order: 130 }),
+  A('c_false_ceiling', 'False ceiling', 'Layers', 80000, 300000, { order: 131 }),
+  A('c_acoustic', 'Acoustic panels', 'AudioLines', 60000, 250000, { order: 132 }),
+  A('c_branding_wall', 'Branding / feature wall', 'Sparkles', 50000, 200000, { order: 133 }),
+  A('c_flooring', 'Flooring (vinyl / carpet / tiles)', 'Grid3x3', 100000, 500000, { order: 134 }),
+  A('c_lighting', 'Lighting', 'Lamp', 60000, 250000, { order: 135 }),
+  A('c_electrical', 'Electrical & networking', 'Cable', 80000, 300000, { order: 136 }),
+  A('c_painting', 'Painting', 'PaintRoller', 40000, 150000, { order: 137 }),
+];
+
+module.exports = { PACKAGES, SERVICES, ESTIMATE_RULES, COMMERCIAL_RULES, COMMERCIAL_AREA_RATES, NOTIFICATION_TEMPLATES, FAQS };

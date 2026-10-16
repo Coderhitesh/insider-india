@@ -7,7 +7,7 @@ const SOCIAL_ICON = { instagram: Instagram, facebook: Facebook, linkedin: Linked
 const COLS = [
   { title: 'Quick Links', links: [['/', 'Home'], ['/services', 'Solutions'], ['/packages', 'Packages'], ['/projects', 'Projects'], ['/about', 'About Us'], ['/contact', 'Contact']] },
   { title: 'Our Solutions', links: [['/interiors', 'Full Home Interiors'], ['/kitchen', 'Modular Kitchens'], ['/wardrobes', 'Wardrobes & Storage'], ['/renovation', 'Renovation'], ['/commercial-interiors', 'Commercial Interiors']] },
-  { title: 'Support', links: [['/estimate', 'Get Free Estimate'], ['/book-consultation', 'Book a Consultation'], ['/how-it-works', 'How It Works'], ['/warranty', 'Warranty'], ['/terms', 'Terms & Conditions'], ['/privacy-policy', 'Privacy Policy']] },
+  { title: 'Support', links: [['/estimate', 'Get Free Estimate'], ['/book-consultation', 'Book a Consultation'], ['/how-it-works', 'How It Works'], ['/refer-and-earn', 'Refer & Earn'], ['/warranty', 'Warranty'], ['/terms', 'Terms & Conditions'], ['/privacy-policy', 'Privacy Policy']] },
 ];
 
 export default function Footer({ company }) {

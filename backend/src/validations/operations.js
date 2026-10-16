@@ -111,6 +111,20 @@ const projectUpdate = z.object({
   documents: z.array(z.object({ media: objectId, title: str(200).optional(), visibleToCustomer: z.boolean().default(true) })).max(100).optional(),
   reason: str(500).optional(),
 });
+const recordPayment = z.object({
+  amount: z.coerce.number().positive('Enter the amount').max(1e9),
+  method: z.enum(['CASH', 'UPI', 'BANK_TRANSFER', 'CHEQUE', 'CARD', 'OTHER']),
+  receivedAt: z.coerce.date().max(new Date(Date.now() + 864e5), 'Date cannot be in the future').optional(),
+  reference: str(120).optional(),
+  note: str(500).optional(),
+  scheduleItem: objectId.nullable().optional(),
+  notifyCustomer: z.boolean().default(true),
+});
+const applyCredit = z.object({ amount: z.coerce.number().min(1, 'Enter the amount').max(1e9), note: str(300).optional() });
+const voidPayment = z.object({ reason: str(500).min(3, 'Give a reason') });
+const createPaymentOrder = z.object({ amount: z.coerce.number().min(1).max(1e9), scheduleItem: objectId.nullable().optional() });
+const verifyPayment = z.object({ razorpay_order_id: str(100).min(1), razorpay_payment_id: str(100).min(1), razorpay_signature: str(200).min(1) });
+const cancelPaymentOrder = z.object({ orderId: str(100).min(1), reason: str(300).optional() });
 const projectStage = z.object({ stage: z.enum(PROJECT_STAGES), note: str(1000).optional() });
 const projectPost = z.object({ text: str(3000).min(1), media: ids, visibleToCustomer: z.boolean().default(true) });
 
@@ -118,4 +132,5 @@ module.exports = {
   scheduleVisit, updateVisit, completeVisit, cancelVisit, saveMeasurement,
   createQuotation, quotationBody, noteOnly, requiredNote, accept, approve, revise,
   projectUpdate, projectStage, projectPost,
+  recordPayment, applyCredit, voidPayment, createPaymentOrder, verifyPayment, cancelPaymentOrder,
 };

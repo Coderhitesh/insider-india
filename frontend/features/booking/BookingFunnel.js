@@ -110,7 +110,8 @@ export default function BookingFunnel() {
   const verified = lead?.verified;
   const move = useCallback((from, dir, l = lead) => {
     let i = ORDER.indexOf(from) + dir;
-    if (ORDER[i] === 'OTP' && l?.verified) i += dir;
+    const skip = (k) => (k === 'OTP' && l?.verified) || (l?.propertyCategory === 'COMMERCIAL' && (k === 'PROPERTY_TYPE' || k === 'BHK'));
+    while (ORDER[i] && skip(ORDER[i])) i += dir;
     setStep(ORDER[Math.max(0, Math.min(i, ORDER.length - 1))]);
   }, [lead]);
   const back = step && ORDER.indexOf(step) > 0 ? () => move(step, -1) : undefined;
@@ -288,8 +289,10 @@ export default function BookingFunnel() {
         ['REQUIREMENT', 'Requirement', label(options, 'requirementTypes', lead.requirementType)],
         ['POSSESSION', 'Possession', label(options, 'possessionOptions', lead.possession)],
         ['LOCATION', 'Location', [lead.property?.address?.formattedAddress, lead.property?.address?.pincode].filter(Boolean).join(', ')],
-        ['PROPERTY_TYPE', 'Home type', label(options, 'propertyTypes', lead.property?.propertyType)],
-        ['BHK', 'Configuration', label(options, 'bhkOptions', lead.property?.bhk)],
+        ...(lead.propertyCategory === 'COMMERCIAL' ? [['SPACE', 'Space', `Commercial${lead.property?.area ? `, ${Number(lead.property.area).toLocaleString('en-IN')} sq ft` : ''}`]] : [
+          ['PROPERTY_TYPE', 'Home type', label(options, 'propertyTypes', lead.property?.propertyType)],
+          ['BHK', 'Configuration', label(options, 'bhkOptions', lead.property?.bhk)],
+        ]),
         ['PROJECT_TYPE', 'Project type', label(options, 'projectTypes', lead.projectType)],
         ['SERVICES', 'Services', (lead.services || []).map((s) => s.title || services.find((x) => x.id === s)?.title).filter(Boolean).join(', ')],
         ['FLOOR_PLAN', 'Floor plan', fp.hasFloorPlan ? `${fp.media.length} file(s) uploaded` : fp.measurementAssistance?.opted ? `Expert measurement assistance (additional ₹${Number(fp.measurementAssistance.charge).toLocaleString('en-IN')})` : 'Not provided'],
@@ -301,7 +304,7 @@ export default function BookingFunnel() {
               <div key={key} className="flex items-start gap-4 py-4">
                 <dt className="w-32 shrink-0 text-graphite sm:w-40">{k}</dt>
                 <dd className="flex-1">{v || <span className="text-error">Missing</span>}</dd>
-                <button type="button" onClick={() => setStep(key)} className="text-sm text-wine underline underline-offset-4" aria-label={`Edit ${k.toLowerCase()}`}>Edit</button>
+                {key !== 'SPACE' && <button type="button" onClick={() => setStep(key)} className="text-sm text-wine underline underline-offset-4" aria-label={`Edit ${k.toLowerCase()}`}>Edit</button>}
               </div>
             ))}
           </dl>

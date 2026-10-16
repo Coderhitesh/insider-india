@@ -8,6 +8,7 @@ const SECRET_PATHS = {
   'providers.sms': ['msg91.authKey', 'twilio.authToken'],
   'providers.whatsapp': ['meta.accessToken', 'interakt.apiKey', 'gupshup.apiKey', 'twilio.authToken'],
   'providers.email': ['smtp.pass'],
+  'providers.payment': ['razorpay.keySecret', 'razorpay.webhookSecret'],
 };
 
 const CACHE_TTL_MS = 30000;

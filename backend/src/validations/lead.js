@@ -11,6 +11,8 @@ const createLead = z.object({
   utm: z.object({ source: str(), medium: str(), campaign: str(), term: str(), content: str() }).partial().optional(),
   referrer: str(500).optional(),
   landingPage: str(500).optional(),
+  // Refer & Earn share link code (?ref=II-XXXXXX); invalid codes are ignored, never an error.
+  referralCode: z.string().trim().max(20).optional().transform((v) => (v && /^II-[A-Z0-9]{6}$/i.test(v) ? v.toUpperCase() : undefined)),
   estimateDraft: estimateDraft.optional(),
 });
 

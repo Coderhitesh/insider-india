@@ -16,6 +16,13 @@ const { TIMELINE, CHANNELS, ROLES } = require('../config/constants');
 
 const tl = (event, at, extra = {}) => ({ event, label: TIMELINE[event], at, visibleToCustomer: true, ...extra });
 
+// "Commercial — Office / Co-working" from the estimate draft's space type.
+async function commercialLabel(lead) {
+  const cfg = await options.getEstimateConfig();
+  const t = (cfg.commercialTypes || []).find((x) => x.value === lead.estimateDraft?.commercialType);
+  return t ? `Commercial — ${t.label}` : 'Commercial';
+}
+
 exports.create = asyncHandler(async (req, res) => {
   const lead = await Lead.findById(req.body.leadId).populate('services', 'title slug');
   if (!lead || String(lead.user) !== String(req.user._id)) throw ApiError.notFound('Request not found', 'LEAD_NOT_FOUND');
@@ -34,8 +41,8 @@ exports.create = asyncHandler(async (req, res) => {
   const labels = {
     requirementType: options.labelOf(opts, 'requirementTypes', lead.requirementType),
     possession: options.labelOf(opts, 'possessionOptions', lead.possession),
-    propertyType: options.labelOf(opts, 'propertyTypes', lead.property.propertyType),
-    bhk: options.labelOf(opts, 'bhkOptions', lead.property.bhk),
+    propertyType: lead.propertyCategory === 'COMMERCIAL' ? await commercialLabel(lead) : options.labelOf(opts, 'propertyTypes', lead.property.propertyType),
+    bhk: lead.propertyCategory === 'COMMERCIAL' ? (lead.property.area ? `${Number(lead.property.area).toLocaleString('en-IN')} sq ft` : null) : options.labelOf(opts, 'bhkOptions', lead.property.bhk),
     projectType: options.labelOf(opts, 'projectTypes', lead.projectType),
   };
 

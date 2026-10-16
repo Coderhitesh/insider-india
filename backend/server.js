@@ -11,6 +11,7 @@ let server;
     await connectDB();
     // Old uploads saved as "http://host:port/api/v1/files/…" → "/api/v1/files/…" (idempotent).
     await require('./src/services/fileUrlMigration').migrateFileUrls().catch((err) => logger.warn('File URL migration skipped', { error: err.message }));
+    await require('./src/services/defaultsMigration').ensureDefaults().catch((err) => logger.warn('Default data check skipped', { error: err.message }));
     server = app.listen(env.port, () => logger.info(`API listening on :${env.port} (${env.nodeEnv})`));
     if (process.env.DISABLE_JOBS !== 'true') reminders.start();
     if (env.otpFixedCode) logger.warn(`OTP TEST MODE: every verification code is ${env.otpFixedCode}. Remove OTP_FIXED_CODE before going live.`);

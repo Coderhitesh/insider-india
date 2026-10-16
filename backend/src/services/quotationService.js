@@ -23,7 +23,7 @@ function staffView(q, { contractor = false } = {}) {
     status: o.status, sections: o.sections, discounts: o.discounts, additionalCharges: o.additionalCharges,
     gstPercent: o.gstPercent, paymentSchedule: o.paymentSchedule, validUntil: o.validUntil, totals: o.totals,
     contractorGrandTotal: o.contractorGrandTotal, contractorNotes: o.contractorNotes, adminNotes: o.adminNotes,
-    customerNotes: o.customerNotes, customerResponse: o.customerResponse,
+    customerNotes: o.customerNotes, customerResponse: o.customerResponse, revisionRequest: o.revisionRequest,
     ...(contractor ? {} : { priceChanges: o.priceChanges }),
     hasPdf: Boolean(o.pdf),
     submittedAt: o.submittedAt, reviewedAt: o.reviewedAt, approvedAt: o.approvedAt, sentAt: o.sentAt, viewedAt: o.viewedAt,

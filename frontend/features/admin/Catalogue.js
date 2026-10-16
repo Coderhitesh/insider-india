@@ -59,31 +59,53 @@ export function Services() {
   );
 }
 
+const SCOPE = { RESIDENTIAL: 'Residential', COMMERCIAL: 'Commercial', BOTH: 'Both' };
+const CTYPES = [['OFFICE', 'Office / Co-working'], ['RETAIL', 'Retail / Showroom'], ['RESTAURANT', 'Restaurant / Café'], ['CLINIC', 'Clinic / Salon'], ['OTHER', 'Other']].map(([value, label]) => ({ value, label }));
+const typeLabel = (r) => (r.type === 'ROOM' ? `Extra ${r.room?.replace(/s$/, '')}` : r.type === 'UNIT' ? `Per ${r.unitLabel || 'unit'}` : 'Add-on');
+
 export function EstimateRules() {
   const { packages } = useRefData();
   return (
-    <CrudResource endpoint="/admin/estimate-rules" title="Estimate rules" subtitle="Adjustments added to the package base range: extra rooms and add-ons. Rules flagged “demo” were seeded as placeholders." managePerm="packages.manage" reorder
-      filters={[{ name: 'type', label: 'Type', options: [['ROOM', 'Extra room'], ['ADDON', 'Add-on']] }]}
+    <CrudResource endpoint="/admin/estimate-rules" title="Estimate rules" subtitle="Adjustments added to the package base range. Residential: extra rooms and add-ons. Commercial: counted items (chairs, cabins, cafeteria…) priced per unit, and add-ons. Rules flagged “demo” are starting values — review before launch." managePerm="packages.manage" reorder
+      filters={[
+        { name: 'appliesTo', label: 'For', options: [['RESIDENTIAL', 'Residential'], ['COMMERCIAL', 'Commercial'], ['BOTH', 'Both']] },
+        { name: 'type', label: 'Type', options: [['ROOM', 'Extra room'], ['ADDON', 'Add-on'], ['UNIT', 'Per unit (commercial)']] },
+      ]}
       columns={[
         { key: 'label', label: 'Rule', render: (r) => <>{r.label}{r.isDemoValue && <span className="ml-2"><Pill tone="amber">Demo value</Pill></span>}</> },
-        { key: 'type', label: 'Type', render: (r) => (r.type === 'ROOM' ? `Extra ${r.room?.replace(/s$/, '')}` : 'Add-on') },
-        { key: 'amount', label: 'Adds', render: (r) => (r.mode === 'PERCENT' ? `${r.min}–${r.max}%` : `${inr(r.min)}–${inr(r.max)}`) },
+        { key: 'appliesTo', label: 'For', render: (r) => SCOPE[r.appliesTo || 'RESIDENTIAL'] + (r.commercialTypes?.length ? ` · ${r.commercialTypes.map((t) => CTYPES.find((c) => c.value === t)?.label || t).join(', ')}` : '') },
+        { key: 'type', label: 'Type', render: typeLabel },
+        { key: 'amount', label: 'Adds', render: (r) => (r.mode === 'PERCENT' ? `${r.min}–${r.max}%` : `${inr(r.min)}–${inr(r.max)}${r.type === 'UNIT' ? ` / ${r.unitLabel?.replace(/s$/, '') || 'unit'}` : ''}`) },
         { key: 'overrides', label: 'Package overrides', render: (r) => r.packageOverrides?.length || '—' },
         { key: 'isActive', label: 'Status', render: active },
       ]}
-      defaults={{ key: '', label: '', type: 'ADDON', room: null, mode: 'FLAT', min: 0, max: 0, packageOverrides: [], icon: '', description: '', isDemoValue: false, isActive: true }}
-      toForm={({ id, createdAt, updatedAt, order, ...r }) => r}
-      fromForm={(f) => ({ ...f, room: f.type === 'ROOM' ? f.room : null, reason: f.reason || undefined })}
+      defaults={{ key: '', label: '', type: 'ADDON', appliesTo: 'RESIDENTIAL', commercialTypes: [], unitLabel: '', defaultQty: 0, maxQty: 50, room: null, mode: 'FLAT', min: 0, max: 0, packageOverrides: [], icon: '', description: '', isDemoValue: false, isActive: true }}
+      toForm={({ id, createdAt, updatedAt, order, ...r }) => ({ appliesTo: 'RESIDENTIAL', commercialTypes: [], unitLabel: '', defaultQty: 0, maxQty: 50, ...r })}
+      fromForm={(f) => ({
+        ...f,
+        room: f.type === 'ROOM' ? f.room : null,
+        appliesTo: f.type === 'ROOM' ? 'RESIDENTIAL' : f.type === 'UNIT' && f.appliesTo === 'RESIDENTIAL' ? 'COMMERCIAL' : f.appliesTo,
+        commercialTypes: f.appliesTo === 'RESIDENTIAL' ? [] : f.commercialTypes || [],
+        unitLabel: f.type === 'UNIT' ? f.unitLabel || 'units' : undefined,
+        reason: f.reason || undefined,
+      })}
       fields={[
         { name: 'label', label: 'Label shown to customers' }, { name: 'key', label: 'Key', hint: 'lower_snake_case, unique' },
-        { name: 'type', label: 'Type', type: 'select', placeholder: false, options: [{ value: 'ADDON', label: 'Add-on (step 3)' }, { value: 'ROOM', label: 'Extra room (step 2)' }] },
+        { name: 'type', label: 'Type', type: 'select', placeholder: false, options: [
+          { value: 'ADDON', label: 'Add-on (yes / no, step 3)' }, { value: 'ROOM', label: 'Extra room (residential, step 2)' }, { value: 'UNIT', label: 'Per unit — chairs, cabins, cafeteria… (commercial, step 2)' },
+        ] },
+        { name: 'appliesTo', label: 'Applies to', type: 'select', placeholder: false, options: [{ value: 'RESIDENTIAL', label: 'Residential' }, { value: 'COMMERCIAL', label: 'Commercial' }, { value: 'BOTH', label: 'Both' }], hideIf: (v) => v.type === 'ROOM' },
+        { name: 'commercialTypes', label: 'Only for these commercial spaces (none ticked = all)', type: 'multiselect', options: CTYPES, hideIf: (v) => v.type === 'ROOM' || v.appliesTo === 'RESIDENTIAL' },
         { name: 'room', label: 'Room', type: 'select', nullable: true, options: [{ value: 'kitchens', label: 'Kitchens' }, { value: 'bedrooms', label: 'Bedrooms' }, { value: 'washrooms', label: 'Washrooms' }], hideIf: (v) => v.type !== 'ROOM' },
+        { name: 'unitLabel', label: 'Unit name (plural)', hint: 'e.g. seats, cabins, rooms', hideIf: (v) => v.type !== 'UNIT' },
+        { name: 'defaultQty', label: 'Starting quantity', type: 'number', min: 0, hideIf: (v) => v.type !== 'UNIT' },
+        { name: 'maxQty', label: 'Maximum quantity', type: 'number', min: 1, hideIf: (v) => v.type !== 'UNIT' },
         { name: 'mode', label: 'Mode', type: 'select', placeholder: false, options: [{ value: 'FLAT', label: 'Flat ₹ per unit' }, { value: 'PERCENT', label: '% of package base' }] },
-        { name: 'min', label: 'Min', type: 'number', min: 0 }, { name: 'max', label: 'Max', type: 'number', min: 0 },
+        { name: 'min', label: 'Min ₹ (per unit)', type: 'number', min: 0 }, { name: 'max', label: 'Max ₹ (per unit)', type: 'number', min: 0 },
         { name: 'packageOverrides', label: 'Different amounts for specific packages', type: 'rows', addLabel: 'Add override', newRow: { package: '', min: 0, max: 0 }, fields: [
           { name: 'package', label: 'Package', type: 'select', options: packages.map((p) => ({ value: p.id, label: p.name })) }, { name: 'min', label: 'Min', type: 'number' }, { name: 'max', label: 'Max', type: 'number' },
         ] },
-        { name: 'icon', label: 'Icon (lucide name)' }, { name: 'image', label: 'Image', type: 'image' }, { name: 'description', label: 'Description', type: 'textarea' },
+        { name: 'icon', label: 'Icon (lucide name)', hint: 'e.g. Armchair, Coffee, DoorClosed, Presentation' }, { name: 'image', label: 'Image', type: 'image' }, { name: 'description', label: 'Description', type: 'textarea' },
         { name: 'isDemoValue', label: 'Demo value', type: 'switch', help: 'Still a placeholder — review before launch' }, { name: 'isActive', label: 'Active', type: 'switch', help: 'Active' },
         { name: 'reason', label: 'Reason for change (audit log)', wide: true },
       ]} />
@@ -96,8 +118,8 @@ export function Content() {
   const [tab, setTab] = useState('projects');
   return (
     <>
-      <Header title="Website content" subtitle="Projects, testimonials, brand partners and FAQs. Unpublished items never appear on the site." />
-      <Tabs tabs={[['projects', 'Projects'], ['testimonials', 'Testimonials'], ['brands', 'Brand partners'], ['faqs', 'FAQs']]} value={tab} onChange={setTab} />
+      <Header title="Website content" subtitle="Projects, testimonials and FAQs. Unpublished items never appear on the site." />
+      <Tabs tabs={[['projects', 'Projects'], ['testimonials', 'Testimonials'], ['faqs', 'FAQs']]} value={tab} onChange={setTab} />
       {tab === 'projects' && (
         <CrudResource embedded endpoint="/admin/projects" title="Projects" managePerm="content.manage" reorder
           filters={[{ name: 'category', label: 'Category', options: CATS }]}
@@ -136,21 +158,6 @@ export function Content() {
             { name: 'quote', label: 'Quote', type: 'textarea', hint: 'Use real customer words only, with their permission.' },
             { name: 'rating', label: 'Rating (1–5)', type: 'number', min: 1, max: 5, nullable: true }, { name: 'photo', label: 'Photo', type: 'image' },
             { name: 'isPublished', label: 'Published', type: 'switch', help: 'Visible on site' },
-          ]} />
-      )}
-      {tab === 'brands' && (
-        <CrudResource embedded endpoint="/admin/brands" title="Brand partners" managePerm="content.manage" reorder
-          columns={[
-            { key: 'name', label: 'Brand', render: (r) => <span className="flex items-center gap-3">{r.logo && <img src={r.logo} alt="" className="h-8 w-14 object-contain" />}{r.name}</span> },
-            { key: 'website', label: 'Website' }, { key: 'isPublished', label: 'Status', render: published },
-          ]}
-          defaults={{ name: '', logo: '', website: '', isPublished: true }}
-          toForm={({ id, createdAt, updatedAt, order, ...r }) => r}
-          fromForm={(f) => ({ ...f, website: f.website || undefined })}
-          fields={[
-            { name: 'name', label: 'Brand name' }, { name: 'logo', label: 'Logo', type: 'image', hint: 'Transparent PNG/SVG works best' },
-            { name: 'website', label: 'Website link (optional)' },
-            { name: 'isPublished', label: 'Published', type: 'switch', help: 'Show in home page slider' },
           ]} />
       )}
       {tab === 'faqs' && (

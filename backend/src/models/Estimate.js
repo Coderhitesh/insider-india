@@ -34,6 +34,8 @@ const estimateSchema = new Schema(
       bedrooms: Number,
       washrooms: Number,
       addons: [String],
+      commercialType: String,
+      units: { type: Schema.Types.Mixed, default: {} },
     },
     results: [resultSchema],
     selectedPackage: { type: Types.ObjectId, ref: 'Package' },

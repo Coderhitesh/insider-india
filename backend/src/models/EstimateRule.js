@@ -4,7 +4,15 @@ const estimateRuleSchema = new Schema(
   {
     key: { type: String, required: true, unique: true, trim: true },
     label: { type: String, required: true },
-    type: { type: String, enum: ['ROOM', 'ADDON'], required: true },
+    // ROOM: extra rooms over the size's included count (residential). ADDON: yes/no element.
+    // UNIT: counted items priced per unit — chairs/workstations, cabins, cafeteria… (commercial).
+    type: { type: String, enum: ['ROOM', 'ADDON', 'UNIT'], required: true },
+    appliesTo: { type: String, enum: ['RESIDENTIAL', 'COMMERCIAL', 'BOTH'], default: 'RESIDENTIAL' },
+    // Commercial space types this rule is shown for (empty = all types).
+    commercialTypes: { type: [String], default: [] },
+    unitLabel: String,
+    defaultQty: { type: Number, default: 0, min: 0 },
+    maxQty: { type: Number, default: 50, min: 1 },
     room: { type: String, enum: ['kitchens', 'bedrooms', 'washrooms', null], default: null },
     mode: { type: String, enum: ['FLAT', 'PERCENT'], default: 'FLAT' },
     min: { type: Number, default: 0, min: 0 },

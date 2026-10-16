@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import clsx from 'clsx';
-import { LayoutDashboard, CalendarCheck, FileText, Hammer, Calculator, FolderOpen, Bell, UserRound } from 'lucide-react';
+import { LayoutDashboard, CalendarCheck, FileText, Hammer, Calculator, FolderOpen, Bell, UserRound, Gift } from 'lucide-react';
 import Spinner from '@/components/ui/Spinner';
 import Button from '@/components/ui/Button';
 import { useAuth } from '@/store/auth';
@@ -17,6 +17,7 @@ const NAV = [
   ['/account/projects', 'Projects', Hammer],
   ['/account/estimates', 'Estimates', Calculator],
   ['/account/documents', 'Documents', FolderOpen],
+  ['/account/referrals', 'Refer & Earn', Gift],
   ['/account/notifications', 'Notifications', Bell],
   ['/account/profile', 'Profile', UserRound],
 ];

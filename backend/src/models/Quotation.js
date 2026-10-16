@@ -107,6 +107,8 @@ const quotationSchema = new Schema(
     adminNotes: { type: String, maxlength: 5000 },
     customerNotes: { type: String, maxlength: 5000 }, // shown to customer / printed on PDF
     customerResponse: { note: String, at: Date },
+    // On a revision: what the customer asked for on the previous version (shown to the contractor/admin).
+    revisionRequest: { note: String, at: Date, fromVersion: Number },
 
     status: { type: String, enum: QUOTATION_STATUS, default: 'DRAFT', index: true },
     priceChanges: { type: [priceChangeSchema], default: [] },

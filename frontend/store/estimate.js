@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
-const initialInputs = { propertyCategory: 'RESIDENTIAL', bhk: null, area: '', kitchens: 1, bedrooms: 2, washrooms: 2, addons: [] };
+const initialInputs = { propertyCategory: 'RESIDENTIAL', bhk: null, area: '', kitchens: 1, bedrooms: 2, washrooms: 2, addons: [], commercialType: null, units: {} };
 
 export const useEstimateStore = create(persist((set) => ({
   step: 1,
@@ -20,4 +20,4 @@ export const useEstimateStore = create(persist((set) => ({
   setLead: (leadId, leadToken) => set({ leadId, leadToken }),
   setEstimate: (estimateId) => set({ estimateId }),
   reset: () => set({ step: 1, inputs: initialInputs, leadId: null, leadToken: null, estimateId: null }),
-}), { name: 'ii-estimate', storage: createJSONStorage(() => sessionStorage), version: 1 }));
+}), { name: 'ii-estimate', storage: createJSONStorage(() => sessionStorage), version: 2 }));

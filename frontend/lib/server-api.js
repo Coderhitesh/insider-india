@@ -18,13 +18,12 @@ async function getJSON(path, { revalidate = 300, fallback = null } = {}) {
 }
 
 export async function getSite() {
-  const data = await getJSON('/catalog/site', { fallback: {} });
-  return { company: { ...COMPANY_FALLBACK, ...(data?.company || {}) }, stats: data?.stats || [] };
+  const data = await getJSON('/catalog/site', { revalidate: 60, fallback: {} });
+  return { company: { ...COMPANY_FALLBACK, ...(data?.company || {}) }, stats: data?.stats || [], hero: data?.hero || { intervalSeconds: 5, top: [], bottom: [] } };
 }
 export const getPackages = async () => (await getJSON('/catalog/packages', { fallback: {} }))?.packages || [];
 export const getServices = async () => (await getJSON('/catalog/services', { fallback: {} }))?.services || [];
 export const getTestimonials = async () => (await getJSON('/catalog/testimonials', { fallback: {} }))?.items || [];
-export const getBrands = async () => (await getJSON('/catalog/brands', { revalidate: 60, fallback: {} }))?.items || [];
 export const getFaqs = async (category) => (await getJSON(`/catalog/faqs${category ? `?category=${category}` : ''}`, { fallback: {} }))?.items || [];
 export async function getProjects({ category, featured, page = 1, limit = 12 } = {}) {
   const qs = new URLSearchParams({ page: String(page), limit: String(limit) });
@@ -35,3 +34,4 @@ export async function getProjects({ category, featured, page = 1, limit = 12 } =
 }
 export const getProject = (slug) => getJSON(`/catalog/projects/${encodeURIComponent(slug)}`, { fallback: null });
 export const getProjectSlugs = async () => (await getJSON('/catalog/projects/slugs', { revalidate: 3600, fallback: {} }))?.items || [];
+export const getReferralProgram = async () => (await getJSON('/catalog/referral-program', { revalidate: 60, fallback: {} }))?.program || null;

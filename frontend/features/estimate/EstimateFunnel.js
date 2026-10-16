@@ -24,6 +24,7 @@ const TOTAL = 5;
 const TITLES = {
   1: ['What type of property are you designing?'],
   2: ['How many of these rooms need interiors?', 'Start from your home size and adjust.'],
+  '2c': ['Tell us about your space', 'Pick the type of space, then set how many of each you need.'],
   3: ['Which finishing elements do you need?', 'Select all that apply. You can skip this step.'],
   4: ['Where should we send your estimate?', 'We will verify your number with a one-time code.'],
   '4in': ['Confirm your details', 'Your estimate will be saved to your account.'],
@@ -74,6 +75,7 @@ export default function EstimateFunnel() {
       ...(i.propertyCategory === 'RESIDENTIAL' ? { bhk: i.bhk } : {}),
       ...(areaBased ? { area: Number(i.area) } : {}),
       kitchens: i.kitchens, bedrooms: i.bedrooms, washrooms: i.washrooms, addons: i.addons,
+      ...(i.propertyCategory === 'COMMERCIAL' ? { commercialType: i.commercialType || undefined, units: i.units || {} } : {}),
     };
   };
 
@@ -100,6 +102,17 @@ export default function EstimateFunnel() {
   const setSize = (patch) => {
     const key = patch.propertyCategory === 'COMMERCIAL' ? 'COMMERCIAL' : patch.bhk;
     s.setInputs({ ...patch, ...(config.defaultCounters?.[key] || {}) });
+  };
+  const commercial = inputs.propertyCategory === 'COMMERCIAL';
+  const forType = (r) => !r.commercialTypes?.length || !inputs.commercialType || r.commercialTypes.includes(inputs.commercialType);
+  const inScope = (r) => r.appliesTo === 'BOTH' || r.appliesTo === (commercial ? 'COMMERCIAL' : 'RESIDENTIAL');
+  const unitRules = commercial ? (config.units || []).filter((u) => inScope(u) && forType(u)) : [];
+  const addonList = (config.addons || []).filter((a) => inScope(a) && (!commercial || forType(a)));
+  // Typical starting quantities for the chosen space type (only items the user has not set yet).
+  const pickType = (type) => {
+    const units = { ...(inputs.units || {}) };
+    (config.units || []).filter((u) => inScope(u) && (!u.commercialTypes?.length || u.commercialTypes.includes(type))).forEach((u) => { if (units[u.key] === undefined) units[u.key] = u.defaultQty || 0; });
+    s.setInputs({ commercialType: type, units });
   };
 
   let body;
@@ -144,6 +157,41 @@ export default function EstimateFunnel() {
         <StepFooter />
       </form>
     );
+  } else if (step === 2 && commercial) {
+    const types = config.commercialTypes || [];
+    body = (
+      <form noValidate onSubmit={(e) => {
+        e.preventDefault();
+        if (types.length && !inputs.commercialType) return setError('Select the type of commercial space.');
+        return next();
+      }}>
+        {types.length > 0 && (
+          <fieldset>
+            <legend className="mb-4 text-xl font-medium">What kind of space is it?</legend>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {types.map((t) => (
+                <ChoiceCard key={t.value} name="ctype" value={t.value} compact checked={inputs.commercialType === t.value} title={t.label}
+                  media={t.icon ? <Icon name={t.icon} className="size-7 text-wine" /> : null} onChange={() => pickType(t.value)} />
+              ))}
+            </div>
+          </fieldset>
+        )}
+        {(inputs.commercialType || !types.length) && unitRules.length > 0 && (
+          <fieldset className="mt-10">
+            <legend className="mb-2 text-xl font-medium">How many do you need?</legend>
+            <p className="text-sm text-graphite">For {Number(inputs.area || 0).toLocaleString('en-IN')} sq ft carpet area. Leave at 0 if not needed.</p>
+            <div className="mt-2 border-y border-stone">
+              {unitRules.map((u) => (
+                <Counter key={u.key} id={`u-${u.key}`} label={u.label} hint={u.description || `Number of ${u.unitLabel}`} value={Number(inputs.units?.[u.key] || 0)} min={0} max={u.maxQty || 50}
+                  onChange={(v) => s.setInputs({ units: { ...(inputs.units || {}), [u.key]: v } })} />
+              ))}
+            </div>
+          </fieldset>
+        )}
+        {errorNotice}
+        <StepFooter onBack={back} />
+      </form>
+    );
   } else if (step === 2) {
     const lim = config.counterLimits;
     body = (
@@ -164,7 +212,7 @@ export default function EstimateFunnel() {
         <fieldset>
           <legend className="sr-only">Finishing requirements</legend>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            {config.addons.map((a) => (
+            {addonList.map((a) => (
               <ChoiceCard key={a.key} type="checkbox" name="addons" value={a.key} compact checked={sel.has(a.key)} title={a.label}
                 media={a.image ? <img src={a.image} alt="" className="h-20 w-full rounded-none object-cover" /> : <Icon name={a.icon} className="size-7 text-wine" />}
                 onChange={() => { const n = new Set(sel); n.has(a.key) ? n.delete(a.key) : n.add(a.key); s.setInputs({ addons: [...n] }); }} />
@@ -233,6 +281,6 @@ export default function EstimateFunnel() {
     );
   }
 
-  const [title, description] = TITLES[step === 4 && status === 'authenticated' && user?.role === 'CUSTOMER' ? '4in' : step];
+  const [title, description] = TITLES[step === 4 && status === 'authenticated' && user?.role === 'CUSTOMER' ? '4in' : (step === 2 && commercial ? '2c' : step)];
   return <FunnelShell stepKey={`e${step}`} stepNumber={step} total={TOTAL} progressLabel="Budget calculator" title={title} description={description}>{body}</FunnelShell>;
 }

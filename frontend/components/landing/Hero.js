@@ -3,15 +3,10 @@ import Button from '@/components/ui/Button';
 import { HOME_IMG, Eyebrow, Arrow } from './media';
 import HeroSlider from './HeroSlider';
 
-// Apne real images yaha daalo
-const TOP_SLIDES = [
-  { src: HOME_IMG.hero, alt: 'A warm living room with a sectional sofa and marble coffee table' },
-  // { src: HOME_IMG.kitchen, alt: 'Modular kitchen' },
-];
-const BOTTOM_SLIDES = [
-  { src: HOME_IMG.hero, alt: 'Modern interior' },
-  // { src: HOME_IMG.wardrobe, alt: 'Wardrobe design' },
-];
+// Built-in photos, used until images are added in Admin → Settings → Home banner.
+const TOP_FALLBACK = [{ src: HOME_IMG.hero, alt: 'A warm living room with a sectional sofa and marble coffee table' }];
+const BOTTOM_FALLBACK = [{ src: HOME_IMG.band, alt: 'Dining area with pendant lights and a long wooden table' }];
+const toSlides = (list, fallback) => (list?.length ? list.map((x) => ({ src: x.image, alt: x.alt || 'Interior designed by INSIDER INDIA LLP' })) : fallback);
 
 // Light botanical sprig, drawn in grey behind the headline.
 function Sprig({ className }) {
@@ -25,7 +20,8 @@ function Sprig({ className }) {
   );
 }
 
-export default function Hero({ stats }) {
+export default function Hero({ stats, hero = {} }) {
+  const ms = Math.max(2, Number(hero.intervalSeconds) || 5) * 1000;
   return (
     <section aria-labelledby="hero-title" className="hero-wash relative overflow-hidden">
       <Sprig className="pointer-events-none absolute -left-6 top-10 hidden w-40 text-[#c9c5bc] opacity-70 lg:block" />
@@ -58,8 +54,8 @@ export default function Hero({ stats }) {
 
         <div className="relative [container-type:inline-size] lg:self-stretch">
           <div className="relative grid w-full gap-1 lg:h-full lg:min-h-[520px] lg:grid-rows-2">
-            <HeroSlider slides={TOP_SLIDES} interval={4000} priority className="aspect-[16/9] lg:aspect-auto" />
-            <HeroSlider slides={BOTTOM_SLIDES} interval={5000} className="aspect-[16/9] lg:aspect-auto" />
+            <HeroSlider slides={toSlides(hero.top, TOP_FALLBACK)} interval={ms} priority className="aspect-[16/9] lg:aspect-auto" />
+            <HeroSlider slides={toSlides(hero.bottom, BOTTOM_FALLBACK)} interval={ms + 1000} className="aspect-[16/9] lg:aspect-auto" />
 
             {/* soft wave where the photo meets the text column */}
             <svg aria-hidden="true" viewBox="0 0 120 600" preserveAspectRatio="none" className="absolute inset-y-0 -left-px hidden h-full w-24 text-[#fff8f6] lg:block">

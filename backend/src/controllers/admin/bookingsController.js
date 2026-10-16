@@ -140,6 +140,7 @@ exports.updateStatus = asyncHandler(async (req, res) => {
   if (rule.lead) await Lead.updateOne({ _id: booking.lead }, { $set: { status: rule.lead, lastActivityAt: now } });
   if (status === 'CONFIRMED') await Lead.updateOne({ _id: booking.lead, status: 'CANCELLED' }, { $set: { status: 'BOOKED' } });
 
+  require('../../services/referralService').syncLater(booking._id);
   await audit(req, { action: 'BOOKING_STATUS_CHANGED', entityType: 'Booking', entityId: booking._id, before: { status: before }, after: { status }, reason: note });
   await logActivity({ lead: booking.lead, booking: booking._id, actor: req.user, type: 'BOOKING_STATUS_CHANGED', message: `Status ${before} → ${status}`, meta: { note } });
   if (rule.notify) {

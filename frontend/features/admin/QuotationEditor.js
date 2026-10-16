@@ -40,7 +40,7 @@ const GUIDE = {
   UNDER_ADMIN_REVIEW: 'Admin: check every rate. Changing a price asks for a reason (saved in the audit log). Add discounts, GST, validity and payment schedule, Preview PDF, then Approve & send to customer.',
   APPROVED: 'Approved but not sent. Click Send to customer — the PDF is generated and the customer is notified on WhatsApp and in their dashboard.',
   SENT_TO_CUSTOMER: 'Waiting for the customer to accept, request a revision or decline from their dashboard.',
-  REVISION_REQUESTED: 'The customer asked for changes (see their note). Click Create revision, update the new version, then Approve & send again.',
+  REVISION_REQUESTED: 'The customer asked to recheck this quotation (see their note). Contractor: click Revise quotation, make the changes and Submit for admin review. Admin: you can also Create revision yourself. After review, Approve & send the new version to the customer.',
   REJECTED: 'The customer declined. If they want changes, Create revision and send again.',
   ACCEPTED: 'Accepted. A project has been created — open Projects to start it and track stages and payments.',
 };
@@ -168,7 +168,8 @@ export default function QuotationEditor({ id }) {
         {q.isLatest && q.status === 'UNDER_ADMIN_REVIEW' && can(user, 'quotations.approve') && <Button size="sm" variant="secondary" loading={busy === 'approve'} onClick={() => act('approve', { send: false })}>Approve</Button>}
         {q.isLatest && q.status === 'UNDER_ADMIN_REVIEW' && can(user, 'quotations.approve') && can(user, 'quotations.send') && <Button size="sm" onClick={() => setDialog({ kind: 'approveSend' })}>Approve &amp; send to customer</Button>}
         {q.isLatest && q.status === 'APPROVED' && can(user, 'quotations.send') && <Button size="sm" onClick={() => setDialog({ kind: 'send' })}>Send to customer</Button>}
-        {q.isLatest && ['SENT_TO_CUSTOMER', 'REJECTED', 'REVISION_REQUESTED'].includes(q.status) && isAdmin && <Button size="sm" onClick={() => setDialog({ kind: 'revise', note: '', returnToContractor: false })}>Create revision</Button>}
+        {q.isLatest && ['SENT_TO_CUSTOMER', 'REJECTED', 'REVISION_REQUESTED'].includes(q.status) && isAdmin && <Button size="sm" onClick={() => setDialog({ kind: 'revise', note: '' })}>Create revision</Button>}
+        {q.isLatest && q.status === 'REVISION_REQUESTED' && contractor && can(user, 'quotations.edit') && <Button size="sm" onClick={() => setDialog({ kind: 'revise', note: '' })}>Revise quotation</Button>}
       </Header>
 
       {q.isLatest && (
@@ -186,6 +187,7 @@ export default function QuotationEditor({ id }) {
       {msg && <Notice tone={msg.tone} className="mb-4">{msg.text}</Notice>}
       {!editable && q.isLatest && <Notice className="mb-4">{contractor && q.status !== 'DRAFT' ? 'Submitted — an admin is reviewing this quotation. You will be notified if changes are needed.' : 'This version is locked. Create a revision to change it.'}</Notice>}
       {q.customerResponse?.note && <Notice className="mb-4">Customer note ({fmtDateTime(q.customerResponse.at)}): {q.customerResponse.note}</Notice>}
+      {q.revisionRequest?.note && q.status === 'DRAFT' && <Notice className="mb-4"><strong>Customer asked for changes on V{q.revisionRequest.fromVersion}:</strong> {q.revisionRequest.note}. Update the items below, Save, then Submit for admin review.</Notice>}
       {dirty && <p className="mb-3 text-sm text-brass">Unsaved changes. Totals below are a preview until you save.</p>}
 
       <div className="grid gap-6 xl:grid-cols-[1fr_22rem]">
@@ -340,9 +342,13 @@ export default function QuotationEditor({ id }) {
       <Dialog open={Boolean(dialog)} onClose={() => setDialog(null)} title={{ reason: 'Reason for price change', return: 'Return to contractor', revise: 'Create a revision', approveSend: 'Approve and send', send: 'Send to customer' }[dialog?.kind] || ''}>
         {dialog?.kind === 'reason' && <ReasonForm label="This is recorded in the audit trail with each changed price." onSubmit={async (r) => { setDialog(null); await save(r); }} />}
         {dialog?.kind === 'return' && <ReasonForm label="Tell the contractor what to change." onSubmit={(r) => act('return', { note: r })} button="Return quotation" />}
-        {dialog?.kind === 'revise' && (
-          <ReasonForm label="What is changing in this revision?" optional button="Create revision" extra={(v, set) => (
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={Boolean(v)} onChange={(e) => set(e.target.checked)} className="accent-[var(--color-wine)]" />Send back to contractor to edit</label>
+        {dialog?.kind === 'revise' && contractor && (
+          <ReasonForm label="A new version (draft) is created from this one with the customer's note. Make the changes, then submit it for admin review. Add a note for the admin (optional)." optional button="Create new version"
+            onSubmit={(r) => act('revise', { note: r || undefined })} />
+        )}
+        {dialog?.kind === 'revise' && !contractor && (
+          <ReasonForm label="What is changing in this revision?" optional button="Create revision" initialExtra={q.status === 'REVISION_REQUESTED' && Boolean(q.contractor)} extra={(v, set) => (
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={Boolean(v)} onChange={(e) => set(e.target.checked)} className="accent-[var(--color-wine)]" />Send to contractor to rework (they submit it back for your review)</label>
           )} onSubmit={(r, ret) => act('revise', { note: r || undefined, returnToContractor: Boolean(ret) })} />
         )}
         {(dialog?.kind === 'approveSend' || dialog?.kind === 'send') && (
@@ -369,9 +375,9 @@ export default function QuotationEditor({ id }) {
   );
 }
 
-function ReasonForm({ label, onSubmit, button = 'Save', optional = false, extra }) {
+function ReasonForm({ label, onSubmit, button = 'Save', optional = false, extra, initialExtra = false }) {
   const [v, setV] = useState('');
-  const [x, setX] = useState(false);
+  const [x, setX] = useState(initialExtra);
   return (
     <form onSubmit={(e) => { e.preventDefault(); if (!optional && v.trim().length < 3) return; onSubmit(v.trim(), x); }} className="space-y-3">
       <label htmlFor="reason-input" className="block text-sm">{label}</label>

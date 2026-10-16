@@ -1,4 +1,4 @@
-const { Package, Service, EstimateRule, NotificationTemplate, Project, Testimonial, Faq, Brand, Estimate, Booking, Lead, User, Notification, Media, AuditLog } = require('../../models');
+const { Package, Service, EstimateRule, NotificationTemplate, Project, Testimonial, Faq, Estimate, Booking, Lead, User, Notification, Media, AuditLog } = require('../../models');
 const { crud } = require('./crudFactory');
 const v = require('../../validations/admin');
 const StorageService = require('../../services/storage/StorageService');
@@ -28,7 +28,11 @@ exports.services = crud({
 exports.estimateRules = crud({
   Model: EstimateRule, entityType: 'EstimateRule', createSchema: v.ruleSchemas.create, updateSchema: v.ruleSchemas.update,
   searchFields: ['key', 'label'], auditFields: ['key', 'label', 'type', 'room', 'mode', 'min', 'max', 'packageOverrides', 'isActive'],
-  filters: (q) => (q.type ? { type: q.type } : {}),
+  filters: (q) => ({
+    ...(q.type ? { type: String(q.type) } : {}),
+    // Older rules have no appliesTo → residential.
+    ...(q.appliesTo === 'RESIDENTIAL' ? { $or: [{ appliesTo: 'RESIDENTIAL' }, { appliesTo: { $exists: false } }] } : q.appliesTo ? { appliesTo: String(q.appliesTo) } : {}),
+  }),
   inUse: async (d) => Boolean(await Estimate.exists({ 'inputs.addons': d.key })),
 });
 
@@ -52,11 +56,6 @@ exports.testimonials = crud({
 exports.faqs = crud({
   Model: Faq, entityType: 'Faq', createSchema: v.faqSchemas.create, updateSchema: v.faqSchemas.update,
   searchFields: ['question', 'answer'], filters: (q) => (q.category ? { category: String(q.category).toUpperCase() } : {}),
-});
-
-exports.brands = crud({
-  Model: Brand, entityType: 'Brand', createSchema: v.brandSchemas.create, updateSchema: v.brandSchemas.update,
-  searchFields: ['name'],
 });
 
 // ── Manual in-app notification ────────────────────────────────

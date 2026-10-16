@@ -14,6 +14,8 @@ async function advance(booking, { status, event, visible = true, by, meta, leadS
   }
   if (event) booking.timeline.push({ event, label: TIMELINE[event] || event, at: new Date(), by, visibleToCustomer: visible, meta });
   if (save) await booking.save();
+  // Refer & Earn: move any referral linked to this booking forward (async, never blocks the booking).
+  require('./referralService').syncLater(booking._id);
 
   if (leadStatus) {
     const lead = await Lead.findById(booking.lead).select('status');

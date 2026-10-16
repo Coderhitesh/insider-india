@@ -6,7 +6,8 @@ const leadSchema = new Schema(
   {
     leadNumber: { type: String, required: true, unique: true },
     user: { type: Types.ObjectId, ref: 'User', index: true, default: null },
-    flow: { type: String, enum: ['BOOKING', 'ESTIMATE'], required: true },
+    flow: { type: String, enum: ['BOOKING', 'ESTIMATE', 'REFERRAL'], required: true },
+    referralCode: { type: String, uppercase: true, trim: true }, // from a referrer's share link (?ref=CODE)
     source: { type: String, default: 'WEBSITE' },
     name: { type: String, trim: true, maxlength: 120 },
     mobile: { type: String, required: true, index: true },

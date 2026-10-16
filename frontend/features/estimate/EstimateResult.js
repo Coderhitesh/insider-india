@@ -75,6 +75,8 @@ export default function EstimateResult({ estimate, config, onChange, onRestart }
             ['Property type', i.propertyCategory === 'COMMERCIAL' ? 'Commercial' : 'Residential'],
             ['Size', sizeLabel],
             ...(i.propertyCategory === 'RESIDENTIAL' ? [['Rooms', `${i.kitchens} kitchen, ${i.bedrooms} bedroom, ${i.washrooms} washroom`]] : []),
+            ...(i.propertyCategory === 'COMMERCIAL' && i.commercialType ? [['Space type', config.commercialTypes?.find((t) => t.value === i.commercialType)?.label || i.commercialType]] : []),
+            ...(i.propertyCategory === 'COMMERCIAL' && Object.keys(i.units || {}).length ? [['Includes', Object.entries(i.units).map(([k, q]) => { const u = config.units?.find((x) => x.key === k); return `${q} × ${u?.label || k}`; }).join(', ')]] : []),
             ['Package', selected.packageName],
             ['Selected features', addonLabels.length ? addonLabels.join(', ') : 'None'],
             ...(selected.available ? [['Package base', `${formatShort(selected.baseMin)} – ${formatShort(selected.baseMax)}`]] : []),

@@ -11,7 +11,7 @@ const ApiError = require('../../utils/ApiError');
 const asyncHandler = require('../../utils/asyncHandler');
 
 const DEFAULTS = {
-  'company.profile': D.COMPANY_PROFILE, 'site.stats': D.SITE_STATS, 'funnel.options': D.FUNNEL_OPTIONS,
+  'company.profile': D.COMPANY_PROFILE, 'site.stats': D.SITE_STATS, 'site.hero': D.SITE_HERO, 'referral.config': D.REFERRAL_CONFIG, 'providers.payment': D.PAYMENT_PROVIDER, 'funnel.options': D.FUNNEL_OPTIONS,
   'estimate.config': D.ESTIMATE_CONFIG, 'otp.config': D.OTP_CONFIG, 'pricing.config': D.PRICING_CONFIG, 'maps.config': D.MAPS_CONFIG, 'operations.config': D.OPERATIONS_CONFIG,
   storage: env.bootstrap.storage,
   'providers.sms': { active: 'LOG', msg91: { authKey: '', senderId: '' }, twilio: { accountSid: '', authToken: '', from: '' } },
@@ -80,6 +80,11 @@ exports.testStorage = asyncHandler(async (req, res) => {
 
 exports.testProvider = asyncHandler(async (req, res) => {
   const { kind } = req.params;
+  if (kind === 'payment') {
+    await require('../../services/paymentService').testRazorpay();
+    await audit(req, { action: 'PROVIDER_TESTED', entityType: 'Setting', meta: { kind, ok: true } });
+    return ok(res, { ok: true }, 'Razorpay keys are valid');
+  }
   if (!['sms', 'whatsapp', 'email'].includes(kind)) throw ApiError.notFound('Unknown provider type');
   const to = kind === 'email' ? String(req.body.to || '').trim().toLowerCase() : normalizeMobile(req.body.to);
   if (!to || (kind === 'email' && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to))) throw ApiError.badRequest(kind === 'email' ? 'Enter a valid email' : 'Enter a valid mobile number');

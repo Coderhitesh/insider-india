@@ -10,6 +10,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const API = (process.env.API_URL || 'http://localhost:5991').replace(/\/$/, '');
 const LOG = process.env.LOG_FILE || path.resolve(__dirname, '../logs/combined.log');
@@ -96,8 +97,36 @@ function upload(token, purpose, buf, name, type) {
   check('estimate config + addons', ec.data?.addons?.length > 0, ec.body);
   check('unknown route → 404', (await call('GET', '/nope')).status === 404);
 
-  section('Booking funnel (customer A)');
+  section('Refer & Earn: setup, join, submit, verify');
+  const adm0 = (await call('POST', '/auth/staff/login', { body: ADMIN })).data.accessToken;
+  const rc0 = await call('GET', '/admin/settings/referral.config', { token: adm0 });
+  check('referral settings readable (off by default)', rc0.status === 200 && rc0.data.value.slabs.length === 3, rc0.body);
+  const pr0 = await call('PUT', '/admin/settings/referral.config', { token: adm0, body: { value: { ...rc0.data.value, enabled: true }, reason: 'e2e' } });
+  check('referral program enabled', pr0.status === 200, pr0.body);
+  const badSlab = await call('PUT', '/admin/settings/referral.config', { token: adm0, body: { value: { ...rc0.data.value, enabled: true, slabs: [rc0.data.value.slabs[1], rc0.data.value.slabs[0]] } } });
+  check('slabs out of order rejected', badSlab.status === 422, badSlab.body);
+  const prog = await call('GET', '/catalog/referral-program');
+  check('public program shows slabs & rewards', prog.data?.program?.enabled === true && prog.data.program.slabs[0].rewards[0] === 25000, prog.body);
   const mA = rnd();
+  const mR = rnd();
+  const tokR = (await login(mR)).data.accessToken;
+  check('consent/terms required to join', (await call('POST', '/account/referrals/join', { token: tokR, body: { name: 'Ravi Referrer' } })).status === 422);
+  const jn = await call('POST', '/account/referrals/join', { token: tokR, body: { name: 'Ravi Referrer', city: 'Noida', type: 'FRIEND', acceptTerms: true } });
+  check('referrer joins with a Referral ID', jn.status === 201 && /^II-[A-Z0-9]{6}$/.test(jn.data.referrer.code), jn.body);
+  const refCode = jn.data.referrer.code;
+  check('joining twice keeps the same ID', (await call('POST', '/account/referrals/join', { token: tokR, body: { acceptTerms: true } })).data?.referrer?.code === refCode);
+  check('self-referral blocked', (await call('POST', '/account/referrals', { token: tokR, body: { name: 'Me', mobile: mR, consent: true } })).status === 409);
+  check('customer consent required', (await call('POST', '/account/referrals', { token: tokR, body: { name: 'Rahul Test', mobile: mA } })).status === 422);
+  const sr = await call('POST', '/account/referrals', { token: tokR, body: { name: 'Rahul Test', mobile: mA, city: 'Noida', propertyType: 'Apartment', budget: '₹15–20L', consent: true } });
+  check('referral submitted', sr.status === 201 && sr.data.referral.status === 'SUBMITTED', sr.body);
+  const refId = sr.data.referral.id;
+  check('referrer sees masked customer number', /^••••••\d{4}$/.test(sr.data.referral.customer.mobile), sr.data?.referral?.customer);
+  check('same customer cannot be referred twice', (await call('POST', '/account/referrals', { token: tokR, body: { name: 'Rahul again', mobile: mA, consent: true } })).status === 409);
+  const vr = await call('POST', `/admin/referrals/${refId}/verify`, { token: adm0, body: { note: 'Called referrer' } });
+  check('admin verifies → CRM lead created', vr.status === 200 && vr.data.referral.status === 'VERIFIED' && vr.data.referral.leadId, vr.body);
+  check('verify twice refused', (await call('POST', `/admin/referrals/${refId}/verify`, { token: adm0, body: {} })).status === 409);
+
+  section('Booking funnel (customer A)');
   check('invalid mobile rejected', (await call('POST', '/leads', { body: { flow: 'BOOKING', name: 'Test A', mobile: '12345' } })).status === 422);
   const lc = await call('POST', '/leads', { body: { flow: 'BOOKING', name: 'Rahul Test', mobile: mA, city: 'Noida', utm: { source: 'e2e' } } });
   check('lead created with anonymous token', lc.status === 201 && lc.data.leadToken, lc.body);
@@ -186,7 +215,7 @@ function upload(token, purpose, buf, name, type) {
 
   section('Estimate flow (customer B) → booking conversion');
   const mB = rnd();
-  const le = await call('POST', '/leads', { body: { flow: 'ESTIMATE', name: 'Neha Test', mobile: mB, estimateDraft: { propertyCategory: 'RESIDENTIAL', bhk: '3BHK' } } });
+  const le = await call('POST', '/leads', { body: { flow: 'ESTIMATE', name: 'Neha Test', mobile: mB, referralCode: refCode, estimateDraft: { propertyCategory: 'RESIDENTIAL', bhk: '3BHK' } } });
   check('estimate lead created', le.status === 201, le.body);
   const vB = await login(mB, { leadId: le.data.lead.id, leadToken: le.data.leadToken });
   const tokB = vB.data.accessToken;
@@ -200,6 +229,16 @@ function upload(token, purpose, buf, name, type) {
   check('switch package', sel.status === 200 && sel.data.estimate.selectedPackage === other.package, sel.body);
   const one = await call('POST', '/estimates', { token: tokB, body: { propertyCategory: 'RESIDENTIAL', bhk: '1BHK', kitchens: 1, bedrooms: 1, washrooms: 1, addons: [] } });
   check('1BHK → price on request (no invented prices)', one.data?.estimate?.results?.every((r) => r.reason === 'PRICE_ON_REQUEST'), one.body);
+  section('Commercial estimate (space type + per-unit items)');
+  const cfgE = await call('GET', '/estimates/config');
+  check('config lists commercial types and per-unit items', cfgE.data?.commercialTypes?.some((t) => t.value === 'OFFICE') && cfgE.data.units?.some((u) => u.key === 'c_workstations'), cfgE.body?.data && Object.keys(cfgE.data));
+  check('commercial without space type → 422', (await call('POST', '/estimates', { token: tokB, body: { propertyCategory: 'COMMERCIAL', area: 2000, units: {} } })).status === 422);
+  const ce = await call('POST', '/estimates', { token: tokB, body: { propertyCategory: 'COMMERCIAL', area: 2000, commercialType: 'OFFICE', units: { c_workstations: 20, c_cabins: 2, c_dining_seats: 10 }, addons: ['c_glass_partitions', 'sofa_set'] } });
+  const cpe = ce.data?.estimate?.results?.find((r) => r.packageSlug === 'premium-elegance');
+  check('office 2000 sq ft, 20 seats, 2 cabins, glass = ₹23L–₹39L (Premium Elegance)', cpe && cpe.finalMin === 2300000 && cpe.finalMax === 3900000, cpe);
+  check('restaurant-only item and residential add-on dropped', !('c_dining_seats' in (ce.data?.estimate?.inputs?.units || {})) && !ce.data.estimate.inputs.addons.includes('sofa_set'), ce.data?.estimate?.inputs);
+  check('per-unit line shows quantity', cpe?.adjustments?.some((a) => a.label === 'Workstations / chairs (20 seats)'), cpe?.adjustments);
+
   const conv = await call('GET', `/leads/${le.data.lead.id}`, { token: tokB });
   check('estimate lead continues at REQUIREMENT with BHK prefilled', conv.data?.lead?.nextStep === 'REQUIREMENT' && conv.data.lead.property.bhk === '3BHK', conv.body?.data?.lead?.nextStep);
   check('customer blocked from other customer lead', (await call('GET', `/leads/${leadId}`, { token: tokB })).status === 403);
@@ -300,12 +339,17 @@ function upload(token, purpose, buf, name, type) {
     check('PDF downloads (valid PDF, > 5 KB)', f.status === 200 && b.slice(0, 4).toString() === '%PDF' && b.length > 5000, b.length);
   }
   check('other customer cannot see it', (await call('GET', `/quotations/${qId}`, { token: tokB })).status === 404);
+  check('contractor cannot revise before customer asks', (await call('POST', `/quotations/${qId}/revise`, { token: tokC, body: {} })).status === 409);
   const rr = await call('POST', `/quotations/${qId}/revision-request`, { token: tokA, body: { note: 'Please use acrylic shutters' } });
   check('revision requested', rr.status === 200 && rr.data.quotation.status === 'REVISION_REQUESTED', rr.body);
   check('cannot accept after requesting revision', (await call('POST', `/quotations/${qId}/accept`, { token: tokA, body: { acceptTerms: true } })).status === 409);
-  const rv = await call('POST', `/quotations/${qId}/revise`, { token: tokAdm, body: { note: 'Acrylic shutters' } });
-  check('revision V2 created, V1 kept', rv.status === 201 && /-V2$/.test(rv.data.quotation.displayNumber), rv.body);
+  const rv = await call('POST', `/quotations/${qId}/revise`, { token: tokC, body: { note: 'Changed to acrylic' } });
+  check('contractor creates revision V2 as draft with customer note', rv.status === 201 && /-V2$/.test(rv.data.quotation.displayNumber) && rv.data.quotation.status === 'DRAFT' && rv.data.quotation.revisionRequest?.note === 'Please use acrylic shutters', rv.body);
   const q2 = rv.data.quotation.id;
+  check('customer cannot see the draft revision', (await call('GET', `/quotations/${q2}`, { token: tokA })).status === 404);
+  check('send blocked before admin review', (await call('POST', `/quotations/${q2}/approve`, { token: tokAdm, body: { send: true } })).status === 409);
+  const sub2 = await call('POST', `/quotations/${q2}/submit`, { token: tokC, body: { note: 'Acrylic shutters, revised rates' } });
+  check('contractor submits V2 for admin review', sub2.status === 200 && sub2.data.quotation.status === 'UNDER_ADMIN_REVIEW', sub2.body);
   const v1 = await call('GET', `/quotations/${qId}`, { token: tokAdm });
   check('V1 unchanged and no longer latest', v1.data.quotation.isLatest === false && v1.data.quotation.status === 'REVISION_REQUESTED', v1.data?.quotation?.status);
   check('V2 approve & send', (await call('POST', `/quotations/${q2}/approve`, { token: tokAdm, body: { send: true } })).data?.quotation?.status === 'SENT_TO_CUSTOMER');
@@ -322,6 +366,123 @@ function upload(token, purpose, buf, name, type) {
   check('post update with photo', (await call('POST', `/execution/${pid}/updates`, { token: tokAdm, body: { text: 'Design meeting done', media: [img.data.media.id], visibleToCustomer: true } })).status === 200);
   const pj = await call('GET', `/account/projects/${pid}`, { token: tokA });
   check('customer sees project stage & update', pj.data?.project?.stage === 'DESIGN_APPROVAL' && pj.data.project.updates.length === 1, pj.body);
+
+  section('Project payments (ledger, balance, Razorpay webhook)');
+  const ps = await call('GET', `/execution/${pid}/payments`, { token: tokAdm });
+  const total = ps.data?.summary?.total;
+  check('payment summary: balance = contract value', ps.status === 200 && total > 0 && ps.data.summary.balance === total && ps.data.summary.paid === 0, ps.body);
+  check('contractor cannot see payments', (await call('GET', `/execution/${pid}/payments`, { token: tokC })).status === 403);
+  const first = ps.data.summary.schedule[0];
+  const adv = Math.round(total * 0.25);
+  const rc = await call('POST', `/execution/${pid}/payments`, { token: tokAdm, body: { amount: adv, method: 'CASH', note: 'Advance', scheduleItem: first?.id } });
+  check('cash advance recorded', rc.status === 201 && rc.data.summary.paid === adv && rc.data.summary.balance === total - adv, rc.body);
+  const ru = await call('POST', `/execution/${pid}/payments`, { token: tokAdm, body: { amount: 10000, method: 'UPI', reference: 'UTR123456' } });
+  check('UPI payment recorded with reference', ru.status === 201 && ru.data.summary.paid === adv + 10000 && ru.data.summary.payments.some((x) => x.reference === 'UTR123456'), ru.body);
+  check('bad method rejected', (await call('POST', `/execution/${pid}/payments`, { token: tokAdm, body: { amount: 10, method: 'BITCOIN' } })).status === 422);
+  const upi = ru.data.summary.payments.find((x) => x.reference === 'UTR123456');
+  const vd = await call('POST', `/execution/${pid}/payments/${upi.id}/void`, { token: tokAdm, body: { reason: 'Entered twice' } });
+  check('void keeps entry, restores balance', vd.status === 200 && vd.data.summary.paid === adv && vd.data.summary.payments.find((x) => x.id === upi.id)?.status === 'VOID', vd.body);
+  const cp = await call('GET', `/account/projects/${pid}/payments`, { token: tokA });
+  check('customer sees received payments + balance only', cp.status === 200 && cp.data.summary.balance === total - adv && cp.data.summary.payments.every((x) => x.status === 'RECEIVED' && x.note === undefined), cp.body);
+  check('online pay refused while gateway off', (await call('POST', `/account/projects/${pid}/payments/order`, { token: tokA, body: { amount: 1000 } })).status === 409);
+  check('payment reminder sent', (await call('POST', `/execution/${pid}/payments/remind`, { token: tokAdm })).status === 200);
+  const pl = await call('GET', '/execution', { token: tokAdm });
+  check('project list shows paid & balance', pl.data?.items?.find((x) => x.id === pid)?.balance === total - adv, pl.data?.items?.[0]);
+  await call('PUT', '/admin/settings/providers.payment', { token: tokAdm, body: { value: { active: 'RAZORPAY', razorpay: { keyId: 'rzp_test_e2e', keySecret: 'secret_e2e', webhookSecret: 'whsec_e2e' } } } });
+  const hookBody = JSON.stringify({ event: 'payment.captured', payload: { payment: { entity: { id: 'pay_x', order_id: 'order_unknown', method: 'upi' } } } });
+  const hook = (sig) => fetch(`${API}/api/v1/payments/razorpay/webhook`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Razorpay-Signature': sig }, body: hookBody });
+  check('webhook with bad signature → 400', (await hook('deadbeef')).status === 400);
+  check('webhook with valid signature accepted', (await hook(crypto.createHmac('sha256', 'whsec_e2e').update(hookBody).digest('hex'))).status === 200);
+  const ver = await call('POST', `/account/projects/${pid}/payments/verify`, { token: tokA, body: { razorpay_order_id: 'order_nope', razorpay_payment_id: 'pay_nope', razorpay_signature: 'abc' } });
+  check('verify unknown order → 404', ver.status === 404, ver.body);
+  await call('PUT', '/admin/settings/providers.payment', { token: tokAdm, body: { value: { active: 'NONE', razorpay: { keyId: '', keySecret: '', webhookSecret: '' } } } });
+
+
+  section('Refer & Earn: qualification, wallet credit, loopholes');
+  await new Promise((r) => setTimeout(r, 300));
+  const rq = await call('GET', `/admin/referrals/${refId}`, { token: tokAdm });
+  const rqr = rq.data?.referral;
+  check('referral auto-linked to booking and qualified on advance', rqr?.status === 'ADVANCE_RECEIVED' && rqr.bookingId === bookingId && rqr.projectId === pid, rqr && { status: rqr.status, bookingId: rqr.bookingId });
+  check('slab A, level 1 → ₹25,000 (value excl. GST)', rqr?.slabKey === 'A' && rqr.level === 1 && rqr.rewardAmount === 25000 && rqr.valueBasis === 'EXCL_GST', rqr && { slab: rqr.slabKey, level: rqr.level, amount: rqr.rewardAmount, value: rqr.projectValue });
+  check('timeline passed every step', ['VERIFIED', 'CONTACTED', 'SITE_VISIT_DONE', 'QUOTATION_SHARED', 'AGREEMENT_SIGNED', 'ADVANCE_RECEIVED'].every((st) => rqr?.timeline?.some((t) => t.status === st)), rqr?.timeline?.map((t) => t.status));
+  check('contractor cannot see referrals', (await call('GET', '/admin/referrals', { token: tokC })).status === 403);
+  const w0 = await call('GET', '/account/referrals', { token: tokR });
+  check('no wallet credit before approval', w0.data?.wallet?.available === 0 && w0.data.stats.pending === 25000, w0.data && { wallet: w0.data.wallet, stats: w0.data.stats });
+  check('changed amount needs a reason', (await call('POST', `/admin/referrals/${refId}/approve`, { token: tokAdm, body: { amount: 20000 } })).status === 422);
+  const apr = await call('POST', `/admin/referrals/${refId}/approve`, { token: tokAdm, body: {} });
+  check('approved → ₹25,000 credited to wallet', apr.status === 200 && apr.data.referral.status === 'REWARD_APPROVED' && apr.data.referral.rewardAmount === 25000, apr.body);
+  check('cash payout disabled (rewards are credit)', (await call('POST', `/admin/referrals/${refId}/pay`, { token: tokAdm, body: { method: 'UPI', reference: 'UTR1' } })).status === 409);
+  const myR = await call('GET', '/account/referrals', { token: tokR });
+  check('referrer wallet ₹25,000, next level 2 (slab A ₹45,000)', myR.data?.wallet?.available === 25000 && myR.data.wallet.entries[0]?.type === 'CREDIT' && myR.data.stats.successful === 1 && myR.data.next.nextLevel === 2 && myR.data.next.rewards[0].amount === 45000, myR.data && { wallet: myR.data.wallet, next: myR.data.next });
+  const linkRef = myR.data?.referrals?.find((x) => x.source === 'LINK');
+  check('share-link customer recorded as a referral to verify', linkRef?.status === 'SUBMITTED', myR.data?.referrals?.map((x) => [x.source, x.status]));
+
+  // The referrer's own next project (created directly in the DB to keep the run short).
+  const mongoose = require('mongoose');
+  const conn = await mongoose.createConnection(process.env.MONGODB_URI).asPromise();
+  const projects = conn.collection('executionprojects');
+  const base = await projects.findOne({ _id: new mongoose.Types.ObjectId(pid) });
+  const rUser = await conn.collection('users').findOne({ mobile: mR });
+  const ownPid = new mongoose.Types.ObjectId();
+  await projects.insertOne({ ...base, _id: ownPid, projectNumber: `${base.projectNumber}-R`, customer: rUser._id, booking: new mongoose.Types.ObjectId(), grandTotal: 100000, paymentSchedule: [], createdAt: new Date(), updatedAt: new Date() });
+  const ownPay = await call('GET', `/account/projects/${ownPid}/payments`, { token: tokR });
+  check('own project shows usable credit', ownPay.data?.credit?.available === 25000 && ownPay.data.credit.maxUsable === 25000, ownPay.data?.credit);
+  check('customer A (no wallet) cannot use credit', (await call('POST', `/account/projects/${pid}/payments/credit`, { token: tokA, body: { amount: 100 } })).status === 409);
+  check('cannot use credit on someone else\'s project', (await call('POST', `/account/projects/${pid}/payments/credit`, { token: tokR, body: { amount: 100 } })).status === 404);
+  check('cannot use more than available', (await call('POST', `/account/projects/${ownPid}/payments/credit`, { token: tokR, body: { amount: 30000 } })).status === 422);
+  const [u1, u2] = await Promise.all([
+    call('POST', `/account/projects/${ownPid}/payments/credit`, { token: tokR, body: { amount: 20000 } }),
+    call('POST', `/account/projects/${ownPid}/payments/credit`, { token: tokR, body: { amount: 20000 } }),
+  ]);
+  const okUses = [u1, u2].filter((x) => x.status === 201).length;
+  check('double-spend blocked (only one of two parallel uses succeeds)', okUses === 1, [u1.status, u2.status]);
+  const used = [u1, u2].find((x) => x.status === 201);
+  check('credit deducted from project balance', used?.data?.summary?.balance === 80000 && used.data.summary.creditApplied === 20000 && used.data.credit.available === 5000, used?.data && { s: used.data.summary.balance, c: used.data.credit });
+  const pc = await call('PUT', '/admin/settings/referral.config', { token: tokAdm, body: { value: { ...(await call('GET', '/admin/settings/referral.config', { token: tokAdm })).data.value, maxRedeemPercent: 22 }, reason: 'e2e cap' } });
+  check('redeem cap setting saved', pc.status === 200, pc.body);
+  check('cap: credit limited to 22% of project value', (await call('POST', `/execution/${ownPid}/payments/credit`, { token: tokAdm, body: { amount: 5000 } })).status === 422);
+  const st2 = await call('POST', `/execution/${ownPid}/payments/credit`, { token: tokAdm, body: { amount: 2000 } });
+  check('staff can apply remaining credit within cap', st2.status === 201 && st2.data.credit.available === 3000, st2.body);
+  await call('PUT', '/admin/settings/referral.config', { token: tokAdm, body: { value: { ...(await call('GET', '/admin/settings/referral.config', { token: tokAdm })).data.value, maxRedeemPercent: 100 } } });
+  const ownStaff = await call('GET', `/execution/${ownPid}/payments`, { token: tokAdm });
+  check('staff record form has no "referral credit" cash method', !ownStaff.data.methods.some((m) => m.value === 'REFERRAL_CREDIT'));
+  check('cannot record REFERRAL_CREDIT as a normal payment', (await call('POST', `/execution/${ownPid}/payments`, { token: tokAdm, body: { amount: 1000, method: 'REFERRAL_CREDIT' } })).status === 422);
+  const crp = ownStaff.data.summary.payments.find((x) => x.method === 'REFERRAL_CREDIT' && x.amount === 2000);
+  await call('POST', `/execution/${ownPid}/payments/${crp.id}/void`, { token: tokAdm, body: { reason: 'Wrong entry' } });
+  check('voided credit returns to wallet', (await call('GET', '/account/referrals', { token: tokR })).data?.wallet?.available === 5000);
+  // Loopholes: booked-before-referral link, reject/reopen, hold, recovery after cancellation.
+  const sr2 = await call('POST', '/account/referrals', { token: tokR, body: { name: 'Second Lead', mobile: rnd(), consent: true } });
+  const r2 = sr2.data.referral.id;
+  check('reject needs a reason', (await call('POST', `/admin/referrals/${r2}/reject`, { token: tokAdm, body: {} })).status === 422);
+  check('rejected', (await call('POST', `/admin/referrals/${r2}/reject`, { token: tokAdm, body: { reason: 'Customer not interested' } })).data?.referral?.status === 'REJECTED');
+  check('reopened → back to verification', (await call('POST', `/admin/referrals/${r2}/reopen`, { token: tokAdm, body: { reason: 'Customer called back' } })).data?.referral?.status === 'SUBMITTED');
+  await call('POST', `/admin/referrals/${r2}/verify`, { token: tokAdm, body: {} });
+  const lk = await call('POST', `/admin/referrals/${r2}/link`, { token: tokAdm, body: { bookingNumber: bk.data.booking.bookingNumber, reason: 'Same family' } });
+  check('cannot credit a booking made before the referral / already credited', lk.status === 409, lk.body);
+  check('put on hold', (await call('POST', `/admin/referrals/${r2}/withhold`, { token: tokAdm, body: { reason: 'Checking documents' } })).data?.referral?.status === 'WITHHELD');
+  const sus = await call('PATCH', `/admin/referrers/${rqr.referrer.id}`, { token: tokAdm, body: { status: 'SUSPENDED' } });
+  check('suspend needs a reason', sus.status === 422, sus.body);
+  await call('PATCH', `/admin/referrers/${rqr.referrer.id}`, { token: tokAdm, body: { status: 'SUSPENDED', suspendedReason: 'Under review' } });
+  check('suspended referrer cannot submit', (await call('POST', '/account/referrals', { token: tokR, body: { name: 'Third Lead', mobile: rnd(), consent: true } })).status === 403);
+  await call('PATCH', `/admin/referrers/${rqr.referrer.id}`, { token: tokAdm, body: { status: 'ACTIVE' } });
+  const cash = ps.data && (await call('GET', `/execution/${pid}/payments`, { token: tokAdm })).data.summary.payments.find((x) => x.method === 'CASH' && x.status === 'RECEIVED');
+  await call('POST', `/execution/${pid}/payments/${cash.id}/void`, { token: tokAdm, body: { reason: 'Refunded' } });
+  await new Promise((r) => setTimeout(r, 300));
+  const rec = await call('GET', `/admin/referrals/${refId}`, { token: tokAdm });
+  check('advance refunded after credit used → on hold + recovery review', rec.data?.referral?.recoveryReview === true && rec.data.referral.status === 'WITHHELD', rec.data?.referral && { status: rec.data.referral.status, flag: rec.data.referral.recoveryReview });
+  const wNeg = await call('GET', '/account/referrals', { token: tokR });
+  check('wallet goes negative (−₹20,000), nothing usable', wNeg.data?.wallet?.balance === -20000 && wNeg.data.wallet.available === 0, wNeg.data?.wallet);
+  check('negative wallet: credit use refused', (await call('POST', `/account/projects/${ownPid}/payments/credit`, { token: tokR, body: { amount: 100 } })).status === 409);
+  await call('POST', `/execution/${pid}/payments`, { token: tokAdm, body: { amount: adv, method: 'CASH', note: 'Advance re-received' } });
+  check('reopened after advance re-received', (await call('POST', `/admin/referrals/${refId}/reopen`, { token: tokAdm, body: { reason: 'Advance received again' } })).status === 200);
+  await new Promise((r) => setTimeout(r, 300));
+  const back = await call('GET', `/admin/referrals/${refId}`, { token: tokAdm });
+  check('re-qualifies (advance received again)', back.data?.referral?.status === 'ADVANCE_RECEIVED', back.data?.referral?.status);
+  await call('POST', `/admin/referrals/${refId}/approve`, { token: tokAdm, body: {} });
+  check('re-approved → wallet back to ₹5,000', (await call('GET', '/account/referrals', { token: tokR })).data?.wallet?.available === 5000);
+  check('recovery review closed', (await call('POST', `/admin/referrals/${refId}/recovery-reviewed`, { token: tokAdm, body: { reason: 'Settled by re-approval' } })).data?.referral?.recoveryReview === false);
+  await conn.close();
+
   const bkd = await call('GET', `/bookings/${bookingId}`, { token: tokA });
   check('booking timeline customer-safe (no internal events)', bkd.data.booking.timeline.every((x) => !['QUOTATION_DRAFTED', 'QUOTATION_UNDER_REVIEW'].includes(x.event)) && bkd.data.booking.status === 'PROJECT_IN_PROGRESS', bkd.data?.booking?.status);
 
