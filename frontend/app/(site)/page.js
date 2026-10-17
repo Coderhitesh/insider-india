@@ -27,13 +27,14 @@ function heroStats(stats, packages) {
   if (stats.length >= 3) return stats;
   const warranty = Math.max(0, ...packages.map((p) => p.warranty?.years || 0));
   const facts = [
-    { key: 'visit', value: 'Free', label: 'Design consultation' },
-    packages.length > 0 && { key: 'pk', value: String(packages.length), label: 'Interior packages' },
+    { key: 'handover', value: '45 Days', label: 'Handover guaranteed, otherwise we pay ₹1,000/day' },
+    { key: 'designers', value: '500+', label: 'Designers' },
     warranty > 0 && { key: 'w', value: `${warranty} yrs`, label: 'Warranty, up to' },
     { key: 'q', value: '100%', label: 'Item-wise quotation' },
   ].filter(Boolean);
-  const hasWarranty = stats.some((s) => /warrant/i.test(s.label));
-  return [...stats, ...facts.filter((f) => !(hasWarranty && f.key === 'w'))].slice(0, 4);
+  const has = (rx) => stats.some((s) => rx.test(s.label));
+  const skip = { w: /warrant/i, handover: /handover/i, designers: /designer/i, q: /quotation/i };
+  return [...stats, ...facts.filter((f) => !(skip[f.key] && has(skip[f.key])))].slice(0, 4);
 }
 
 export default async function Home() {

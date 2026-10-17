@@ -186,3 +186,9 @@ Off by default — turn on in **Admin → Settings → Refer & Earn** (slabs, le
 - Flow: Submitted → Verified (staff) → Contacted → Site visit → Quotation shared → Agreement signed → Advance received (automatic from booking/quotation/payments) → Approve (staff) = credit added to wallet.
 - Guards: self/staff/existing-customer/duplicate referrals blocked; first valid referral wins; one booking credits one referral; booking must be after the referral; reward locked at qualification, level re-checked at approval; amount change needs a note; credit only on the referrer's own project, ≤ wallet, ≤ project balance, ≤ max %; parallel double-spend blocked; credit never counts as a qualifying advance for another referral; referred project cancelled/refunded → reward on hold and credit removed (if already used → wallet negative + recovery review); suspended referrer cannot submit or use credit.
 - Confirm before launch: slab B amounts (marked "pending approval" in the PDF).
+
+## Gallery
+
+- Public: `/gallery` (all) and `/gallery/<category-slug>` (SEO page per category), masonry grid + lightbox. Every photo shows a **Get Estimate** button on hover (always visible on phones); project detail galleries have it too.
+- Admin → Website content → **Gallery photos** (bulk upload up to 50 per category, edit, hide, reorder) and **Gallery categories** (add/rename/reorder/hide, intro text, cover, SEO). 12 categories are created on first start (Full Home, Modular Kitchen, Bedroom, Living Room, Wardrobe, Dining, Kids Room, Bathroom, Pooja Room, False Ceiling, Office & Commercial, Renovation).
+- Published portfolio projects also appear in the gallery under the matching category. Categories with no photos are hidden from the filter bar.

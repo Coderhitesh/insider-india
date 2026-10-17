@@ -5,6 +5,7 @@ import CrudResource from '@/components/admin/CrudResource';
 import { Header, Pill, Tabs } from '@/components/admin/Kit';
 import { useRefData } from '@/components/admin/refData';
 import { inr } from '@/lib/admin';
+import { GalleryPhotos, GalleryCategories } from '@/features/admin/Gallery';
 
 const BHK = [['1BHK', 'Studio / 1 BHK'], ['2BHK', '2 BHK'], ['3BHK', '3 BHK'], ['4BHK', '4 BHK'], ['5BHK_PLUS', '5 BHK+']].map(([value, label]) => ({ value, label }));
 const active = (r) => <Pill value={r.isActive === false ? 'INACTIVE' : 'ACTIVE'} />;
@@ -118,8 +119,10 @@ export function Content() {
   const [tab, setTab] = useState('projects');
   return (
     <>
-      <Header title="Website content" subtitle="Projects, testimonials and FAQs. Unpublished items never appear on the site." />
-      <Tabs tabs={[['projects', 'Projects'], ['testimonials', 'Testimonials'], ['faqs', 'FAQs']]} value={tab} onChange={setTab} />
+      <Header title="Website content" subtitle="Projects, gallery, testimonials and FAQs. Unpublished items never appear on the site." />
+      <Tabs tabs={[['projects', 'Projects'], ['gallery', 'Gallery photos'], ['gallery-categories', 'Gallery categories'], ['testimonials', 'Testimonials'], ['faqs', 'FAQs']]} value={tab} onChange={setTab} />
+      {tab === 'gallery' && <GalleryPhotos />}
+      {tab === 'gallery-categories' && <GalleryCategories />}
       {tab === 'projects' && (
         <CrudResource embedded endpoint="/admin/projects" title="Projects" managePerm="content.manage" reorder
           filters={[{ name: 'category', label: 'Category', options: CATS }]}

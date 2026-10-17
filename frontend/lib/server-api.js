@@ -35,3 +35,4 @@ export async function getProjects({ category, featured, page = 1, limit = 12 } =
 export const getProject = (slug) => getJSON(`/catalog/projects/${encodeURIComponent(slug)}`, { fallback: null });
 export const getProjectSlugs = async () => (await getJSON('/catalog/projects/slugs', { revalidate: 3600, fallback: {} }))?.items || [];
 export const getReferralProgram = async () => (await getJSON('/catalog/referral-program', { revalidate: 60, fallback: {} }))?.program || null;
+export const getGallery = async () => (await getJSON('/catalog/gallery', { revalidate: 60, fallback: null })) || { categories: [], items: [] };

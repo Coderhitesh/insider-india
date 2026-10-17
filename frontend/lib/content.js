@@ -32,6 +32,7 @@ export const NAV = [
   { href: '/commercial-interiors', label: 'Commercial' },
   { href: '/packages', label: 'Packages' },
   { href: '/projects', label: 'Projects' },
+  { href: '/gallery', label: 'Gallery' },
   { href: '/how-it-works', label: 'How it works' },
 ];
 
@@ -40,6 +41,7 @@ export const HEADER_NAV = [
   { href: '/', label: 'Home' },
   { href: '/services', label: 'Solutions' },
   { href: '/projects', label: 'Projects' },
+  { href: '/gallery', label: 'Gallery' },
   { href: '/how-it-works', label: 'How It Works' },
   { href: '/packages', label: 'Packages' },
   { href: '/about', label: 'About' },

@@ -8,7 +8,14 @@ const logger = require('../utils/logger');
  * commercial estimate rules (inserted only if their key is missing) and per-sq-ft rates for packages
  * that have none. Idempotent; runs on every start.
  */
+const GALLERY_CATEGORIES = ['Full Home', 'Modular Kitchen', 'Bedroom', 'Living Room', 'Wardrobe', 'Dining', 'Kids Room', 'Bathroom', 'Pooja Room', 'False Ceiling', 'Office & Commercial', 'Renovation'];
+
 async function ensureDefaults() {
+  // Gallery categories: seeded once (admins can rename, reorder, hide or add more).
+  const { GalleryCategory } = require('../models');
+  if (!(await GalleryCategory.estimatedDocumentCount())) {
+    await GalleryCategory.insertMany(GALLERY_CATEGORIES.map((name, i) => ({ name, slug: name === 'Office & Commercial' ? 'office-commercial' : name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), order: i + 1 })));
+  }
   let rules = 0;
   for (const r of COMMERCIAL_RULES) {
     const res = await EstimateRule.updateOne({ key: r.key }, { $setOnInsert: r }, { upsert: true });

@@ -31,4 +31,6 @@ module.exports = {
   Payment: require('./Payment'),
   Referrer: require('./Referrer'),
   Referral: require('./Referral'),
+  GalleryCategory: require('./GalleryCategory'),
+  GalleryImage: require('./GalleryImage'),
 };

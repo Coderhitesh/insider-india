@@ -1,4 +1,4 @@
-const { Package, Service, EstimateRule, NotificationTemplate, Project, Testimonial, Faq, Estimate, Booking, Lead, User, Notification, Media, AuditLog } = require('../../models');
+const { Package, Service, EstimateRule, NotificationTemplate, Project, Testimonial, Faq, Estimate, Booking, Lead, User, Notification, Media, AuditLog, GalleryCategory, GalleryImage } = require('../../models');
 const { crud } = require('./crudFactory');
 const v = require('../../validations/admin');
 const StorageService = require('../../services/storage/StorageService');
@@ -46,6 +46,29 @@ exports.projects = crud({
   Model: Project, entityType: 'Project', createSchema: v.projectSchemas.create, updateSchema: v.projectSchemas.update,
   searchFields: ['title', 'city', 'locality'], slugFrom: 'title',
   filters: (q) => (q.category ? { category: q.category } : {}),
+});
+
+exports.galleryCategories = crud({
+  Model: GalleryCategory, entityType: 'GalleryCategory', createSchema: v.galleryCategorySchemas.create, updateSchema: v.galleryCategorySchemas.update,
+  searchFields: ['name', 'slug'], slugFrom: 'name',
+  inUse: (doc) => GalleryImage.exists({ category: doc._id }),
+});
+
+exports.galleryImages = crud({
+  Model: GalleryImage, entityType: 'GalleryImage', createSchema: v.galleryImageSchemas.create, updateSchema: v.galleryImageSchemas.update,
+  searchFields: ['title', 'alt'],
+  filters: (q) => (q.category && /^[a-f0-9]{24}$/i.test(String(q.category)) ? { category: String(q.category) } : {}),
+});
+
+/** Adds many photos to one category in one go (bulk upload). */
+exports.galleryBulk = asyncHandler(async (req, res) => {
+  const b = req.body;
+  if (!(await GalleryCategory.exists({ _id: b.category }))) throw ApiError.notFound('Category not found');
+  const last = await GalleryImage.findOne().sort({ order: -1 }).select('order').lean();
+  let order = last?.order || 0;
+  const docs = await GalleryImage.insertMany(b.items.map((x) => ({ ...x, category: b.category, isPublished: b.isPublished, order: (order += 1) })));
+  await audit(req, { action: 'GALLERYIMAGE_BULK_CREATED', entityType: 'GalleryImage', meta: { category: b.category, count: docs.length } });
+  ok(res, { count: docs.length }, `${docs.length} photo(s) added`, 201);
 });
 
 exports.testimonials = crud({

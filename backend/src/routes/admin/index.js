@@ -115,6 +115,9 @@ mount('estimate-rules', catalog.estimateRules, 'packages.view', 'packages.manage
 mount('notification-templates', catalog.templates, 'notifications.send', 'notifications.send');
 mount('projects', catalog.projects, 'content.manage', 'content.manage');
 mount('testimonials', catalog.testimonials, 'content.manage', 'content.manage');
+mount('gallery-categories', catalog.galleryCategories, 'content.manage', 'content.manage');
+router.post('/gallery-images/bulk', P('content.manage'), validate({ body: v.galleryBulk }), catalog.galleryBulk);
+mount('gallery-images', catalog.galleryImages, 'content.manage', 'content.manage');
 mount('faqs', catalog.faqs, 'content.manage', 'content.manage');
 
 // Notifications, audit, uploads

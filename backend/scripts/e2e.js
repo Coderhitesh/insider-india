@@ -514,6 +514,25 @@ function upload(token, purpose, buf, name, type) {
   const d2 = await call('GET', '/admin/dashboard?range=today', { token: tokAdm });
   check('dashboard after flow: accepted quotation counted', d2.data?.quotations?.accepted >= 1, d2.data?.quotations);
 
+  section('Gallery');
+  const gc = await call('GET', '/admin/gallery-categories?limit=200', { token: tokAdm });
+  const kitchen = gc.data?.items?.find((c) => c.slug === 'modular-kitchen');
+  check('gallery categories seeded', gc.status === 200 && gc.data.items.length >= 10 && kitchen, gc.data?.items?.map((c) => c.slug));
+  check('contractor cannot manage gallery', (await call('GET', '/admin/gallery-images', { token: tokC })).status === 403);
+  check('bulk add needs a valid image', (await call('POST', '/admin/gallery-images/bulk', { token: tokAdm, body: { category: kitchen.id, items: [{ image: 'javascript:alert(1)' }] } })).status === 422);
+  const gb = await call('POST', '/admin/gallery-images/bulk', { token: tokAdm, body: { category: kitchen.id, items: [{ image: '/images/home/hero.jpg', alt: 'E2E kitchen 1' }, { image: 'https://example.com/k2.jpg', title: 'E2E kitchen 2' }] } });
+  check('bulk add 2 photos', gb.status === 201 && gb.data.count === 2, gb.body);
+  const hidden = await call('POST', '/admin/gallery-images', { token: tokAdm, body: { category: kitchen.id, image: 'https://example.com/k3.jpg', title: 'E2E hidden', isPublished: false } });
+  check('single photo created (hidden)', hidden.status === 201, hidden.body);
+  const pub = await call('GET', '/catalog/gallery');
+  const kItems = pub.data?.items?.filter((x) => x.category === 'modular-kitchen') || [];
+  check('public gallery: published photos by category, hidden excluded', kItems.some((x) => x.title === 'E2E kitchen 2') && !kItems.some((x) => x.title === 'E2E hidden') && pub.data.categories.find((c) => c.slug === 'modular-kitchen').count === kItems.length, kItems.length);
+  const dc = await call('DELETE', `/admin/gallery-categories/${kitchen.id}`, { token: tokAdm });
+  check('category with photos is hidden, not deleted', dc.status === 200 && dc.data.deactivated === true, dc.body);
+  check('hidden category not public', !(await call('GET', '/catalog/gallery')).data.categories.some((c) => c.slug === 'modular-kitchen'));
+  await call('PATCH', `/admin/gallery-categories/${kitchen.id}`, { token: tokAdm, body: { isActive: true } });
+  for (const x of (await call('GET', `/admin/gallery-images?category=${kitchen.id}&limit=200`, { token: tokAdm })).data.items.filter((i) => /^E2E/.test(i.title || i.alt || ''))) await call('DELETE', `/admin/gallery-images/${x.id}`, { token: tokAdm });
+
   section('Logout');
   check('logout', (await call('POST', '/auth/logout', { cookie: relog.cookie })).status === 200);
   check('refresh after logout → 401', (await call('POST', '/auth/refresh', { cookie: relog.cookie })).status === 401);

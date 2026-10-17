@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import EstimateHover from '@/components/gallery/EstimateHover';
 import { notFound } from 'next/navigation';
 import PageHeader from '@/components/pages/PageHeader';
 import ProjectCard from '@/components/home/ProjectCard';
@@ -58,7 +59,7 @@ export default async function ProjectPage({ params }) {
             {gallery.map((img, i) => (
               <li key={img.url} className={i % 3 === 0 ? 'sm:col-span-2' : ''}>
                 <figure>
-                  <div className={`relative overflow-hidden rounded-none ${i % 3 === 0 ? 'aspect-[16/9]' : 'aspect-[4/5]'}`}><Image src={img.url} alt={img.alt || p.title} fill sizes={i % 3 === 0 ? '100vw' : '50vw'} className="object-cover" loading="lazy" /></div>
+                  <div className={`group relative overflow-hidden rounded-none ${i % 3 === 0 ? 'aspect-[16/9]' : 'aspect-[4/5]'}`}><Image src={img.url} alt={img.alt || p.title} fill sizes={i % 3 === 0 ? '100vw' : '50vw'} className="object-cover transition-transform duration-500 group-hover:scale-[1.03]" loading="lazy" /><EstimateHover /></div>
                   {img.caption && <figcaption className="mt-2 text-sm text-graphite">{img.caption}</figcaption>}
                 </figure>
               </li>

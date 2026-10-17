@@ -121,6 +121,9 @@ const SITE_STATS = {
     { key: 'years', label: 'Years of Experience', value: null, visible: false },
     { key: 'projects', label: 'Projects Completed', value: null, visible: false },
     { key: 'warranty', label: 'Warranty Cover', value: 'Up to 20 Years', visible: true },
+    { key: 'handover', label: 'Handover guaranteed, otherwise we pay ₹1,000/day', value: '45 Days', visible: true },
+    { key: 'designers', label: 'Designers', value: '500+', visible: true },
+    { key: 'quotation', label: 'Item-wise quotation', value: '100%', visible: true },
     { key: 'consultations', label: 'Design Consultations', value: null, visible: false },
   ],
 };

@@ -248,7 +248,34 @@ const faqBase = z.object({
 });
 const faqSchemas = { create: faqBase, update: faqBase.partial() };
 
+const galleryCategoryBase = z.object({
+  name: str(80).min(2),
+  slug: optStr(80),
+  description: optStr(600),
+  coverImage: url.optional(),
+  seo: z.object({ title: optStr(120), description: optStr(300) }).optional(),
+  isActive: z.boolean().default(true),
+  order: z.coerce.number().int().optional(),
+});
+const galleryCategorySchemas = { create: galleryCategoryBase, update: galleryCategoryBase.partial() };
+
+const galleryImageBase = z.object({
+  category: objectId,
+  image: url.refine((v) => v !== '', 'Upload an image'),
+  title: optStr(120),
+  alt: optStr(200),
+  isPublished: z.boolean().default(true),
+  order: z.coerce.number().int().optional(),
+});
+const galleryImageSchemas = { create: galleryImageBase, update: galleryImageBase.partial() };
+const galleryBulk = z.object({
+  category: objectId,
+  items: z.array(z.object({ image: url.refine((v) => v !== '', 'Upload an image'), title: optStr(120), alt: optStr(200) })).min(1).max(100),
+  isPublished: z.boolean().default(true),
+});
+
 module.exports = {
+  galleryCategorySchemas, galleryImageSchemas, galleryBulk,
   listQuery, updateLead, assign, bookingStatus, note, updateCustomer,
   createContractor, updateContractor, createStaff, updateStaff, resetPassword, createRole, updateRole,
   packageSchemas, serviceSchemas, ruleSchemas, templateSchemas, sendNotification,
