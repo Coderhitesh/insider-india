@@ -11,6 +11,13 @@ const logger = require('../utils/logger');
 const GALLERY_CATEGORIES = ['Full Home', 'Modular Kitchen', 'Bedroom', 'Living Room', 'Wardrobe', 'Dining', 'Kids Room', 'Bathroom', 'Pooja Room', 'False Ceiling', 'Office & Commercial', 'Renovation'];
 
 async function ensureDefaults() {
+  // Booking funnel for commercial spaces: home-only services are tagged, commercial services added once.
+  const { Service } = require('../models');
+  const { HOME_ONLY_SERVICES, SERVICES } = require('../seed/data');
+  await Service.updateMany({ slug: { $in: HOME_ONLY_SERVICES }, scope: { $exists: false } }, { $set: { scope: 'RESIDENTIAL' } });
+  await Service.updateMany({ scope: { $exists: false } }, { $set: { scope: 'BOTH' } });
+  for (const sv of SERVICES.filter((x) => x.scope === 'COMMERCIAL')) await Service.updateOne({ slug: sv.slug }, { $setOnInsert: sv }, { upsert: true });
+
   // Gallery categories: seeded once (admins can rename, reorder, hide or add more).
   const { GalleryCategory } = require('../models');
   if (!(await GalleryCategory.estimatedDocumentCount())) {
@@ -31,7 +38,7 @@ async function ensureDefaults() {
   }
   // Permissions added after the first seed (e.g. payments.*): register them and give them to the ADMIN role.
   let perms = 0;
-  for (const p of PERMISSIONS.filter((x) => x.key.startsWith('payments.') || x.key.startsWith('referrals.'))) {
+  for (const p of PERMISSIONS.filter((x) => x.key.startsWith('payments.') || x.key.startsWith('referrals.') || x.key.startsWith('enquiries.'))) {
     const r = await Permission.updateOne({ key: p.key }, { $setOnInsert: { ...p, isSystem: true } }, { upsert: true });
     if (r.upsertedCount) {
       perms += 1;

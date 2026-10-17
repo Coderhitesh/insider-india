@@ -19,7 +19,7 @@ const tl = (event, at, extra = {}) => ({ event, label: TIMELINE[event], at, visi
 // "Commercial — Office / Co-working" from the estimate draft's space type.
 async function commercialLabel(lead) {
   const cfg = await options.getEstimateConfig();
-  const t = (cfg.commercialTypes || []).find((x) => x.value === lead.estimateDraft?.commercialType);
+  const t = (cfg.commercialTypes || []).find((x) => x.value === (lead.property?.commercialType || lead.estimateDraft?.commercialType));
   return t ? `Commercial — ${t.label}` : 'Commercial';
 }
 
@@ -43,7 +43,7 @@ exports.create = asyncHandler(async (req, res) => {
     possession: options.labelOf(opts, 'possessionOptions', lead.possession),
     propertyType: lead.propertyCategory === 'COMMERCIAL' ? await commercialLabel(lead) : options.labelOf(opts, 'propertyTypes', lead.property.propertyType),
     bhk: lead.propertyCategory === 'COMMERCIAL' ? (lead.property.area ? `${Number(lead.property.area).toLocaleString('en-IN')} sq ft` : null) : options.labelOf(opts, 'bhkOptions', lead.property.bhk),
-    projectType: options.labelOf(opts, 'projectTypes', lead.projectType),
+    projectType: options.labelOf(opts, lead.propertyCategory === 'COMMERCIAL' ? 'commercialProjectTypes' : 'projectTypes', lead.projectType),
   };
 
   // Direct bookings get an indicative budget too (from BHK, typical rooms and chosen services).
@@ -61,6 +61,7 @@ exports.create = asyncHandler(async (req, res) => {
     propertyType: lead.property.propertyType,
     bhk: lead.property.bhk,
     area: lead.property.area,
+    commercialType: lead.propertyCategory === 'COMMERCIAL' ? (lead.property.commercialType || lead.estimateDraft?.commercialType) : undefined,
   });
 
   let booking;
@@ -79,6 +80,9 @@ exports.create = asyncHandler(async (req, res) => {
         propertyType: lead.property.propertyType,
         bhk: lead.property.bhk,
         projectType: lead.projectType,
+        propertyCategory: lead.propertyCategory,
+        commercialType: lead.propertyCategory === 'COMMERCIAL' ? (lead.property.commercialType || lead.estimateDraft?.commercialType) : undefined,
+        area: lead.property.area,
         services: lead.services.map((s) => ({ service: s._id, title: s.title })),
         labels,
       },

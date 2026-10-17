@@ -23,12 +23,13 @@ export default async function ServicePage({ pageKey }) {
   const [{ company }, projects] = await Promise.all([getSite(), getProjects({ category: s.category, limit: 3 })]);
   const img = IMAGES[s.image];
   const img2 = IMAGES_ALT[s.image] || img;
+  const q = s.category === 'COMMERCIAL' ? '?space=commercial' : '';
   return (
     <>
       <PageHeader eyebrow="Our solutions" title={s.title} lede={s.lede} crumbs={[{ name: 'Services', path: '/services' }, { name: s.title, path: s.path }]} image={img} imageAlt={s.title}>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <Button href="/estimate" size="lg" className="h-13 px-7">Get Free Estimate <Arrow /></Button>
-          <Button href="/book-consultation" size="lg" variant="secondary" className="h-13 border-[1.5px] bg-paper px-7">Book a Consultation <Arrow /></Button>
+          <Button href={`/estimate${q}`} size="lg" className="h-13 px-7">Get Free Estimate <Arrow /></Button>
+          <Button href={`/book-consultation${q}`} size="lg" variant="secondary" className="h-13 border-[1.5px] bg-paper px-7">Book a Consultation <Arrow /></Button>
         </div>
       </PageHeader>
 

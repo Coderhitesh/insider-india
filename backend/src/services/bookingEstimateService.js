@@ -23,10 +23,30 @@ function pickPackage(results, packages) {
  * Creates an indicative estimate for a direct booking (customer never used the calculator),
  * from BHK, typical room counts and the selected services. Never throws — a booking must not fail on this.
  */
+/** Commercial direct booking: area + space type with the typical quantities for that type. */
+async function autoCommercialEstimate(lead, cfg) {
+  const area = Number(lead.property?.area);
+  const type = lead.property?.commercialType || lead.estimateDraft?.commercialType;
+  if (!area) return null;
+  const { EstimateRule } = require('../models');
+  const unitRules = await EstimateRule.find({ isActive: true, type: 'UNIT' }).select('key appliesTo commercialTypes defaultQty').lean();
+  const units = Object.fromEntries(unitRules
+    .filter((u) => (u.appliesTo || 'COMMERCIAL') !== 'RESIDENTIAL' && (!u.commercialTypes?.length || u.commercialTypes.includes(type)) && u.defaultQty > 0)
+    .map((u) => [u.key, u.defaultQty]));
+  const input = { propertyCategory: 'COMMERCIAL', area, commercialType: type, units, kitchens: 0, bedrooms: 0, washrooms: 0, addons: [] };
+  const { input: clean, results, packages, disclaimer } = await engine.calculateAll(input);
+  const sel = pickPackage(results, packages);
+  return Estimate.create({
+    estimateNumber: await nextNumber('EST'), user: lead.user, lead: lead._id, source: 'AUTO_BOOKING', inputs: clean, results, disclaimer,
+    ...(sel ? { selectedPackage: sel.package, baseMin: sel.baseMin, baseMax: sel.baseMax, adjustments: sel.adjustments || [], finalMin: sel.finalMin, finalMax: sel.finalMax } : {}),
+  });
+}
+
 async function autoEstimateForLead(lead) {
   try {
-    if (lead.propertyCategory === 'COMMERCIAL' || !lead.property?.bhk) return null;
     const cfg = await options.getEstimateConfig();
+    if (lead.propertyCategory === 'COMMERCIAL') return await autoCommercialEstimate(lead, cfg);
+    if (!lead.property?.bhk) return null;
     const counters = cfg.defaultCounters?.[lead.property.bhk] || { kitchens: 1, bedrooms: 2, washrooms: 2 };
     const addons = [...new Set((lead.services || []).map((s) => SERVICE_TO_ADDON[s.slug]).filter(Boolean))];
     const input = { propertyCategory: 'RESIDENTIAL', bhk: lead.property.bhk, ...counters, addons };

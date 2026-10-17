@@ -51,6 +51,12 @@ export default function EstimateFunnel() {
       .catch((err) => setError(err.message));
   }, []);
   useEffect(() => { const p = params.get('package'); if (p) useEstimateStore.getState().setPreferredPackage(p); }, [params]);
+  // From the commercial interiors page: start on "Commercial" (only when nothing has been chosen yet).
+  useEffect(() => {
+    if (!config || params.get('space') !== 'commercial') return;
+    const st = useEstimateStore.getState();
+    if (st.step === 1 && !st.inputs.bhk && st.inputs.propertyCategory !== 'COMMERCIAL') st.setInputs({ propertyCategory: 'COMMERCIAL', bhk: null, ...(config.defaultCounters?.COMMERCIAL || {}) });
+  }, [config, params]);
 
   // Restore a finished estimate after reload (requires the session).
   useEffect(() => {

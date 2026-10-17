@@ -17,15 +17,48 @@ import { useAuth } from '@/store/auth';
 import { can, fmtDate, fmtDateTime, inr } from '@/lib/admin';
 
 export const REF_LABEL = {
-  SUBMITTED: 'Submitted', VERIFIED: 'Verified', CONTACTED: 'Contacted', SITE_VISIT_DONE: 'Site visit done', QUOTATION_SHARED: 'Quotation shared',
-  AGREEMENT_SIGNED: 'Agreement signed', ADVANCE_RECEIVED: 'Pending approval', REWARD_APPROVED: 'Credited to wallet', REWARD_PAID: 'Paid (legacy)', REJECTED: 'Rejected', WITHHELD: 'On hold',
+  SUBMITTED: 'Needs review', VERIFIED: 'Registered', CONTACTED: 'Booking made', SITE_VISIT_DONE: 'Site visit done', QUOTATION_SHARED: 'Quotation shared',
+  AGREEMENT_SIGNED: 'Quotation accepted', ADVANCE_RECEIVED: 'Qualified — to approve', REWARD_APPROVED: 'Credited to wallet', REWARD_PAID: 'Paid (legacy)', REJECTED: 'Rejected', WITHHELD: 'On hold',
 };
 const REF_TONE = { SUBMITTED: 'amber', ADVANCE_RECEIVED: 'wine', REWARD_APPROVED: 'green', REWARD_PAID: 'green', REJECTED: 'red', WITHHELD: 'outline' };
 const TYPE = { CUSTOMER: 'Customer', FRIEND: 'Friend / family', PROPERTY_DEALER: 'Property dealer', BROKER: 'Broker', PARTNER: 'Partner', OTHER: 'Other' };
+const SOURCE = { SIGNUP: 'Signed up with code', ADMIN: 'Added by staff', FORM: 'Form (legacy)', LINK: 'Link (legacy)' };
 const RefPill = ({ s }) => <Pill tone={REF_TONE[s] || 'grey'}>{REF_LABEL[s] || s}</Pill>;
 
+function AddReferral({ onDone }) {
+  const [form, setForm] = useState(null);
+  const [errors, setErrors] = useState({});
+  const [msg, setMsg] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const save = async () => {
+    setBusy(true); setErrors({}); setMsg(null);
+    try { const res = await api('/admin/referrals', { method: 'POST', body: form }); setForm(null); onDone(res); } catch (x) { setErrors(x.fieldErrors?.() || {}); setMsg(x.message); } finally { setBusy(false); }
+  };
+  return (
+    <>
+      <Button size="sm" onClick={() => { setErrors({}); setMsg(null); setForm({ referrerCode: '', customerMobile: '', reason: '' }); }}>Add referral</Button>
+      <Drawer open={Boolean(form)} onClose={() => setForm(null)} title="Add a referral manually" width="max-w-md"
+        footer={<><Button variant="ghost" onClick={() => setForm(null)}>Cancel</Button><Button loading={busy} onClick={save}>Add</Button></>}>
+        {form && (
+          <>
+            <p className="mb-4 text-sm text-graphite">Only when a customer forgot to enter the code at registration. The customer must already be registered and not linked to anyone. Bookings since their registration count. Audited.</p>
+            <Fields value={form} onChange={setForm} errors={errors} fields={[
+              { name: 'referrerCode', label: 'Referrer’s code', hint: 'e.g. II-ABC123' },
+              { name: 'customerMobile', label: 'Customer’s registered mobile' },
+              { name: 'reason', label: 'Reason', type: 'textarea', rows: 2 },
+            ]} />
+            {msg && <Notice tone="error" className="mt-3">{msg}</Notice>}
+          </>
+        )}
+      </Drawer>
+    </>
+  );
+}
+
 export function ReferralsList() {
+  const user = useAuth((s) => s.user);
   const list = useList('/admin/referrals', { limit: '25' });
+  const [msg, setMsg] = useState(null);
   const sum = list.data?.summary;
   const filters = [
     { name: 'status', label: 'Status', options: Object.entries(REF_LABEL) },
@@ -33,25 +66,27 @@ export function ReferralsList() {
   ];
   return (
     <Guard perm="referrals.view">
-      <Header title="Referrals" subtitle="Refer & Earn — verify, track and approve rewards (credited to the referrer’s wallet for their next project)">
+      <Header title="Referrals" subtitle="Refer & Earn — runs automatically: friend registers with a code → books → accepts the quotation → credit added to the referrer’s wallet. Step in only to review, hold or adjust.">
+        {can(user, 'referrals.manage') && <AddReferral onDone={(res) => { setMsg({ tone: 'success', text: `${res.message} (${res.data.referral.referralNumber})` }); list.reload(); }} />}
         <Button size="sm" variant="secondary" href="/admin/referrers">Referrers</Button>
         <Button size="sm" variant="ghost" href="/admin/settings">Programme settings</Button>
       </Header>
       {sum && (
         <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <button type="button" className="text-left" onClick={() => list.setParams({ status: 'SUBMITTED', flag: '' })}><Stat label="To verify" value={sum.toVerify} /></button>
-          <button type="button" className="text-left" onClick={() => list.setParams({ status: 'ADVANCE_RECEIVED', flag: '' })}><Stat label="Pending approval" value={sum.pendingApproval} /></button>
+          <button type="button" className="text-left" onClick={() => list.setParams({ status: 'SUBMITTED', flag: '' })}><Stat label="Needs review" value={sum.toVerify} hint="Enquired before registering" /></button>
+          <button type="button" className="text-left" onClick={() => list.setParams({ status: 'ADVANCE_RECEIVED', flag: '' })}><Stat label="Qualified — to approve" value={sum.pendingApproval} hint="Only when auto-credit is off" /></button>
           <button type="button" className="text-left" onClick={() => list.setParams({ flag: 'due', status: '' })}><Stat label="Credit issued" value={inr(sum.creditIssued)} hint={`${sum.creditIssuedCount} referral(s) · ${inr(sum.creditUsed)} used on projects`} /></button>
           <button type="button" className="text-left" onClick={() => list.setParams({ flag: 'recovery', status: '' })}><Stat label="Recovery review" value={sum.recovery} hint="Reversed after credit was used" /></button>
         </div>
       )}
+      {msg && <Notice tone={msg.tone} className="mb-3">{msg.text}</Notice>}
       <Filters params={list.params} setParams={list.setParams} filters={filters} placeholder="Referral no., customer name or mobile" />
       <DataTable tableId="referrals" {...list} rows={list.rows} retry={list.reload} onPage={(p) => list.setParams({ page: String(p) }, { resetPage: false })}
         rowHref={(r) => `/admin/referrals/${r.id}`} empty="No referrals match these filters."
         columns={[
-          { key: 'referralNumber', label: 'Referral', render: (r) => <><span className="block">{r.referralNumber}</span><span className="text-xs text-graphite">{fmtDate(r.createdAt)} · {r.source === 'LINK' ? 'Link' : 'Form'}</span></> },
+          { key: 'referralNumber', label: 'Referral', render: (r) => <><span className="block">{r.referralNumber}</span><span className="text-xs text-graphite">{fmtDate(r.createdAt)} · {SOURCE[r.source] || r.source}</span></> },
           { key: 'customer', label: 'Customer', render: (r) => <><span className="block">{r.customer.name}</span><span className="text-xs text-graphite">+91 {r.customer.mobile}</span></> },
-          { key: 'referrer', label: 'Referrer', render: (r) => <><span className="block">{r.referrer?.name}</span><span className="text-xs text-graphite">{r.referrer?.code}</span></> },
+          { key: 'referrer', label: 'Referrer', render: (r) => <><span className="block">{r.referrer?.name || (r.referrer?.mobile ? `+91 ${r.referrer.mobile}` : '—')}</span><span className="text-xs text-graphite">{r.referrer?.code}</span></> },
           { key: 'status', label: 'Status', render: (r) => <span className="flex flex-wrap gap-1"><RefPill s={r.status} />{r.checks?.duplicate && r.status === 'SUBMITTED' && <Pill tone="red">Duplicate?</Pill>}{r.recoveryReview && <Pill tone="red">Recovery</Pill>}</span> },
           { key: 'booking', label: 'Booking', render: (r) => r.bookingNumber || '—' },
           { key: 'value', label: 'Project value', render: (r) => (r.projectValue ? inr(r.projectValue) : '—') },
@@ -62,13 +97,14 @@ export function ReferralsList() {
 }
 
 const ACTIONS = {
-  verify: { title: 'Verify referral', button: 'Verify', fields: [{ name: 'note', label: 'Note', type: 'textarea', rows: 2 }], init: { note: '', override: false } },
+  verify: { title: 'Accept referral', button: 'Accept', fields: [{ name: 'note', label: 'Note', type: 'textarea', rows: 2 }], init: { note: '', override: false } },
   contacted: { title: 'Mark contacted', button: 'Mark contacted', fields: [{ name: 'note', label: 'Note (optional)', type: 'textarea', rows: 2 }], init: { note: '' } },
   reject: { title: 'Reject referral', button: 'Reject', fields: [{ name: 'reason', label: 'Reason (shown to the referrer)', type: 'textarea', rows: 3 }], init: { reason: '' } },
   withhold: { title: 'Put on hold', button: 'Put on hold', fields: [{ name: 'reason', label: 'Reason (shown to the referrer)', type: 'textarea', rows: 3 }], init: { reason: '' } },
   reopen: { title: 'Reopen referral', button: 'Reopen', fields: [{ name: 'reason', label: 'Reason', type: 'textarea', rows: 2 }], init: { reason: '' } },
   'recovery-reviewed': { title: 'Close recovery review', button: 'Close review', fields: [{ name: 'reason', label: 'What was done (recovered / adjusted / waived)', type: 'textarea', rows: 3 }], init: { reason: '' } },
   link: { title: 'Link booking manually', button: 'Link', fields: [{ name: 'bookingNumber', label: 'Booking number', hint: 'e.g. BK-2026-000123 — use when the customer booked with a different number' }, { name: 'reason', label: 'Reason (audited)', type: 'textarea', rows: 2 }], init: { bookingNumber: '', reason: '' } },
+  adjust: { title: 'Change credited amount', button: 'Save', fields: [{ name: 'amount', label: 'New credit amount (₹)', type: 'number', min: 0 }, { name: 'reason', label: 'Reason (shown to the referrer, audited)', type: 'textarea', rows: 2 }] },
   approve: { title: 'Approve & credit wallet', button: 'Approve & credit', fields: [{ name: 'amount', label: 'Reward amount (₹)', type: 'number', min: 0 }, { name: 'note', label: 'Note (required if you change the amount)', type: 'textarea', rows: 2 }] },
 };
 
@@ -90,6 +126,7 @@ export function ReferralDetail({ id }) {
   const open = (key) => {
     setErrors({}); setMsg(null); setAct(key);
     if (key === 'approve') setForm({ amount: r.rewardAmount, note: '' });
+    else if (key === 'adjust') setForm({ amount: r.rewardAmount, reason: '' });
     else setForm({ ...ACTIONS[key].init });
   };
   const submit = async () => {
@@ -102,10 +139,10 @@ export function ReferralDetail({ id }) {
   };
 
   const buttons = [
-    manage && r.status === 'SUBMITTED' && ['verify', 'Verify', 'primary'],
-    manage && r.status === 'VERIFIED' && ['contacted', 'Mark contacted', 'secondary'],
+    manage && r.status === 'SUBMITTED' && ['verify', 'Accept referral', 'primary'],
     manage && inProgress && !r.bookingId && ['link', 'Link booking', 'secondary'],
-    manage && r.status === 'ADVANCE_RECEIVED' && ['approve', 'Approve reward', 'primary'],
+    manage && r.status === 'ADVANCE_RECEIVED' && ['approve', 'Approve & credit', 'primary'],
+    manage && r.status === 'REWARD_APPROVED' && ['adjust', 'Change credit', 'secondary'],
     manage && ['REJECTED', 'WITHHELD'].includes(r.status) && ['reopen', 'Reopen', 'secondary'],
     manage && r.recoveryReview && ['recovery-reviewed', 'Close recovery review', 'secondary'],
     manage && !['REWARD_PAID', 'REJECTED', 'WITHHELD'].includes(r.status) && ['withhold', 'Hold', 'ghost'],
@@ -130,8 +167,8 @@ export function ReferralDetail({ id }) {
           <Box title="Referred customer">
             <KV rows={[
               ['Name', r.customer.name], ['Mobile', `+91 ${r.customer.mobile}`], ['City', r.customer.city], ['Property type', r.customer.propertyType],
-              ['Budget', r.customer.budget], ['Requirement', r.customer.notes], ['Source', r.source === 'LINK' ? 'Referral link (customer booked via link)' : 'Submitted by referrer'],
-              ['Consent', r.consentAt ? `Confirmed ${fmtDateTime(r.consentAt)}` : r.source === 'LINK' ? 'Customer came through the link' : '—'],
+              ['Budget', r.customer.budget], ['Requirement', r.customer.notes], ['Source', SOURCE[r.source] || r.source],
+              ['Counts bookings from', r.since ? fmtDateTime(r.since) : fmtDateTime(r.createdAt)],
             ]} />
           </Box>
           <Box title="Project & reward">
@@ -180,7 +217,7 @@ export function ReferralDetail({ id }) {
             {needOverride && (
               <div className="mb-4 border border-wine/40 bg-wine-tint p-3 text-sm">
                 <p>{now.soft.join(' ')}</p>
-                <label className="mt-2 flex items-center gap-2"><input type="checkbox" className="accent-wine" checked={Boolean(form.override)} onChange={(e) => setForm({ ...form, override: e.target.checked })} />I checked — this is a genuine new referral (note required)</label>
+                <label className="mt-2 flex items-center gap-2"><input type="checkbox" className="accent-wine" checked={Boolean(form.override)} onChange={(e) => setForm({ ...form, override: e.target.checked })} />I checked — this customer is genuinely new to us (note required)</label>
               </div>
             )}
             <Fields value={form} onChange={setForm} errors={errors} fields={cfg.fields} />

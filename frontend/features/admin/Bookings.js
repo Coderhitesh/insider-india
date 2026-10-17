@@ -149,7 +149,7 @@ export function BookingDetail({ id }) {
             <KV rows={[
               ['Mobile', <a key="m" href={`tel:+91${b.mobile}`} className="underline">+91 {b.mobile}</a>],
               ['Address', [b.address?.formattedAddress, b.address?.pincode].filter(Boolean).join(', ')],
-              ['Requirement', l.requirementType], ['Home type', l.propertyType], ['Configuration', l.bhk], ['Project type', l.projectType],
+              ...(/^Commercial/.test(l.propertyType || '') ? [['Space', l.propertyType], ['Carpet area', l.bhk]] : [['Requirement', l.requirementType], ['Home type', l.propertyType], ['Configuration', l.bhk]]), ['Project type', l.projectType],
               ['Possession', l.possession], ['Services', b.services.join(', ')],
               ['Package (indicative)', b.package?.name || sel?.packageName],
               ['Measurement assistance', b.floorPlan.measurementAssistance?.opted ? `Yes, ${inr(b.floorPlan.measurementAssistance.charge)}` : 'No'],

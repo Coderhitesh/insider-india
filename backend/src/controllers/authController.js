@@ -65,6 +65,7 @@ exports.verifyOtp = asyncHandler(async (req, res) => {
   await otpService.verifyOtp({ mobile, code: req.body.code });
 
   const now = new Date();
+  const isNew = !user;
   if (!user) {
     user = await User.create({ name: lead?.name || req.body.name || '', mobile, role: ROLES.CUSTOMER, mobileVerified: true, lastLogin: now });
   } else {
@@ -96,7 +97,17 @@ exports.verifyOtp = asyncHandler(async (req, res) => {
       lead.lastActivityAt = now;
       await lead.save();
       await logActivity({ lead: lead._id, actor: user, type: 'OTP_VERIFIED', message: 'Mobile number verified' });
-      if (lead.referralCode) await require('../services/referralService').attachFromLead(lead, user);
+    }
+  }
+
+  // Refer & Earn: a brand-new customer registering with a referral code (typed, or from the referrer's link).
+  let referral = null;
+  if (isNew && user.role === ROLES.CUSTOMER) {
+    // Only codes from this browser (typed / link) or this funnel's own lead — never from leads others created for the number.
+    const code = req.body.referralCode || lead?.referralCode;
+    if (code) {
+      const r = await require('../services/referralService').attachOnRegister(user, code, { lead });
+      referral = { applied: r.applied, reason: r.reason };
     }
   }
 
@@ -106,7 +117,7 @@ exports.verifyOtp = asyncHandler(async (req, res) => {
 
   const session = await startSession(req, res, user);
   if (lead) await lead.populate('services', 'title slug');
-  ok(res, { ...session, lead: lead ? leadView(lead) : null, resumeLead: resume ? leadView(resume) : null }, 'Mobile number verified');
+  ok(res, { ...session, lead: lead ? leadView(lead) : null, resumeLead: resume ? leadView(resume) : null, referral }, 'Mobile number verified');
 });
 
 exports.refresh = asyncHandler(async (req, res) => {

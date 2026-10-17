@@ -86,7 +86,7 @@ export function BookingDetail({ id }) {
               <Row label="Location">{[b.address?.formattedAddress, b.address?.pincode].filter(Boolean).join(', ')}</Row>
               <Row label="Requirement">{l.requirementType}</Row>
               <Row label="Home type">{l.propertyType}</Row>
-              <Row label="Configuration">{l.bhk}</Row>
+              <Row label={/^Commercial/.test(l.propertyType || "") ? "Carpet area" : "Configuration"}>{l.bhk}</Row>
               <Row label="Project type">{l.projectType}</Row>
               <Row label="Services">{b.services.join(', ')}</Row>
               <Row label="Possession">{l.possession}</Row>

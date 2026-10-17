@@ -12,11 +12,11 @@ export const revalidate = 60;
 export const metadata = pageMetadata({ title: 'Refer & Earn', description: 'Refer friends and family for interior design, renovation or modular kitchens and earn a reward when their project is confirmed.', path: '/refer-and-earn' });
 
 const STEPS = [
-  { icon: UserPlus, title: 'Join', body: 'Log in with your mobile number and get your Referral ID in seconds.' },
-  { icon: Send, title: 'Refer', body: 'Share your link, or submit your friend’s name and number with their permission.' },
-  { icon: ShieldCheck, title: 'We verify', body: 'We check the referral is genuine and new to us, then call them.' },
-  { icon: Ruler, title: 'Consultation & site visit', body: 'Our expert meets them, measures the home and prepares a quotation.' },
-  { icon: FileSignature, title: 'Project confirmed', body: 'They accept the quotation and pay the qualifying advance.' },
+  { icon: UserPlus, title: 'Get your code', body: 'Log in with your mobile number — your Referral ID and link are ready instantly. No forms.' },
+  { icon: Send, title: 'Share it', body: 'Send your link on WhatsApp or anywhere. Friends can also type your code when they register.' },
+  { icon: ShieldCheck, title: 'Friend registers', body: 'When a new customer registers with your code, they appear in your dashboard automatically.' },
+  { icon: Ruler, title: 'Consultation & site visit', body: 'Our expert meets them, measures the home and prepares the final quotation.' },
+  { icon: FileSignature, title: 'Quotation accepted', body: 'They accept the final quotation — your referral qualifies automatically.' },
   { icon: Wallet, title: 'Credit in your wallet', body: 'Your reward is added to your wallet as credit. Use it on your own next project — it’s deducted from the amount, you pay the rest.' },
 ];
 const ORDINAL = ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth', 'Seventh', 'Eighth', 'Ninth', 'Tenth'];

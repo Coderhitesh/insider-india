@@ -12,7 +12,9 @@ const referralSchema = new Schema(
     referralNumber: { type: String, required: true, unique: true },
     referrer: { type: Types.ObjectId, ref: 'Referrer', required: true, index: true },
     referrerUser: { type: Types.ObjectId, ref: 'User', index: true },
-    source: { type: String, enum: ['FORM', 'LINK'], default: 'FORM' },
+    // SIGNUP: the customer registered with the referrer's code / link. ADMIN: attached by staff. FORM/LINK: legacy.
+    source: { type: String, enum: ['SIGNUP', 'ADMIN', 'FORM', 'LINK'], default: 'SIGNUP' },
+    since: Date, // bookings made on/after this date count (registration date)
     customer: {
       name: { type: String, required: true, trim: true },
       mobile: { type: String, required: true, index: true },

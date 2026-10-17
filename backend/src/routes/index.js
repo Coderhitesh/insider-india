@@ -4,6 +4,7 @@ router.use('/files', require('./files.routes'));
 router.use('/auth', require('./auth.routes'));
 router.use('/catalog', require('./catalog.routes'));
 router.use('/leads', require('./lead.routes'));
+router.use('/enquiries', require('./enquiry.routes'));
 router.use('/estimates', require('./estimate.routes'));
 router.use('/bookings', require('./booking.routes'));
 router.use('/uploads', require('./upload.routes'));

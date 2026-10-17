@@ -32,6 +32,7 @@ function leadView(lead) {
       propertyType: l.property?.propertyType || null,
       bhk: l.property?.bhk || null,
       area: l.property?.area || null,
+      commercialType: l.property?.commercialType || l.estimateDraft?.commercialType || null,
     },
     projectType: l.projectType || null,
     services: (l.services || []).map((s) => (s && s._id ? { id: String(s._id), title: s.title, slug: s.slug } : String(s))),

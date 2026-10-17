@@ -24,6 +24,9 @@ const userSchema = new Schema(
       secretEnc: { type: String, select: false },
     },
     lastLogin: Date,
+    // Refer & Earn: who referred this customer (set once, at registration).
+    referredBy: { type: Types.ObjectId, ref: 'Referrer' },
+    referredCode: String,
     createdBy: { type: Types.ObjectId, ref: 'User' },
   },
   { timestamps: true },

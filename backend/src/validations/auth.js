@@ -13,6 +13,7 @@ const verifyOtp = z.object({
   leadId: objectId.optional(),
   leadToken: z.string().max(200).optional(),
   name: z.string().trim().min(2).max(120).optional(),
+  referralCode: z.string().trim().max(20).optional().transform((v) => (v && /^II-[A-Z0-9]{6}$/i.test(v) ? v.toUpperCase() : undefined)),
 });
 
 const staffLogin = z.object({

@@ -29,6 +29,11 @@ router.get('/dashboard', P('dashboard.view'), validate({ query: v.listQuery.pick
 // Leads
 router.get('/leads', P('leads.view'), validate({ query: v.listQuery }), leads.list);
 router.get('/leads/:id', P('leads.view'), id, leads.get);
+const enquiries = require('../../controllers/enquiryController');
+const ev = require('../../validations/enquiry');
+router.get('/enquiries', P('enquiries.view'), enquiries.list);
+router.get('/enquiries/:id', P('enquiries.view'), id, enquiries.get);
+router.patch('/enquiries/:id', P('enquiries.manage'), validate({ params: idParam, body: ev.update }), enquiries.update);
 router.patch('/leads/:id', P('leads.edit'), validate({ params: idParam, body: v.updateLead }), leads.update);
 router.post('/leads/:id/assign-contractor', P('leads.assign'), validate({ params: idParam, body: v.assign }), leads.assign);
 router.delete('/leads/:id', P('leads.delete'), id, leads.remove);
@@ -87,6 +92,8 @@ const rv = require('../../validations/referral');
 const rid = validate({ params: idParam });
 router.get('/referrals', P('referrals.view'), referrals.list);
 router.get('/referrals/:id', P('referrals.view'), rid, referrals.get);
+router.post('/referrals', P('referrals.manage'), validate({ body: rv.create }), referrals.create);
+router.post('/referrals/:id/adjust', P('referrals.manage'), validate({ params: idParam, body: rv.adjust }), referrals.adjust);
 router.post('/referrals/:id/verify', P('referrals.manage'), validate({ params: idParam, body: rv.verify }), referrals.verify);
 router.post('/referrals/:id/reject', P('referrals.manage'), validate({ params: idParam, body: rv.reason }), referrals.reject);
 router.post('/referrals/:id/contacted', P('referrals.manage'), validate({ params: idParam, body: rv.note }), referrals.markContacted);

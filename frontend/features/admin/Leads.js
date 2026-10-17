@@ -128,7 +128,7 @@ export function LeadDetail({ id }) {
               ['Mobile', `+91 ${l.mobile}${l.verified ? ' (verified)' : ''}`], ['City', l.city], ['Source', l.flow === 'ESTIMATE' ? 'Estimate calculator' : 'Booking funnel'],
               ['Requirement', l.labels.requirementType], ['Possession', l.labels.possession],
               ['Address', [l.property.address?.formattedAddress, l.property.address?.pincode].filter(Boolean).join(', ')],
-              ['Home type', l.labels.propertyType], ['Configuration', l.labels.bhk], ['Project type', l.labels.projectType],
+              [l.propertyCategory === 'COMMERCIAL' ? 'Space' : 'Home type', l.labels.propertyType], [l.propertyCategory === 'COMMERCIAL' ? 'Carpet area' : 'Configuration', l.labels.bhk], ['Project type', l.labels.projectType],
               ['Services', l.services.map((s) => s.title).join(', ')],
               ['Floor plan', l.floorPlan.hasFloorPlan ? `${l.floorPlan.media.length} file(s)` : l.floorPlan.measurementAssistance?.opted ? `Assistance requested (${inr(l.floorPlan.measurementAssistance.charge)})` : l.floorPlan.hasFloorPlan === false ? 'None' : null],
               ['Campaign', [l.utm?.source, l.utm?.medium, l.utm?.campaign].filter(Boolean).join(' / ')], ['Landing page', l.landingPage],

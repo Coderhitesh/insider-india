@@ -67,6 +67,19 @@ const PACKAGES = [
   },
 ];
 
+const HOME_ONLY_SERVICES = ['modern-kitchen', 'modern-wardrobe-storage', 'tv-units', 'pooja-units'];
+// Shown only in the commercial booking flow.
+const COMMERCIAL_SERVICES = [
+  ['Workstations & Office Furniture', 'workstations-furniture', 'Armchair'],
+  ['Cabins & Glass Partitions', 'cabins-partitions', 'DoorClosed'],
+  ['Reception & Front Desk', 'reception-desk', 'ConciergeBell'],
+  ['Conference & Meeting Rooms', 'conference-rooms', 'Presentation'],
+  ['Lighting & Electrical', 'lighting-electrical', 'Lamp'],
+  ['Flooring', 'flooring', 'Grid3x3'],
+  ['Display & Storage Units', 'display-storage', 'Boxes'],
+  ['Networking & Cabling', 'networking-cabling', 'Cable'],
+];
+
 const SERVICES = [
   ['Modern Kitchen', 'modern-kitchen', 'CookingPot'],
   ['Modern Wardrobe / Storage', 'modern-wardrobe-storage', 'Archive'],
@@ -76,7 +89,8 @@ const SERVICES = [
   ['Furniture & Doors', 'furniture-doors', 'DoorOpen'],
   ['TV Units', 'tv-units', 'Tv'],
   ['Pooja Units', 'pooja-units', 'Flame'],
-].map(([title, slug, icon], i) => ({ title, slug, icon, order: i + 1, showInBooking: true }));
+].map(([title, slug, icon], i) => ({ title, slug, icon, order: i + 1, showInBooking: true, scope: HOME_ONLY_SERVICES.includes(slug) ? 'RESIDENTIAL' : 'BOTH' }))
+  .concat(COMMERCIAL_SERVICES.map(([title, slug, icon], i) => ({ title, slug, icon, order: 20 + i, showInBooking: true, scope: 'COMMERCIAL' })));
 
 // DEMO VALUES — not supplied in the brief. Review in Admin > Estimate Rules before launch.
 const ESTIMATE_RULES = [
@@ -196,4 +210,4 @@ const COMMERCIAL_RULES = [
   A('c_painting', 'Painting', 'PaintRoller', 40000, 150000, { order: 137 }),
 ];
 
-module.exports = { PACKAGES, SERVICES, ESTIMATE_RULES, COMMERCIAL_RULES, COMMERCIAL_AREA_RATES, NOTIFICATION_TEMPLATES, FAQS };
+module.exports = { HOME_ONLY_SERVICES, COMMERCIAL_SERVICES, PACKAGES, SERVICES, ESTIMATE_RULES, COMMERCIAL_RULES, COMMERCIAL_AREA_RATES, NOTIFICATION_TEMPLATES, FAQS };

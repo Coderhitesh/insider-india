@@ -25,8 +25,9 @@ Har booking page (`/admin/bookings/<id>`) ke top par **Workflow** box dikhata ha
 
 ## Refer & Earn (staff)
 
-1. **To verify** tile → open referral → check "Checks" → Verify (tick override + note if flagged as possible duplicate) or Reject. Verifying creates a CRM lead.
-2. Status then follows the customer's booking, quotation and payments automatically. If they booked with another number, use **Link booking** (audited).
-3. **Pending approval** → Approve & credit (change amount only with a reason). The amount goes to the referrer's wallet — no cash payout.
-4. When the referrer books their own project: project → Payments → **Use credit** (or they apply it themselves from their dashboard). They pay the remaining balance normally.
-5. Referred project cancelled / refunded after the credit was used → "Recovery review" → adjust in their project balance, then Close recovery review.
+Runs by itself. Check People → Refer & Earn now and then:
+1. **Needs review** — the friend had enquired before registering with the code. Accept (tick + note) or Reject.
+2. **Add referral** — a customer forgot to enter the code at registration (they must be registered and not linked yet).
+3. **Change credit** — goodwill/corrections on a credited referral (reason required, referrer is notified).
+4. **Recovery review** — credit was already used and the referred project was cancelled/refunded. Adjust in the referrer's project balance, then close the review.
+5. Referrer project → Payments → **Use credit** applies wallet credit (customers can also do it themselves).

@@ -1,4 +1,4 @@
-const { Lead, Service, Media, User } = require('../models');
+const { Lead, Service, Media, User, Estimate } = require('../models');
 const { loadLeadForAccess } = require('../services/leadAccess');
 const options = require('../services/optionsService');
 const geo = require('../services/geoService');
@@ -70,7 +70,6 @@ exports.create = asyncHandler(async (req, res) => {
     resumeTokenHash: leadToken ? hmac(`lead:${leadToken}`) : undefined,
   });
 
-  if (verified && b.referralCode) await require('../services/referralService').attachFromLead(lead, req.user);
   await logActivity({ lead: lead._id, actor: req.user, type: 'LEAD_CREATED', message: `Lead created via ${b.flow === 'ESTIMATE' ? 'estimate calculator' : 'booking funnel'}` });
   created(res, { lead: leadView(lead), leadToken }, 'Saved');
 });
@@ -101,6 +100,33 @@ const applyStep = {
       }
     }
   },
+  async SPACE(lead, d) {
+    if (lead.propertyCategory !== d.propertyCategory) {
+      lead.propertyCategory = d.propertyCategory;
+      // Answers that only fit the other kind of space are cleared so the right questions are asked again.
+      const funnel = await options.getFunnelOptions();
+      const projectList = d.propertyCategory === 'COMMERCIAL' ? 'commercialProjectTypes' : 'projectTypes';
+      if (lead.projectType && !options.isValidOption(funnel, projectList, lead.projectType)) lead.projectType = undefined;
+      if (lead.services?.length) {
+        const ok = await Service.find({ _id: { $in: lead.services }, scope: { $in: [d.propertyCategory, 'BOTH', null] } }).select('_id').lean();
+        lead.services = ok.map((x) => x._id);
+      }
+      if (lead.estimate) {
+        const est = await Estimate.findById(lead.estimate).select('inputs.propertyCategory').lean();
+        if (est?.inputs?.propertyCategory && est.inputs.propertyCategory !== d.propertyCategory) lead.estimate = undefined;
+      }
+    }
+  },
+  async COMMERCIAL_DETAILS(lead, d) {
+    const cfg = await options.getEstimateConfig();
+    const types = (cfg.commercialTypes || []).filter((o) => o.active !== false);
+    if (!types.some((t) => t.value === d.commercialType)) throw invalidOption('commercialType', 'type of space');
+    const lim = cfg.areaLimits || { min: 100, max: 200000 };
+    if (d.area < lim.min || d.area > lim.max) throw new ApiError(422, `Enter an area between ${lim.min} and ${lim.max} sq ft`, 'VALIDATION_ERROR', [{ field: 'area', message: `Between ${lim.min} and ${lim.max} sq ft` }]);
+    lead.propertyCategory = 'COMMERCIAL';
+    lead.set('property.commercialType', d.commercialType);
+    lead.set('property.area', d.area);
+  },
   async REQUIREMENT(lead, d) { await assertOption('requirementTypes', 'requirementType', d.requirementType, 'requirement'); lead.requirementType = d.requirementType; },
   async POSSESSION(lead, d) { await assertOption('possessionOptions', 'possession', d.possession, 'possession timeline'); lead.possession = d.possession; },
   async LOCATION(lead, d) {
@@ -122,10 +148,10 @@ const applyStep = {
   },
   async PROPERTY_TYPE(lead, d) { await assertOption('propertyTypes', 'propertyType', d.propertyType, 'home type'); lead.set('property.propertyType', d.propertyType); },
   async BHK(lead, d) { await assertOption('bhkOptions', 'bhk', d.bhk, 'configuration'); lead.set('property.bhk', d.bhk); },
-  async PROJECT_TYPE(lead, d) { await assertOption('projectTypes', 'projectType', d.projectType, 'project type'); lead.projectType = d.projectType; },
+  async PROJECT_TYPE(lead, d) { await assertOption(lead.propertyCategory === 'COMMERCIAL' ? 'commercialProjectTypes' : 'projectTypes', 'projectType', d.projectType, 'project type'); lead.projectType = d.projectType; },
   async SERVICES(lead, d) {
     const ids = [...new Set(d.services)];
-    const found = await Service.find({ _id: { $in: ids }, isActive: true, showInBooking: true }).select('_id').lean();
+    const found = await Service.find({ _id: { $in: ids }, isActive: true, showInBooking: true, scope: { $in: [lead.propertyCategory || 'RESIDENTIAL', 'BOTH', null] } }).select('_id').lean();
     if (found.length !== ids.length) throw invalidOption('services', 'service');
     lead.services = ids;
   },

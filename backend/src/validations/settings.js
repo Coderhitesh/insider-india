@@ -55,6 +55,7 @@ const SETTINGS_SCHEMAS = {
     afterLastLevel: z.enum(['REPEAT_LAST', 'NONE']),
     countingPeriod: z.enum(['LIFETIME', 'FINANCIAL_YEAR', 'CALENDAR_YEAR']),
     payoutTrigger: z.enum(['ADVANCE', 'AGREEMENT']),
+    autoApprove: z.boolean().default(true),
     minAdvancePercent: z.coerce.number().min(0).max(100),
     valueBasis: z.enum(['EXCL_GST', 'INCL_GST']),
     maxRedeemPercent: z.coerce.number().min(1).max(100).default(100),
@@ -70,7 +71,7 @@ const SETTINGS_SCHEMAS = {
   }),
   'funnel.options': z.object({
     cities: optionList, requirementTypes: optionList, possessionOptions: optionList,
-    propertyTypes: optionList, bhkOptions: optionList, projectTypes: optionList,
+    propertyTypes: optionList, bhkOptions: optionList, projectTypes: optionList, commercialProjectTypes: optionList.optional(),
   }),
   'estimate.config': z.object({
     residentialSizes: optionList,

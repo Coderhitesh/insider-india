@@ -35,6 +35,11 @@ const stepSchemas = {
     country: str(100).optional(),
     pincode: z.string().trim().regex(/^[1-9]\d{5}$/, 'Enter a valid 6-digit pincode'),
   }),
+  SPACE: z.object({ propertyCategory: z.enum(['RESIDENTIAL', 'COMMERCIAL'], { errorMap: () => ({ message: 'Choose home or commercial' }) }) }),
+  COMMERCIAL_DETAILS: z.object({
+    commercialType: z.string().trim().min(1, 'Select the type of space').max(60),
+    area: z.coerce.number({ invalid_type_error: 'Enter the carpet area' }).int('Enter whole sq ft').positive('Enter the carpet area'),
+  }),
   PROPERTY_TYPE: option('propertyType', 'Select your home type'),
   BHK: option('bhk', 'Select your home configuration'),
   PROJECT_TYPE: option('projectType', 'Select project type'),

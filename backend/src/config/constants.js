@@ -15,6 +15,8 @@ const PERMISSIONS = [
   ['leads.edit', 'Leads', 'Edit leads'],
   ['leads.delete', 'Leads', 'Delete leads'],
   ['leads.assign', 'Leads', 'Assign leads'],
+  ['enquiries.view', 'Enquiries', 'View contact-page enquiries'],
+  ['enquiries.manage', 'Enquiries', 'Update enquiry status and notes'],
   ['customers.view', 'Customers', 'View customers'],
   ['customers.edit', 'Customers', 'Edit customers'],
   ['contractors.view', 'Contractors', 'View contractors'],
@@ -95,11 +97,12 @@ const TIMELINE = Object.freeze({
   PROJECT_COMPLETED: 'Project Completed',
 });
 
+// SPACE: home or commercial. Homes answer REQUIREMENT / PROPERTY_TYPE / BHK; commercial spaces answer COMMERCIAL_DETAILS instead.
 const BOOKING_STEPS = [
-  'BASIC_INFO', 'REQUIREMENT', 'POSSESSION', 'OTP',
+  'BASIC_INFO', 'SPACE', 'REQUIREMENT', 'COMMERCIAL_DETAILS', 'POSSESSION', 'OTP',
   'LOCATION', 'PROPERTY_TYPE', 'BHK', 'PROJECT_TYPE', 'SERVICES', 'FLOOR_PLAN',
 ];
-const PRE_OTP_STEPS = ['BASIC_INFO', 'REQUIREMENT', 'POSSESSION'];
+const PRE_OTP_STEPS = ['BASIC_INFO', 'SPACE', 'REQUIREMENT', 'COMMERCIAL_DETAILS', 'POSSESSION'];
 
 const CHANNELS = Object.freeze({ IN_APP: 'IN_APP', WHATSAPP: 'WHATSAPP', SMS: 'SMS', EMAIL: 'EMAIL' });
 

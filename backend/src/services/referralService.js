@@ -17,8 +17,8 @@ const COUNTED = ['ADVANCE_RECEIVED', 'REWARD_APPROVED', 'REWARD_PAID'];
 const OPEN = STATUS.filter((s) => !['REJECTED'].includes(s));
 
 const LABEL = {
-  SUBMITTED: 'Submitted', VERIFIED: 'Verified', CONTACTED: 'Customer contacted', SITE_VISIT_DONE: 'Site visit done',
-  QUOTATION_SHARED: 'Quotation shared', AGREEMENT_SIGNED: 'Agreement signed', ADVANCE_RECEIVED: 'Advance received',
+  SUBMITTED: 'Under review', VERIFIED: 'Registered', CONTACTED: 'Booking made', SITE_VISIT_DONE: 'Site visit done',
+  QUOTATION_SHARED: 'Quotation shared', AGREEMENT_SIGNED: 'Quotation accepted', ADVANCE_RECEIVED: 'Qualified',
   REWARD_APPROVED: 'Credit added to wallet', REWARD_PAID: 'Reward paid', REJECTED: 'Not accepted', WITHHELD: 'On hold',
 };
 
@@ -138,7 +138,7 @@ async function findBooking(ref) {
   if (!user) return null;
   if (!ref.customerUser) ref.customerUser = user._id;
   const taken = await Referral.distinct('booking', { _id: { $ne: ref._id }, booking: { $ne: null } });
-  return Booking.findOne({ customer: user._id, createdAt: { $gte: ref.createdAt }, status: { $ne: 'CANCELLED' }, _id: { $nin: taken } }).sort({ createdAt: 1 }).select('_id').lean();
+  return Booking.findOne({ customer: user._id, createdAt: { $gte: ref.since || ref.createdAt }, status: { $ne: 'CANCELLED' }, _id: { $nin: taken } }).sort({ createdAt: 1 }).select('_id').lean();
 }
 
 /**
@@ -149,6 +149,11 @@ async function sync(ref) {
   if (!AUTO.includes(ref.status) && ref.status !== 'REWARD_PAID') return ref;
   const cfg = await getConfig();
   let changed = false;
+  // Friends who registered without a name: show their name once they add it.
+  if (ref.customerUser && (!ref.customer.name || ref.customer.name === 'Customer')) {
+    const u = await User.findById(ref.customerUser).select('name').lean();
+    if (u?.name) { ref.customer.name = u.name; changed = true; }
+  }
 
   if (!ref.booking && ref.status !== 'REWARD_PAID') {
     const b = await findBooking(ref);
@@ -204,15 +209,95 @@ async function sync(ref) {
         if (s === 'ADVANCE_RECEIVED') {
           await qualify(ref, { quotation: accepted, cfg });
           push(ref, s, { auto: true, note: `Project value ${fmt(ref.projectValue)} · Slab ${ref.slabKey} · Level ${ref.level} · Reward ${fmt(ref.rewardAmount)}` });
-          notifyReferrer(ref, 'Your referral qualified!', `${ref.customer.name}'s project is confirmed. Reward ${fmt(ref.rewardAmount)} is awaiting approval.`);
+          if (!cfg.autoApprove) notifyReferrer(ref, 'Your referral qualified!', `${ref.customer.name}'s project is confirmed. Reward ${fmt(ref.rewardAmount)} is awaiting approval.`);
         } else push(ref, s, { auto: true });
       }
       changed = true;
     }
   }
+  // Automatic credit: qualified → wallet, unless staff turned auto-approval off or the referrer is suspended.
+  if (ref.status === 'ADVANCE_RECEIVED' && cfg.autoApprove) {
+    const referrer = await Referrer.findById(ref.referrer).select('status').lean();
+    if (referrer?.status === 'ACTIVE') { await approve(ref, { auto: true, cfg }); changed = true; }
+  }
   if (changed) await ref.save();
   return ref;
 }
+
+/**
+ * Credits the reward to the referrer's wallet. The level is re-checked at this moment (two referrals may have
+ * qualified together); `amount` overrides the calculated reward (staff, with a note).
+ */
+async function approve(ref, { auto = false, by, amount, note, cfg } = {}) {
+  cfg = cfg || (await getConfig());
+  const level = await levelFor(ref, cfg, ref.qualifiedAt || new Date());
+  if (level !== ref.level) {
+    const slab = slabFor(cfg, ref.projectValue);
+    ref.timeline.push({ status: ref.status, at: new Date(), auto: true, note: `Level corrected ${ref.level} → ${level}` });
+    ref.level = level;
+    ref.rewardCalculated = rewardFor(cfg, slab, level);
+    ref.rewardAmount = ref.rewardCalculated;
+  }
+  if (amount !== undefined) ref.rewardAmount = Math.round(amount);
+  ref.approvedAt = new Date();
+  ref.approvedBy = by;
+  ref.approvalNote = note;
+  push(ref, 'REWARD_APPROVED', { by, auto, note: `${fmt(ref.rewardAmount)} added to wallet${note ? ` — ${note}` : ''}` });
+  await ref.save();
+  notifyReferrer(ref, 'Credit added to your wallet', `${fmt(ref.rewardAmount)} referral credit for ${ref.customer.name} has been added to your Refer & Earn wallet. Use it on your next project with us.`);
+  return ref;
+}
+
+/**
+ * A new customer registered with a referral code (typed, or remembered from the referrer's link).
+ * Only brand-new accounts count. Clean referrals start as VERIFIED; possible duplicates wait for staff review.
+ * Never throws — a bad/ineligible code must not break registration.
+ */
+async function attachOnRegister(user, code, { lead } = {}) {
+  try {
+    code = String(code || '').trim().toUpperCase();
+    if (!/^II-[A-Z0-9]{6}$/.test(code) || !user || user.role !== 'CUSTOMER') return { applied: false };
+    const cfg = await getConfig();
+    if (!cfg.enabled) return { applied: false, reason: 'Programme is not open' };
+    const referrer = await Referrer.findOne({ code });
+    if (!referrer || referrer.status !== 'ACTIVE') return { applied: false, reason: 'Invalid referral code' };
+    if (String(referrer.user) === String(user._id)) return { applied: false, reason: 'You cannot use your own code' };
+    const now = new Date();
+    const { hard, soft } = await checkMobile(user.mobile, { referrer, excludeLead: lead?._id, at: now });
+    if (hard.length) { logger.info('Referral not applied', { code, reason: hard[0] }); return { applied: false, reason: hard[0] }; }
+    const { nextNumber } = require('../utils/sequence');
+    const review = soft.length > 0;
+    const ref = new Referral({
+      referralNumber: await nextNumber('REF'), referrer: referrer._id, referrerUser: referrer.user, source: 'SIGNUP', since: now,
+      customer: { name: user.name || lead?.name || 'Customer', mobile: user.mobile, city: lead?.city },
+      lead: lead?._id, customerUser: user._id,
+      checks: { duplicate: review, duplicateReason: soft.join(' '), checkedAt: now },
+      status: review ? 'SUBMITTED' : 'VERIFIED',
+      timeline: [
+        { status: 'SUBMITTED', at: now, auto: true, note: `Registered with code ${code}` },
+        ...(review ? [] : [{ status: 'VERIFIED', at: now, auto: true }]),
+      ],
+    });
+    await ref.save();
+    await User.updateOne({ _id: user._id, referredBy: null }, { $set: { referredBy: referrer._id, referredCode: code } });
+    notifyReferrer(ref, 'New referral registered', `${ref.customer.name} registered with your referral code. You earn credit when they book and accept their quotation.`);
+    return { applied: true, referral: ref };
+  } catch (err) {
+    logger.warn('Referral attach failed', { error: err.message });
+    return { applied: false };
+  }
+}
+
+// Syncs for one referrer run one at a time (levels depend on each other).
+const chains = new Map();
+function serial(key, fn) {
+  const prev = chains.get(key) || Promise.resolve();
+  const next = prev.catch(() => {}).then(fn);
+  chains.set(key, next);
+  next.finally(() => { if (chains.get(key) === next) chains.delete(key); }).catch(() => {});
+  return next;
+}
+const syncSerial = (ref) => serial(String(ref.referrer), async () => sync(await Referral.findById(ref._id) || ref));
 
 async function syncForBooking(bookingId) {
   if (!bookingId) return;
@@ -222,7 +307,7 @@ async function syncForBooking(bookingId) {
     const u = await User.findById(booking.customer).select('mobile').lean();
     if (u) refs.push(...(await Referral.find({ booking: null, 'customer.mobile': u.mobile })));
   }
-  for (const r of refs) await sync(r).catch((err) => logger.warn('Referral sync failed', { referral: String(r._id), error: err.message }));
+  for (const r of refs) await syncSerial(r).catch((err) => logger.warn('Referral sync failed', { referral: String(r._id), error: err.message }));
 }
 
 /** Fire-and-forget hook for booking/payment changes. */
@@ -303,18 +388,22 @@ async function redeem({ project, amount, actor, note }) {
   const ApiError = require('../utils/ApiError');
   const value = Math.round(Number(amount) || 0);
   if (value < 1) throw ApiError.badRequest('Enter the credit amount to use', 'INVALID_AMOUNT');
-  const now = new Date();
-  const locked = await Referrer.findOneAndUpdate(
-    { user: project.customer, $or: [{ walletLockUntil: null }, { walletLockUntil: { $lt: now } }] },
-    { $set: { walletLockUntil: new Date(now.getTime() + 15000) } }, { new: true },
-  );
-  if (!locked) {
-    if (!(await Referrer.exists({ user: project.customer }))) throw ApiError.conflict('This customer has no Refer & Earn credit', 'NO_WALLET');
-    throw ApiError.conflict('Credit is being applied already. Please try again in a few seconds.', 'WALLET_BUSY');
-  }
+  const referrer = await Referrer.findOne({ user: project.customer });
+  if (!referrer) throw ApiError.conflict('This customer has no Refer & Earn credit', 'NO_WALLET');
+  const { Lock } = require('../models');
+  const key = `wallet:${referrer._id}`;
+  const acquire = async () => {
+    try { await Lock.create({ _id: key, expiresAt: new Date(Date.now() + 15000) }); return true; } catch (err) {
+      if (err.code !== 11000) throw err;
+      const stale = await Lock.deleteOne({ _id: key, expiresAt: { $lt: new Date() } });
+      if (!stale.deletedCount) return false;
+      try { await Lock.create({ _id: key, expiresAt: new Date(Date.now() + 15000) }); return true; } catch { return false; }
+    }
+  };
+  if (!(await acquire())) throw ApiError.conflict('Credit is being applied already. Please try again in a few seconds.', 'WALLET_BUSY');
   try {
-    if (locked.status !== 'ACTIVE') throw ApiError.conflict('Refer & Earn account is suspended — credit cannot be used', 'REFERRER_SUSPENDED');
-    const [w, s, cfg] = await Promise.all([wallet(locked), paySvc.summary(project), getConfig()]);
+    if (referrer.status !== 'ACTIVE') throw ApiError.conflict('Refer & Earn account is suspended — credit cannot be used', 'REFERRER_SUSPENDED');
+    const [w, s, cfg] = await Promise.all([wallet(referrer), paySvc.summary(project), getConfig()]);
     const cap = Math.max(0, Math.floor((s.total * (cfg.maxRedeemPercent ?? 100)) / 100) - s.creditApplied);
     const max = Math.min(w.available, s.balance, cap);
     if (!s.total) throw ApiError.conflict('Project value is not set yet', 'NO_PROJECT_VALUE');
@@ -322,12 +411,18 @@ async function redeem({ project, amount, actor, note }) {
     if (value > max) throw new ApiError(422, `You can use up to ${fmt(max)} on this project`, 'VALIDATION_ERROR', [{ field: 'amount', message: `Max ${fmt(max)}` }]);
     const payment = await Payment.create({
       paymentNumber: await nextNumber('PAY'), project: project._id, booking: project.booking, customer: project.customer,
-      amount: value, method: 'REFERRAL_CREDIT', status: 'RECEIVED', receivedAt: new Date(), reference: locked.code,
+      amount: value, method: 'REFERRAL_CREDIT', status: 'RECEIVED', receivedAt: new Date(), reference: referrer.code,
       note: note || 'Refer & Earn wallet credit', recordedBy: actor?._id,
     });
+    // Belt and braces: if anything slipped past the lock, undo instead of overdrawing the wallet.
+    const after = await wallet(referrer);
+    if (after.balance < 0) {
+      await Payment.updateOne({ _id: payment._id }, { $set: { status: 'VOID', voidedAt: new Date(), voidReason: 'Auto-reversed: wallet would be overdrawn' } });
+      throw ApiError.conflict('Not enough wallet credit. Please refresh and try again.', 'CREDIT_NOT_APPLICABLE');
+    }
     return { payment, max };
   } finally {
-    await Referrer.updateOne({ _id: locked._id }, { $set: { walletLockUntil: null } });
+    await Lock.deleteOne({ _id: key }).catch(() => {});
   }
 }
 
@@ -341,5 +436,5 @@ async function nextLevelInfo(referrer, cfg) {
 
 module.exports = {
   STATUS, LABEL, COUNTED, getConfig, slabFor, rewardFor, periodStart, addWorkingDays, newCode, checkMobile,
-  sync, syncForBooking, syncLater, attachFromLead, levelFor, notifyReferrer, push, nextLevelInfo, wallet, redeem, flagIfOverdrawn, CREDITED,
+  sync, syncSerial, approve, attachOnRegister, syncForBooking, syncLater, attachFromLead, levelFor, notifyReferrer, push, nextLevelInfo, wallet, redeem, flagIfOverdrawn, CREDITED,
 };

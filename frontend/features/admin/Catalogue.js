@@ -44,17 +44,19 @@ export function Packages() {
 
 export function Services() {
   return (
-    <CrudResource endpoint="/admin/services" title="Services" subtitle="Options in step 10 of the booking funnel" managePerm="packages.manage" reorder
+    <CrudResource endpoint="/admin/services" title="Services" subtitle="Options in the “What are you looking for?” step of the booking funnel (homes and commercial spaces see different lists)" managePerm="packages.manage" reorder
       columns={[
         { key: 'title', label: 'Service' }, { key: 'icon', label: 'Icon' },
+        { key: 'scope', label: 'Shown for', render: (r) => ({ RESIDENTIAL: 'Homes', COMMERCIAL: 'Commercial', BOTH: 'Both' }[r.scope] || 'Both') },
         { key: 'showInBooking', label: 'In booking funnel', render: (r) => (r.showInBooking ? 'Yes' : 'No') }, { key: 'isActive', label: 'Status', render: active },
       ]}
-      defaults={{ title: '', icon: '', image: '', description: '', showInBooking: true, isActive: true }}
+      defaults={{ title: '', icon: '', image: '', description: '', scope: 'BOTH', showInBooking: true, isActive: true }}
       toForm={strip}
       fields={[
         { name: 'title', label: 'Title' }, { name: 'slug', label: 'Slug', hint: 'Leave blank to generate' },
         { name: 'icon', label: 'Icon (lucide name)', hint: 'e.g. CookingPot, Archive, Tv, Flame' }, { name: 'image', label: 'Image', type: 'image' },
         { name: 'description', label: 'Description', type: 'textarea' },
+        { name: 'scope', label: 'Shown for', type: 'select', placeholder: false, options: [{ value: 'BOTH', label: 'Homes and commercial' }, { value: 'RESIDENTIAL', label: 'Homes only' }, { value: 'COMMERCIAL', label: 'Commercial only' }] },
         { name: 'showInBooking', label: 'Booking funnel', type: 'switch', help: 'Offer in booking funnel' }, { name: 'isActive', label: 'Active', type: 'switch', help: 'Active' },
       ]} />
   );

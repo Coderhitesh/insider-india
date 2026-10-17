@@ -9,6 +9,7 @@ const propertySchema = new Schema(
     propertyType: String,
     bhk: String,
     area: Number,
+    commercialType: String,
   },
   { timestamps: true },
 );

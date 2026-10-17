@@ -1,16 +1,22 @@
 const { BOOKING_STEPS } = require('../config/constants');
 
+const isCommercial = (lead) => lead.propertyCategory === 'COMMERCIAL';
+const commercialType = (lead) => lead.property?.commercialType || lead.estimateDraft?.commercialType;
+
 function isStepComplete(lead, step) {
   const addr = lead.property?.address || {};
   switch (step) {
     case 'BASIC_INFO': return Boolean(lead.name && lead.mobile);
-    case 'REQUIREMENT': return Boolean(lead.requirementType);
+    // Answered explicitly, or known from the estimator / an older request that already chose a home requirement.
+    case 'SPACE': return (lead.stepsCompleted || []).includes('SPACE') || Boolean(lead.estimate || lead.estimateDraft?.propertyCategory || lead.requirementType);
+    case 'REQUIREMENT': return isCommercial(lead) || Boolean(lead.requirementType);
+    case 'COMMERCIAL_DETAILS': return !isCommercial(lead) || Boolean(commercialType(lead) && lead.property?.area > 0);
     case 'POSSESSION': return Boolean(lead.possession);
     case 'OTP': return Boolean(lead.user && lead.verifiedAt);
     case 'LOCATION': return Boolean(addr.formattedAddress && addr.pincode);
     // Commercial spaces (from the estimator) have no home type / BHK — those steps are skipped.
-    case 'PROPERTY_TYPE': return lead.propertyCategory === 'COMMERCIAL' || Boolean(lead.property?.propertyType);
-    case 'BHK': return lead.propertyCategory === 'COMMERCIAL' || Boolean(lead.property?.bhk);
+    case 'PROPERTY_TYPE': return isCommercial(lead) || Boolean(lead.property?.propertyType);
+    case 'BHK': return isCommercial(lead) || Boolean(lead.property?.bhk);
     case 'PROJECT_TYPE': return Boolean(lead.projectType);
     case 'SERVICES': return (lead.services || []).length > 0;
     case 'FLOOR_PLAN': {
@@ -31,4 +37,4 @@ function computeNextStep(lead) {
 
 const stepIndex = (step) => BOOKING_STEPS.indexOf(step) + 1;
 
-module.exports = { isStepComplete, computeNextStep, stepIndex };
+module.exports = { isStepComplete, computeNextStep, stepIndex, isCommercial, commercialType };

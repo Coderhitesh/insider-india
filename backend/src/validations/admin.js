@@ -150,6 +150,7 @@ const serviceBase = z.object({
   image: url.optional(),
   description: optStr(1000),
   showInBooking: z.boolean().default(true),
+  scope: z.enum(['RESIDENTIAL', 'COMMERCIAL', 'BOTH']).default('BOTH'),
   isActive: z.boolean().default(true),
   order: z.coerce.number().int().optional(),
 });

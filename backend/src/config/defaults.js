@@ -34,6 +34,11 @@ const FUNNEL_OPTIONS = {
     opt('RENOVATION', 'Renovation'),
     opt('RESALE', 'Resale Property Interior'),
   ]),
+  commercialProjectTypes: ordered([
+    opt('NEW_FITOUT', 'New Fit-out', { description: 'Complete interiors for a new office, shop or outlet.' }),
+    opt('RENOVATION', 'Renovation / Refurbishment', { description: 'Upgrade or redesign an existing space.' }),
+    opt('EXPANSION', 'Expansion', { description: 'Additional floor, area or branch.' }),
+  ]),
 };
 
 const ESTIMATE_CONFIG = {
@@ -146,7 +151,8 @@ const REFERRAL_CONFIG = {
   ],
   afterLastLevel: 'REPEAT_LAST', // REPEAT_LAST | NONE
   countingPeriod: 'LIFETIME', // LIFETIME | FINANCIAL_YEAR | CALENDAR_YEAR
-  payoutTrigger: 'ADVANCE', // ADVANCE (qualifying advance received) | AGREEMENT (quotation accepted)
+  payoutTrigger: 'AGREEMENT', // AGREEMENT (final quotation accepted) | ADVANCE (accepted + qualifying advance received)
+  autoApprove: true, // credit the wallet automatically when the referral qualifies (staff can still hold/adjust)
   minAdvancePercent: 10,
   valueBasis: 'EXCL_GST', // EXCL_GST | INCL_GST
   // Rewards are not paid in cash: they are added to the referrer's wallet as credit for their own next project.
@@ -157,9 +163,9 @@ const REFERRAL_CONFIG = {
   maxSubmissionsPerDay: 10,
   terms: [
     'Refer genuine new customers for interior design, renovation, modular kitchens, furniture or turnkey projects.',
-    'Submit the referral before the customer starts discussions with us. The customer must be new to us — not already in our records, an existing customer for the same project, or in active discussion.',
+    'Your friend must register with your referral code or link (it is applied automatically when they open your link). The code only works for new customers registering for the first time — not for people already registered or already in discussion with us.',
     'The first valid referral we accept for a customer gets the credit. Duplicate, self, disputed or fraudulent referrals are rejected.',
-    'A referral qualifies after verification, a signed agreement (accepted quotation) and receipt of the qualifying advance. The reward slab is based on the final accepted project value, excluding GST, refunds, cancelled work and unapproved variations.',
+    'A referral qualifies when your friend books with us and accepts the final quotation. The reward slab is based on the final accepted project value, excluding GST, refunds, cancelled work and unapproved variations.',
     'Rewards are not paid in cash and cannot be withdrawn or transferred. Approved rewards are added to your Refer & Earn wallet as credit.',
     'Use your wallet credit against your own next project with us: the credit is deducted from your project amount and you pay the remaining balance.',
     'Your second and third successful referrals earn the higher level rewards. One project counts once. Past rewards are not increased later.',

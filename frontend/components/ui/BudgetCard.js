@@ -24,7 +24,7 @@ export default function BudgetCard({ budget, title = 'Approximate budget', compa
       )}
       <p className="flex gap-2 bg-blush px-5 py-3 text-sm text-charcoal">
         <Info className="mt-0.5 size-4 shrink-0 text-wine" aria-hidden="true" />
-        <span><strong>This is not the final budget.</strong> {budget.source === 'AUTO_BOOKING' ? 'It is estimated from your home size and the services you chose. ' : ''}Your final quotation is prepared after the site visit, actual measurements and material selection.</span>
+        <span><strong>This is not the final budget.</strong> {budget.source === 'AUTO_BOOKING' ? 'It is estimated from your space size and the services you chose. ' : ''}Your final quotation is prepared after the site visit, actual measurements and material selection.</span>
       </p>
     </div>
   );

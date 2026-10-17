@@ -40,16 +40,21 @@ exports.packageBySlug = asyncHandler(async (req, res) => {
 exports.services = asyncHandler(async (req, res) => {
   const filter = { isActive: true };
   if (req.query.context === 'booking') filter.showInBooking = true;
-  const items = await Service.find(filter).sort({ order: 1 }).select('title slug icon image description').lean();
+  // Website pages (no context) show home services; the booking funnel gets everything and filters by space.
+  if (req.query.scope === 'COMMERCIAL' || req.query.scope === 'RESIDENTIAL') filter.scope = { $in: [req.query.scope, 'BOTH', null] };
+  else if (req.query.context !== 'booking') filter.scope = { $ne: 'COMMERCIAL' };
+  const items = await Service.find(filter).sort({ order: 1 }).select('title slug icon image description scope').lean();
   cache(res);
   ok(res, { services: items.map((s) => ({ ...s, id: String(s._id), _id: undefined })) });
 });
 
 exports.funnelOptions = asyncHandler(async (req, res) => {
-  const [opts, pricing, otp, maps] = await Promise.all([options.getFunnelOptions(), options.getPricingConfig(), otpService.getConfig(), settings.get('maps.config', {})]);
+  const [opts, pricing, otp, maps, est] = await Promise.all([options.getFunnelOptions(), options.getPricingConfig(), otpService.getConfig(), settings.get('maps.config', {}), options.getEstimateConfig()]);
   cache(res);
   ok(res, {
     ...opts,
+    commercialTypes: (est.commercialTypes || []).filter((o) => o.active !== false),
+    areaLimits: est.areaLimits,
     floorPlanAssistanceCharge: pricing.floorPlanAssistanceCharge,
     otp: { length: otp.length, channels: otp.channels, resendCooldownSeconds: otp.resendCooldownSeconds },
     addressAutocomplete: geo.isEnabled() && (maps?.autocompleteEnabled ?? true),

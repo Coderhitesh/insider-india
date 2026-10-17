@@ -28,7 +28,6 @@ const referrerSchema = new Schema(
       updatedAt: Date,
     },
     adminNotes: String,
-    walletLockUntil: Date, // short lock while credit is being applied (prevents double spending)
   },
   { timestamps: true },
 );

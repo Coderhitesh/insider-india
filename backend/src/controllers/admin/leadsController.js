@@ -63,8 +63,8 @@ function listItem(l, opts) {
     flow: l.flow,
     status: l.status,
     city: l.property?.address?.city || l.city || null,
-    bhk: options.labelOf(opts, 'bhkOptions', l.property?.bhk),
-    requirement: options.labelOf(opts, 'requirementTypes', l.requirementType),
+    bhk: l.propertyCategory === 'COMMERCIAL' ? `Commercial${l.property?.area ? ` · ${Number(l.property.area).toLocaleString('en-IN')} sq ft` : ''}` : options.labelOf(opts, 'bhkOptions', l.property?.bhk),
+    requirement: l.propertyCategory === 'COMMERCIAL' ? 'Commercial space' : options.labelOf(opts, 'requirementTypes', l.requirementType),
     services: (l.services || []).map((s) => s.title).filter(Boolean),
     verified: Boolean(l.verifiedAt),
     nextStep: next,
@@ -128,15 +128,18 @@ exports.get = asyncHandler(async (req, res) => {
   ]);
   const opts = await options.getFunnelOptions({ activeOnly: false });
   const l = lead.toObject();
+  const commercial = l.propertyCategory === 'COMMERCIAL';
+  const ecfg = commercial ? await options.getEstimateConfig() : null;
+  const ctype = commercial ? (ecfg.commercialTypes || []).find((t) => t.value === (l.property?.commercialType || l.estimateDraft?.commercialType))?.label : null;
   ok(res, {
     lead: {
       ...leadView(lead),
       labels: {
         requirementType: options.labelOf(opts, 'requirementTypes', l.requirementType),
         possession: options.labelOf(opts, 'possessionOptions', l.possession),
-        propertyType: options.labelOf(opts, 'propertyTypes', l.property?.propertyType),
-        bhk: options.labelOf(opts, 'bhkOptions', l.property?.bhk),
-        projectType: options.labelOf(opts, 'projectTypes', l.projectType),
+        propertyType: commercial ? `Commercial${ctype ? ` — ${ctype}` : ''}` : options.labelOf(opts, 'propertyTypes', l.property?.propertyType),
+        bhk: commercial ? (l.property?.area ? `${Number(l.property.area).toLocaleString('en-IN')} sq ft` : null) : options.labelOf(opts, 'bhkOptions', l.property?.bhk),
+        projectType: options.labelOf(opts, commercial ? 'commercialProjectTypes' : 'projectTypes', l.projectType),
       },
       assignedContractor: l.assignedContractor ? { id: String(l.assignedContractor._id), name: l.assignedContractor.name, mobile: l.assignedContractor.mobile } : null,
       assignedAdmin: l.assignedAdmin ? { id: String(l.assignedAdmin._id), name: l.assignedAdmin.name } : null,

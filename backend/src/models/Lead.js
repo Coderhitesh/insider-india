@@ -24,6 +24,7 @@ const leadSchema = new Schema(
       propertyType: String,
       bhk: String,
       area: Number,
+      commercialType: String, // OFFICE, RETAIL … (commercial spaces)
     },
     projectType: String,
     services: [{ type: Types.ObjectId, ref: 'Service' }],

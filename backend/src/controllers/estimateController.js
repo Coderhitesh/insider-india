@@ -97,6 +97,7 @@ exports.create = asyncHandler(async (req, res) => {
     const funnel = await options.getFunnelOptions();
     if (clean.propertyCategory === 'RESIDENTIAL' && options.isValidOption(funnel, 'bhkOptions', clean.bhk)) lead.set('property.bhk', clean.bhk);
     if (clean.area) lead.set('property.area', clean.area);
+    if (clean.propertyCategory === 'COMMERCIAL' && clean.commercialType) lead.set('property.commercialType', clean.commercialType);
     lead.lastActivityAt = new Date();
     await lead.save();
     await logActivity({ lead: lead._id, actor: req.user, type: 'ESTIMATE_GENERATED', message: `Estimate ${estimate.estimateNumber} generated` });

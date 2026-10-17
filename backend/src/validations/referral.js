@@ -50,4 +50,7 @@ const referrerUpdate = z.object({
   adminNotes: opt(2000),
 });
 
-module.exports = { join, payout, submit, note, reason, verify, link, approve, pay, referrerUpdate, objectId };
+const adjust = z.object({ amount: z.coerce.number().min(0).max(1e8), reason: str(1000).min(3, 'Give a reason') });
+const create = z.object({ referrerCode: str(20).regex(/^II-[A-Za-z0-9]{6}$/, 'Enter a referral code like II-ABC123'), customerMobile: str(20).min(10, 'Enter the customer mobile'), reason: str(1000).min(3, 'Give a reason') });
+
+module.exports = { adjust, create, join, payout, submit, note, reason, verify, link, approve, pay, referrerUpdate, objectId };

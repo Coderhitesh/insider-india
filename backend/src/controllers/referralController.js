@@ -47,7 +47,7 @@ function referralView(x, { staff = false } = {}) {
       checks: o.checks, leadId: o.lead ? String(o.lead._id || o.lead) : null, bookingId: o.booking ? String(o.booking._id || o.booking) : null,
       bookingNumber: o.booking?.bookingNumber, projectId: o.project ? String(o.project) : null, linkedManually: o.linkedManually,
       rewardCalculated: o.rewardCalculated, approvalNote: o.approvalNote, recoveryReview: o.recoveryReview, valueBasis: o.valueBasis,
-      consentAt: o.consentAt, payoutDetails: o.payout?.details,
+      consentAt: o.consentAt, since: o.since, payoutDetails: o.payout?.details,
     } : {}),
   };
 }
@@ -74,17 +74,32 @@ async function myReferrer(req) {
   return Referrer.findOne({ user: req.user._id });
 }
 
+/** Every customer gets a Referral ID automatically (no sign-up form) once the programme is open. */
+async function ensureReferrer(req, cfg) {
+  let referrer = await myReferrer(req);
+  if (referrer || !cfg.enabled || req.user.role !== 'CUSTOMER') return referrer;
+  try {
+    referrer = await Referrer.create({ user: req.user._id, code: await svc.newCode(), name: req.user.name || '', mobile: req.user.mobile, type: 'CUSTOMER', termsAcceptedAt: new Date() });
+  } catch (err) {
+    if (err.code !== 11000) throw err;
+    referrer = await myReferrer(req); // created by a parallel request
+  }
+  return referrer;
+}
+
 exports.mine = asyncHandler(async (req, res) => {
   const cfg = await svc.getConfig();
-  const referrer = await myReferrer(req);
+  const referrer = await ensureReferrer(req, cfg);
   if (!referrer) return ok(res, { program: await publicProgram(), referrer: null, referrals: [], stats: null });
+  if (!referrer.name && req.user.name) { referrer.name = req.user.name; await referrer.save(); }
   const refs = await Referral.find({ referrer: referrer._id }).sort({ createdAt: -1 });
-  for (const r of refs) await svc.sync(r).catch(() => {});
+  for (const r of refs) await svc.syncSerial(r).catch(() => {});
+  for (let i = 0; i < refs.length; i += 1) refs[i] = (await Referral.findById(refs[i]._id)) || refs[i];
   const sum = (f) => refs.filter(f).reduce((s, r) => s + (r.rewardAmount || 0), 0);
   ok(res, {
     program: await publicProgram(),
     referrer: referrerView(referrer),
-    shareUrl: `${env.frontendUrl}/book-consultation?ref=${encodeURIComponent(referrer.code)}`,
+    shareUrl: `${env.frontendUrl}/?ref=${encodeURIComponent(referrer.code)}`,
     referrals: refs.map((r) => referralView(r)),
     stats: {
       total: refs.length,
@@ -124,7 +139,10 @@ exports.updatePayout = asyncHandler(async (req, res) => {
   ok(res, { referrer: referrerView(r) }, 'Payout details saved');
 });
 
+/** Manual "refer by number" is switched off: referrals are recorded only when the friend registers with the code. */
 exports.submit = asyncHandler(async (req, res) => {
+  throw new ApiError(410, 'Share your referral code or link — your friend is added automatically when they register with it.', 'USE_REFERRAL_CODE');
+  // eslint-disable-next-line no-unreachable
   const cfg = await svc.getConfig();
   if (!cfg.enabled) throw ApiError.conflict('Refer & Earn is not open yet.', 'PROGRAM_OFF');
   const referrer = await myReferrer(req);
@@ -159,6 +177,7 @@ async function loadRef(req) {
 }
 
 async function respond(res, r, message) {
+  r = (await Referral.findById(r._id)) || r; // background syncs may have moved it on
   await r.populate(populateRef);
   ok(res, { referral: referralView(r, { staff: true }) }, message);
 }
@@ -193,8 +212,8 @@ exports.list = asyncHandler(async (req, res) => {
 });
 
 exports.get = asyncHandler(async (req, res) => {
+  await svc.syncSerial(await loadRef(req));
   const r = await loadRef(req);
-  await svc.sync(r);
   const fresh = await svc.checkMobile(r.customer.mobile, { referrer: await Referrer.findById(r.referrer).lean(), excludeReferral: r._id, excludeLead: r.lead, at: r.createdAt });
   await r.populate(populateRef);
   const cfg = await svc.getConfig();
@@ -211,19 +230,11 @@ exports.verify = asyncHandler(async (req, res) => {
   if (soft.length && !req.body.override) throw new ApiError(409, `Possible duplicate: ${soft.join(' ')} Tick “verify anyway” with a note if you have checked it.`, 'POSSIBLE_DUPLICATE');
   if (soft.length && (req.body.note || '').trim().length < 3) throw new ApiError(422, 'Add a note explaining why this is a genuine new referral', 'VALIDATION_ERROR', [{ field: 'note', message: 'Required' }]);
 
-  if (!r.lead) {
-    const lead = await Lead.create({
-      leadNumber: await nextNumber('LD'), flow: 'REFERRAL', source: 'REFERRAL', name: r.customer.name, mobile: r.customer.mobile, city: r.customer.city,
-      status: 'NEW', currentStep: 'BASIC_INFO', stepsCompleted: ['BASIC_INFO'], referralCode: referrer?.code,
-    });
-    r.lead = lead._id;
-    await logActivity({ lead: lead._id, actor: req.user, type: 'LEAD_CREATED', message: `Referral ${r.referralNumber} from ${referrer?.name} (${referrer?.code}). ${[r.customer.propertyType, r.customer.budget, r.customer.notes].filter(Boolean).join(' · ')}` });
-  }
   svc.push(r, 'VERIFIED', { by: req.user._id, note: req.body.note });
   await r.save();
   await audit(req, { action: 'REFERRAL_VERIFIED', entityType: 'Referral', entityId: r._id, reason: req.body.note, meta: { override: Boolean(soft.length) } });
-  svc.notifyReferrer(r, 'Referral accepted', `Your referral for ${r.customer.name} (${r.referralNumber}) has been verified. We will contact them soon.`);
-  await svc.sync(r);
+  svc.notifyReferrer(r, 'Referral accepted', `Your referral ${r.customer.name} (${r.referralNumber}) has been accepted. You earn credit when they book and accept their quotation.`);
+  await svc.syncSerial(r);
   await respond(res, r, 'Referral verified');
 });
 
@@ -264,39 +275,75 @@ exports.link = asyncHandler(async (req, res) => {
   r.timeline.push({ status: r.status, at: new Date(), by: req.user._id, note: `Linked to booking ${booking.bookingNumber}: ${req.body.reason}` });
   await r.save();
   await audit(req, { action: 'REFERRAL_LINKED', entityType: 'Referral', entityId: r._id, before: { booking: before }, after: { booking: booking._id }, reason: req.body.reason });
-  await svc.sync(r);
+  await svc.syncSerial(r);
   await respond(res, r, `Linked to ${booking.bookingNumber}`);
 });
 
 exports.approve = asyncHandler(async (req, res) => {
   const r = await loadRef(req);
-  if (r.status !== 'ADVANCE_RECEIVED') throw ApiError.conflict('Only qualified referrals (advance received) can be approved', 'INVALID_STATUS');
+  if (r.status !== 'ADVANCE_RECEIVED') throw ApiError.conflict('Only qualified referrals can be approved', 'INVALID_STATUS');
   await svc.sync(r);
-  if (r.status !== 'ADVANCE_RECEIVED') throw ApiError.conflict('This referral no longer qualifies — check the project and payments', 'NO_LONGER_QUALIFIES');
+  if (r.status !== 'ADVANCE_RECEIVED') throw ApiError.conflict(r.status === 'REWARD_APPROVED' ? 'Already credited' : 'This referral no longer qualifies — check the booking and quotation', 'NO_LONGER_QUALIFIES');
   const referrer = await Referrer.findById(r.referrer).lean();
   if (referrer?.status !== 'ACTIVE') throw ApiError.conflict('The referrer is suspended. Reactivate them first.', 'REFERRER_SUSPENDED');
-  // Re-check the level at approval time (two referrals may have qualified together).
-  const cfg = await svc.getConfig();
-  const level = await svc.levelFor(r, cfg, r.qualifiedAt);
-  if (level !== r.level) {
-    const slab = svc.slabFor(cfg, r.projectValue);
-    r.timeline.push({ status: r.status, at: new Date(), auto: true, note: `Level corrected ${r.level} → ${level}` });
-    r.level = level;
-    r.rewardCalculated = svc.rewardFor(cfg, slab, level);
-    if (req.body.amount === undefined) r.rewardAmount = r.rewardCalculated;
-  }
-  const amount = req.body.amount === undefined ? r.rewardAmount : Math.round(req.body.amount);
-  if (amount !== r.rewardCalculated && (req.body.note || '').trim().length < 3) throw new ApiError(422, 'Give a reason for changing the reward amount', 'VALIDATION_ERROR', [{ field: 'note', message: 'Required' }]);
+  const amount = req.body.amount === undefined ? undefined : Math.round(req.body.amount);
+  if (amount !== undefined && amount !== r.rewardCalculated && (req.body.note || '').trim().length < 3) throw new ApiError(422, 'Give a reason for changing the reward amount', 'VALIDATION_ERROR', [{ field: 'note', message: 'Required' }]);
   const before = { rewardAmount: r.rewardAmount };
+  await svc.approve(r, { by: req.user._id, amount, note: req.body.note });
+  await audit(req, { action: 'REFERRAL_REWARD_APPROVED', entityType: 'Referral', entityId: r._id, before, after: { rewardAmount: r.rewardAmount, calculated: r.rewardCalculated, slab: r.slabKey, level: r.level }, reason: req.body.note });
+  await respond(res, r, `${fmt(r.rewardAmount)} credited to the referrer's wallet`);
+});
+
+/** Change the credit of an already-credited referral (audited). Lowering it can make the wallet negative → recovery review. */
+exports.adjust = asyncHandler(async (req, res) => {
+  const r = await loadRef(req);
+  if (r.status !== 'REWARD_APPROVED') throw ApiError.conflict('Only credited referrals can be adjusted', 'INVALID_STATUS');
+  const amount = Math.round(req.body.amount);
+  if (amount === r.rewardAmount) throw ApiError.badRequest('Amount is unchanged', 'NO_CHANGE');
+  const before = r.rewardAmount;
+  const counted = svc.CREDITED.includes(r.status);
   r.rewardAmount = amount;
-  r.approvedAt = new Date();
-  r.approvedBy = req.user._id;
-  r.approvalNote = req.body.note;
-  svc.push(r, 'REWARD_APPROVED', { by: req.user._id, note: `${fmt(amount)}${req.body.note ? ` — ${req.body.note}` : ''}` });
+  r.timeline.push({ status: r.status, at: new Date(), by: req.user._id, note: `Credit changed ${fmt(before)} → ${fmt(amount)}: ${req.body.reason}` });
   await r.save();
-  await audit(req, { action: 'REFERRAL_REWARD_APPROVED', entityType: 'Referral', entityId: r._id, before, after: { rewardAmount: amount, calculated: r.rewardCalculated, slab: r.slabKey, level: r.level }, reason: req.body.note });
-  svc.notifyReferrer(r, 'Credit added to your wallet', `${fmt(amount)} referral credit for ${r.customer.name} has been added to your Refer & Earn wallet. Use it on your next project with us.`);
-  await respond(res, r, `${fmt(amount)} credited to the referrer's wallet`);
+  if (counted && amount < before) {
+    const w = await svc.wallet(await Referrer.findById(r.referrer).lean());
+    if (w.balance < 0 && !r.recoveryReview) { r.recoveryReview = true; r.timeline.push({ status: r.status, at: new Date(), auto: true, note: `Credit was already used — wallet is ${fmt(w.balance)}.` }); await r.save(); }
+  }
+  await audit(req, { action: 'REFERRAL_CREDIT_ADJUSTED', entityType: 'Referral', entityId: r._id, before: { rewardAmount: before }, after: { rewardAmount: amount }, reason: req.body.reason });
+  svc.notifyReferrer(r, 'Referral credit updated', `Your credit for ${r.customer.name} (${r.referralNumber}) is now ${fmt(amount)}. Reason: ${req.body.reason}`);
+  await respond(res, r, 'Credit updated');
+});
+
+/**
+ * Staff attach a referral the customer forgot to enter at registration (audited).
+ * Same eligibility rules as the code, except bookings since the customer's registration count.
+ */
+exports.create = asyncHandler(async (req, res) => {
+  const b = req.body;
+  const referrer = await Referrer.findOne({ code: b.referrerCode.toUpperCase() });
+  if (!referrer) throw new ApiError(422, 'Referral code not found', 'VALIDATION_ERROR', [{ field: 'referrerCode', message: 'Not found' }]);
+  const mobile = normalizeMobile(b.customerMobile);
+  const customer = mobile && (await User.findOne({ mobile }).lean());
+  if (!customer) throw new ApiError(422, 'No registered customer with this mobile', 'VALIDATION_ERROR', [{ field: 'customerMobile', message: 'Not registered' }]);
+  if (customer.role !== 'CUSTOMER') throw ApiError.conflict('This number belongs to a staff account', 'NOT_CUSTOMER');
+  if (String(customer._id) === String(referrer.user)) throw ApiError.conflict('A customer cannot refer themselves', 'SELF_REFERRAL');
+  if (customer.referredBy) throw ApiError.conflict('This customer is already linked to a referrer', 'ALREADY_REFERRED');
+  const open = await Referral.findOne({ $or: [{ customerUser: customer._id }, { 'customer.mobile': mobile }], status: { $ne: 'REJECTED' } }).select('referralNumber').lean();
+  if (open) throw ApiError.conflict(`Already referred (${open.referralNumber})`, 'ALREADY_REFERRED');
+  const since = customer.createdAt;
+  const credited = await Referral.distinct('booking', { booking: { $ne: null } });
+  const ref = await Referral.create({
+    referralNumber: await nextNumber('REF'), referrer: referrer._id, referrerUser: referrer.user, source: 'ADMIN', since,
+    customer: { name: customer.name || 'Customer', mobile }, customerUser: customer._id,
+    checks: { duplicate: false, checkedAt: new Date() }, status: 'VERIFIED', linkedManually: true,
+    timeline: [{ status: 'SUBMITTED', at: new Date(), by: req.user._id, note: `Added by staff: ${b.reason}` }, { status: 'VERIFIED', at: new Date(), by: req.user._id }],
+  });
+  await User.updateOne({ _id: customer._id, referredBy: null }, { $set: { referredBy: referrer._id, referredCode: referrer.code } });
+  await audit(req, { action: 'REFERRAL_ADDED_MANUALLY', entityType: 'Referral', entityId: ref._id, after: { referrer: referrer.code, customer: mobile, creditedBookings: credited.length }, reason: b.reason });
+  await svc.syncSerial(ref);
+  const fresh = await Referral.findById(ref._id);
+  svc.notifyReferrer(fresh, 'New referral added', `${fresh.customer.name} has been added to your referrals.`);
+  await respond(res, fresh, 'Referral added');
 });
 
 exports.pay = asyncHandler(async (req, res) => {
@@ -349,7 +396,7 @@ exports.reopen = asyncHandler(async (req, res) => {
   svc.push(r, to, { by: req.user._id, note: `Reopened: ${req.body.reason}` });
   await r.save();
   await audit(req, { action: 'REFERRAL_REOPENED', entityType: 'Referral', entityId: r._id, reason: req.body.reason });
-  await svc.sync(r);
+  await svc.syncSerial(r);
   await respond(res, r, 'Referral reopened');
 });
 

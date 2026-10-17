@@ -11,7 +11,7 @@ export default function ThankYou({ booking, budget }) {
     ['Property location', [booking.address?.formattedAddress, booking.address?.pincode].filter(Boolean).join(', ')],
     ['Requirement', l.requirementType],
     ['Property type', l.propertyType],
-    ['Configuration', l.bhk],
+    [/^Commercial/.test(l.propertyType || '') ? 'Carpet area' : 'Configuration', l.bhk],
     ['Services', booking.services?.join(', ')],
     ['Possession', l.possession],
     ['Floor plan', fp.hasFloorPlan ? `${fp.files} file${fp.files === 1 ? '' : 's'} uploaded` : fp.measurementAssistance?.opted ? 'Expert measurement assistance requested' : 'Not provided'],

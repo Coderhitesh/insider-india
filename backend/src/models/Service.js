@@ -8,6 +8,7 @@ const serviceSchema = new Schema(
     image: String,
     description: String,
     showInBooking: { type: Boolean, default: true },
+    scope: { type: String, enum: ['RESIDENTIAL', 'COMMERCIAL', 'BOTH'], default: 'BOTH' }, // which booking funnel shows it
     isActive: { type: Boolean, default: true, index: true },
     order: { type: Number, default: 0 },
   },

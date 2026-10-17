@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { MessageCircle, MessageSquareText } from 'lucide-react';
+import { MessageCircle, MessageSquareText, Gift } from 'lucide-react';
+import { readReferralCode } from '@/components/providers/Providers';
 import OtpInput from '@/components/ui/OtpInput';
 import Notice from '@/components/ui/Notice';
 import Spinner from '@/components/ui/Spinner';
@@ -24,6 +25,10 @@ export default function OtpVerify({ mobile, leadId, leadToken, name, defaultLeng
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(null);
   const started = useRef(false);
+  // Refer & Earn: code remembered from a referrer's link, or typed here. Applies only to brand-new accounts.
+  const [refCode, setRefCode] = useState('');
+  const [showRef, setShowRef] = useState(false);
+  useEffect(() => { const c = readReferralCode(); if (c) { setRefCode(c); setShowRef(true); } }, []);
 
   useEffect(() => {
     if (cooldown <= 0) return undefined;
@@ -60,7 +65,7 @@ export default function OtpVerify({ mobile, leadId, leadToken, name, defaultLeng
     setVerifying(true);
     setError('');
     try {
-      const res = await api('/auth/verify-otp', { method: 'POST', body: { mobile, code: value, leadId, leadToken, name } });
+      const res = await api('/auth/verify-otp', { method: 'POST', body: { mobile, code: value, leadId, leadToken, name, referralCode: /^II-[A-Z0-9]{6}$/.test(refCode.trim().toUpperCase()) ? refCode.trim().toUpperCase() : undefined } });
       useAuth.getState().setSession(res.data);
       await onVerified?.(res.data);
     } catch (err) {
@@ -91,6 +96,16 @@ export default function OtpVerify({ mobile, leadId, leadToken, name, defaultLeng
       <form className="mt-8" onSubmit={(e) => { e.preventDefault(); verify(); }}>
         <p className="mb-3 text-sm font-medium" id="otp-label">Enter {info.length}-digit code</p>
         <OtpInput length={info.length} value={code} onChange={setCode} onComplete={verify} disabled={verifying} error={Boolean(error)} />
+        <div className="mt-5 max-w-md">
+          {showRef ? (
+            <label className="block text-sm">
+              <span className="flex items-center gap-1.5 font-medium"><Gift className="size-4 text-wine" aria-hidden="true" />Referral code <span className="font-normal text-graphite">(optional, new customers only)</span></span>
+              <input value={refCode} onChange={(e) => setRefCode(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 9))} placeholder="II-XXXXXX" autoCapitalize="characters"
+                className="tabular mt-1.5 h-11 w-full border border-stone-deep bg-paper px-3 text-base tracking-wider focus:border-wine focus:outline-none" aria-invalid={refCode && !/^II-[A-Z0-9]{6}$/.test(refCode) ? true : undefined} />
+              {refCode && !/^II-[A-Z0-9]{6}$/.test(refCode) && <span className="mt-1 block text-caption text-graphite">Format: II- followed by 6 letters/numbers</span>}
+            </label>
+          ) : <button type="button" className="text-sm text-wine underline underline-offset-4" onClick={() => setShowRef(true)}>Have a referral code?</button>}
+        </div>
         {error && <Notice tone="error" className="mt-5 max-w-md">{error}</Notice>}
         <Button type="submit" size="lg" className="mt-6 w-full sm:w-auto" loading={verifying} disabled={code.length !== info.length}>Verify and continue</Button>
       </form>

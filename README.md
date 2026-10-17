@@ -173,22 +173,36 @@ automatically when the API starts (or run `npm run fix:file-urls` in `backend/`)
   pay online when Razorpay is on (Admin → Settings → Online payments). Razorpay webhook: `<API domain>/api/v1/payments/razorpay/webhook`
   (events payment.captured, order.paid, payment.failed; set the same webhook secret in settings). Permissions: `payments.view`, `payments.manage`.
 
-## Refer & Earn
+## Refer & Earn (automatic)
 
-Off by default — turn on in **Admin → Settings → Refer & Earn** (slabs, level rewards, qualifying advance %, max % of a project payable by credit, terms).
+Turn on in **Admin → Settings → Refer & Earn**. Defaults: credit when the friend **accepts the final quotation**, **automatic credit** on (both changeable there; "accepted + advance received" is the safer option).
 
-**Rewards are wallet credit, not cash.** An approved reward is added to the referrer's wallet. They use it on their own next project: the credit is deducted from the project amount (recorded as a "Referral credit" payment) and they pay the rest.
+Flow — nothing to fill in, nothing for staff to approve:
+1. Every customer gets a Referral ID + share link automatically (Account → Refer & Earn).
+2. Friend opens the link (code remembered 30 days) or types the code on the OTP screen ("Have a referral code?").
+3. When a **new** account is created with the code → referral recorded (status Registered). Existing accounts, own code, staff numbers, already-referred or already-booked customers → ignored (registration never fails).
+4. Friend books → site visit → quotation shared → accepts → reward (slab × level) is credited to the referrer's wallet automatically.
+5. Referrer uses wallet credit on their own next project (Payments → Use credit); pays the rest. No cash payouts.
 
-- Customer: `/refer-and-earn` (public info) → `/account/referrals` (join, Referral ID, share link / WhatsApp, submit referral, status timeline, wallet + history). On their project page → Payments → "Use credit".
-- Staff: project → Payments → "Use credit" (same rules). Void the credit entry to return it to the wallet.
-- Share link `…/book-consultation?ref=II-XXXXXX` is remembered 30 days (first code wins); the lead becomes a referral once the customer verifies OTP.
-- Admin: **People → Refer & Earn** (`/admin/referrals`, `/admin/referrers` with wallet balance). Permissions `referrals.view`, `referrals.manage`.
-- Flow: Submitted → Verified (staff) → Contacted → Site visit → Quotation shared → Agreement signed → Advance received (automatic from booking/quotation/payments) → Approve (staff) = credit added to wallet.
-- Guards: self/staff/existing-customer/duplicate referrals blocked; first valid referral wins; one booking credits one referral; booking must be after the referral; reward locked at qualification, level re-checked at approval; amount change needs a note; credit only on the referrer's own project, ≤ wallet, ≤ project balance, ≤ max %; parallel double-spend blocked; credit never counts as a qualifying advance for another referral; referred project cancelled/refunded → reward on hold and credit removed (if already used → wallet negative + recovery review); suspended referrer cannot submit or use credit.
-- Confirm before launch: slab B amounts (marked "pending approval" in the PDF).
+Staff (People → Refer & Earn) only step in when needed: **Needs review** (friend had enquired before registering) → Accept/Reject; **Add referral** (customer forgot the code; audited); **Change credit** (audited, notifies referrer); Hold / Reject / Reopen; Link booking; suspend a referrer; recovery review when credit was already used and the referral is reversed.
+
+Guards: only brand-new accounts; code only from the same browser/funnel (never from leads others created for that number); first referral wins; one booking credits one referral; bookings before registration don't count; level re-checked at credit time and syncs per referrer run one at a time; booking cancelled / quotation no longer accepted (or advance voided in "advance" mode) → credit removed, negative wallet + recovery review if already used; credit only on own project, ≤ wallet, ≤ balance, ≤ max %, double-spend locked, never counts as an advance; suspended referrer: code stops working, credit locked.
 
 ## Gallery
 
 - Public: `/gallery` (all) and `/gallery/<category-slug>` (SEO page per category), masonry grid + lightbox. Every photo shows a **Get Estimate** button on hover (always visible on phones); project detail galleries have it too.
 - Admin → Website content → **Gallery photos** (bulk upload up to 50 per category, edit, hide, reorder) and **Gallery categories** (add/rename/reorder/hide, intro text, cover, SEO). 12 categories are created on first start (Full Home, Modular Kitchen, Bedroom, Living Room, Wardrobe, Dining, Kids Room, Bathroom, Pooja Room, False Ceiling, Office & Commercial, Renovation).
 - Published portfolio projects also appear in the gallery under the matching category. Categories with no photos are hidden from the filter bar.
+
+## Booking funnel: homes and commercial spaces
+
+Step 2 asks **My home** or **Commercial space** (pre-selected from `/commercial-interiors` via `?space=commercial`; the estimator accepts the same link).
+- Home: Requirement → Possession → OTP → Location → Home type → BHK → Project type → Services → Floor plan → Review.
+- Commercial: Space type + carpet area → Availability → OTP → Location → Project type (New fit-out / Renovation / Expansion) → Services (commercial list) → Floor plan → Review.
+- Leads from the estimator skip what they already answered (space, BHK / space type + area).
+- Services have **Shown for** (Homes / Commercial / Both) in Admin → Services; commercial project types are in Settings → Funnel options; space types in Settings → Estimator.
+- Direct commercial bookings also get an indicative budget (area + typical quantities for the space type).
+
+## Contact page enquiries
+
+`/contact` has a plain message form (name, mobile, optional email/city, topic, message, preferred reply channel, consent). Saved as **Enquiries** (`ENQ-YYYY-NNNNNN`), admins get an in-app notification, and staff manage them in **Admin → Enquiries** (status New / In progress / Resolved / Spam, notes, call / WhatsApp links). Permissions `enquiries.view`, `enquiries.manage` (given to Admin automatically). Spam guards: hidden honeypot field, 10 messages/hour per IP, same message from the same number within 10 minutes is not duplicated.

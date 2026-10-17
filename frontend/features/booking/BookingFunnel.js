@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { useRouter, useSearchParams } from 'next/navigation';
 import ChoiceCard from '@/components/ui/ChoiceCard';
 import Notice from '@/components/ui/Notice';
 import Spinner from '@/components/ui/Spinner';
@@ -19,10 +20,17 @@ import { normalizeMobile } from '@/lib/format';
 import { useAuth } from '@/store/auth';
 import { useBookingStore } from '@/store/booking';
 import { readAttribution } from '@/components/providers/Providers';
+import { IMAGES } from '@/lib/content';
 
-const ORDER = ['BASIC_INFO', 'REQUIREMENT', 'POSSESSION', 'OTP', 'LOCATION', 'PROPERTY_TYPE', 'BHK', 'PROJECT_TYPE', 'SERVICES', 'FLOOR_PLAN', 'REVIEW'];
+const ORDER = ['BASIC_INFO', 'SPACE', 'REQUIREMENT', 'COMMERCIAL_DETAILS', 'POSSESSION', 'OTP', 'LOCATION', 'PROPERTY_TYPE', 'BHK', 'PROJECT_TYPE', 'SERVICES', 'FLOOR_PLAN', 'REVIEW'];
+const HOME_ONLY = ['PROPERTY_TYPE', 'BHK', 'REQUIREMENT'];
+const isCommercial = (l) => l?.propertyCategory === 'COMMERCIAL';
+// Steps this request actually goes through (homes and commercial spaces ask different questions).
+const stepsFor = (l, { forCount = false } = {}) => ORDER.filter((k) => (isCommercial(l) ? !HOME_ONLY.includes(k) : k !== 'COMMERCIAL_DETAILS') && (forCount || !(k === 'OTP' && l?.verified)));
 const COPY = {
   BASIC_INFO: ["Let's start with you", 'We save your answers as you go, so you can pick up where you left off.'],
+  SPACE: ['What would you like us to design?'],
+  COMMERCIAL_DETAILS: ['Tell us about your space', 'Pick the type of space and its approximate carpet area.'],
   REQUIREMENT: ['What are you looking for?'],
   POSSESSION: ['When will you get possession of your property?'],
   OTP: ['Verify your mobile number', 'This keeps your request secure and lets you track it in your dashboard.'],
@@ -45,6 +53,8 @@ function initialDraft(step, lead, user) {
     case 'POSSESSION': return { value: lead.possession };
     case 'PROPERTY_TYPE': return { value: lead.property?.propertyType };
     case 'BHK': return { value: lead.property?.bhk };
+    case 'SPACE': return { value: lead.stepsCompleted?.includes('SPACE') || lead.estimateId || lead.requirementType ? lead.propertyCategory : undefined };
+    case 'COMMERCIAL_DETAILS': return { type: lead.property?.commercialType || '', area: lead.property?.area ? String(lead.property.area) : '' };
     case 'PROJECT_TYPE': return { value: lead.projectType };
     case 'SERVICES': return { values: (lead.services || []).map((s) => (typeof s === 'object' ? s.id : s)) };
     default: return {};
@@ -53,6 +63,8 @@ function initialDraft(step, lead, user) {
 
 export default function BookingFunnel() {
   const router = useRouter();
+  const params = useSearchParams();
+  const wantCommercial = params.get('space') === 'commercial';
   const { status, user } = useAuth();
   const { leadId, leadToken, setLead, clearToken, reset } = useBookingStore();
   const [options, setOptions] = useState(null);
@@ -99,7 +111,9 @@ export default function BookingFunnel() {
   // Reset local step state whenever the step changes; move focus to the new question.
   useEffect(() => {
     if (!step) return;
-    setDraft(initialDraft(step, lead, user));
+    const d = initialDraft(step, lead, user);
+    if (step === 'SPACE' && !d.value && wantCommercial) d.value = 'COMMERCIAL';
+    setDraft(d);
     setError('');
     setFieldErrors({});
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -110,8 +124,8 @@ export default function BookingFunnel() {
   const verified = lead?.verified;
   const move = useCallback((from, dir, l = lead) => {
     let i = ORDER.indexOf(from) + dir;
-    const skip = (k) => (k === 'OTP' && l?.verified) || (l?.propertyCategory === 'COMMERCIAL' && (k === 'PROPERTY_TYPE' || k === 'BHK'));
-    while (ORDER[i] && skip(ORDER[i])) i += dir;
+    const visible = stepsFor(l);
+    while (ORDER[i] && !visible.includes(ORDER[i])) i += dir;
     setStep(ORDER[Math.max(0, Math.min(i, ORDER.length - 1))]);
   }, [lead]);
   const back = step && ORDER.indexOf(step) > 0 ? () => move(step, -1) : undefined;
@@ -178,8 +192,16 @@ export default function BookingFunnel() {
   if (loadError) return <div className="container-x max-w-3xl py-20"><Notice tone="error" action={<Button size="sm" variant="secondary" onClick={() => window.location.reload()}>Retry</Button>}>{loadError}</Notice></div>;
   if (!step || !options) return <div className="container-x flex max-w-3xl items-center gap-3 py-24 text-graphite" role="status"><Spinner className="size-5 text-wine" />Loading your request…</div>;
 
-  const idx = ORDER.indexOf(step);
-  const [title, description] = COPY[step];
+  const commercial = isCommercial(lead);
+  const flowSteps = stepsFor(lead, { forCount: true }); // the OTP step stays counted so the total does not jump
+  const idx = Math.max(0, flowSteps.indexOf(step));
+  const [title, description] = (commercial && {
+    POSSESSION: ['When will the space be available to start work?'],
+    PROJECT_TYPE: ['What kind of work is it?'],
+    SERVICES: ['What do you need for your space?', 'Select everything you would like us to look at.'],
+    FLOOR_PLAN: ['Do you have a layout or floor plan to share?'],
+  }[step]) || COPY[step];
+  const bookingServices = services.filter((sv) => !sv.scope || sv.scope === 'BOTH' || sv.scope === (commercial ? 'COMMERCIAL' : 'RESIDENTIAL'));
   const radioGrid = (list, { cols = 'sm:grid-cols-2', compact = true, media } = {}) => (
     <fieldset>
       <legend className="sr-only">{title}</legend>
@@ -221,6 +243,52 @@ export default function BookingFunnel() {
         </form>
       );
       break;
+    case 'SPACE':
+      body = (
+        <form onSubmit={submitChoice('SPACE', 'propertyCategory')}>
+          <fieldset>
+            <legend className="sr-only">{title}</legend>
+            <div className="grid grid-cols-2 gap-3">
+              {[['RESIDENTIAL', 'My home', 'Full home, kitchen, wardrobes, renovation', IMAGES.interiors, 'Home'], ['COMMERCIAL', 'Commercial space', 'Office, shop, showroom, restaurant, clinic', IMAGES.commercial, 'Store']].map(([v, t, d, img, icon]) => (
+                <ChoiceCard key={v} name="space" value={v} checked={draft.value === v} title={t} description={d} onChange={() => setDraft({ value: v })}
+                  media={<span className="relative block h-28 sm:h-40"><Image src={img} alt="" fill sizes="(min-width:640px) 340px, 45vw" className="object-cover" /><span className="absolute bottom-2 left-2 flex size-9 items-center justify-center rounded-full bg-white text-wine shadow"><Icon name={icon} className="size-4" /></span></span>} />
+              ))}
+            </div>
+          </fieldset>
+          {errorNotice}<StepFooter onBack={back} loading={saving} />
+        </form>
+      );
+      break;
+    case 'COMMERCIAL_DETAILS': {
+      const lim = options.areaLimits || { min: 100, max: 200000 };
+      body = (
+        <form noValidate onSubmit={(e) => {
+          e.preventDefault();
+          const errs = {};
+          if (!draft.type) errs.commercialType = 'Select the type of space';
+          const a = Number(draft.area);
+          if (!a || a < lim.min || a > lim.max) errs.area = `Enter an area between ${lim.min.toLocaleString('en-IN')} and ${lim.max.toLocaleString('en-IN')} sq ft`;
+          setFieldErrors(errs);
+          if (Object.keys(errs).length) { setError(errs.commercialType || ''); return; }
+          save('COMMERCIAL_DETAILS', { commercialType: draft.type, area: a });
+        }}>
+          <fieldset>
+            <legend className="mb-4 text-xl font-medium">What kind of space is it?</legend>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {(options.commercialTypes || []).map((t) => (
+                <ChoiceCard key={t.value} name="ctype" value={t.value} compact checked={draft.type === t.value} title={t.label}
+                  media={t.icon ? <Icon name={t.icon} className="size-7 text-wine" /> : null} onChange={() => setDraft({ ...draft, type: t.value })} />
+              ))}
+            </div>
+          </fieldset>
+          <Field id="b-area" label="Approximate carpet area (sq ft)" error={fieldErrors.area} hint="A rough figure is fine — we measure on site." className="mt-8 max-w-xs">
+            <Input id="b-area" inputMode="numeric" value={draft.area || ''} error={fieldErrors.area} onChange={(e) => setDraft({ ...draft, area: e.target.value.replace(/\D/g, '').slice(0, 7) })} />
+          </Field>
+          {errorNotice}<StepFooter onBack={back} loading={saving} />
+        </form>
+      );
+      break;
+    }
     case 'REQUIREMENT':
       body = <form onSubmit={submitChoice('REQUIREMENT', 'requirementType')}>{radioGrid('requirementTypes', { cols: 'sm:grid-cols-3', compact: false, media: (o) => <Swatch tone={{ FULL_HOME: 'oak', KITCHEN_WARDROBE_STORAGE: 'charcoal', CIVIL_FULL_HOME: 'terracotta' }[o.value] || 'sand'} className="h-12 rounded-none sm:h-20" /> })}{errorNotice}<StepFooter onBack={back} loading={saving} /></form>;
       break;
@@ -257,7 +325,7 @@ export default function BookingFunnel() {
       body = <form onSubmit={submitChoice('BHK', 'bhk')}>{radioGrid('bhkOptions', { cols: 'grid-cols-2 sm:grid-cols-3' })}{errorNotice}<StepFooter onBack={back} loading={saving} /></form>;
       break;
     case 'PROJECT_TYPE':
-      body = <form onSubmit={submitChoice('PROJECT_TYPE', 'projectType')}>{radioGrid('projectTypes', { cols: 'sm:grid-cols-3', compact: false })}{errorNotice}<StepFooter onBack={back} loading={saving} /></form>;
+      body = <form onSubmit={submitChoice('PROJECT_TYPE', 'projectType')}>{radioGrid(commercial && options.commercialProjectTypes?.length ? 'commercialProjectTypes' : 'projectTypes', { cols: 'sm:grid-cols-3', compact: false })}{errorNotice}<StepFooter onBack={back} loading={saving} /></form>;
       break;
     case 'SERVICES': {
       const selected = new Set(draft.values || []);
@@ -266,7 +334,7 @@ export default function BookingFunnel() {
           <fieldset>
             <legend className="sr-only">{title}</legend>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {services.map((s) => (
+              {bookingServices.map((s) => (
                 <ChoiceCard key={s.id} type="checkbox" name="services" value={s.id} checked={selected.has(s.id)} compact title={s.title}
                   media={<Icon name={s.icon} className="size-7 text-wine" />}
                   onChange={() => { const n = new Set(selected); n.has(s.id) ? n.delete(s.id) : n.add(s.id); setDraft({ values: [...n] }); }} />
@@ -286,14 +354,16 @@ export default function BookingFunnel() {
       const fp = lead.floorPlan || {};
       const rows = [
         ['BASIC_INFO', 'You', `${lead.name}, ${lead.maskedMobile}${lead.city ? `, ${lead.city}` : ''}`],
-        ['REQUIREMENT', 'Requirement', label(options, 'requirementTypes', lead.requirementType)],
-        ['POSSESSION', 'Possession', label(options, 'possessionOptions', lead.possession)],
+        ['SPACE', 'Space', commercial ? 'Commercial space' : 'Home'],
+        ...(commercial ? [['COMMERCIAL_DETAILS', 'Space details', [label(options, 'commercialTypes', lead.property?.commercialType), lead.property?.area ? `${Number(lead.property.area).toLocaleString('en-IN')} sq ft` : ''].filter(Boolean).join(', ')]]
+          : [['REQUIREMENT', 'Requirement', label(options, 'requirementTypes', lead.requirementType)]]),
+        ['POSSESSION', commercial ? 'Available from' : 'Possession', label(options, 'possessionOptions', lead.possession)],
         ['LOCATION', 'Location', [lead.property?.address?.formattedAddress, lead.property?.address?.pincode].filter(Boolean).join(', ')],
-        ...(lead.propertyCategory === 'COMMERCIAL' ? [['SPACE', 'Space', `Commercial${lead.property?.area ? `, ${Number(lead.property.area).toLocaleString('en-IN')} sq ft` : ''}`]] : [
+        ...(commercial ? [] : [
           ['PROPERTY_TYPE', 'Home type', label(options, 'propertyTypes', lead.property?.propertyType)],
           ['BHK', 'Configuration', label(options, 'bhkOptions', lead.property?.bhk)],
         ]),
-        ['PROJECT_TYPE', 'Project type', label(options, 'projectTypes', lead.projectType)],
+        ['PROJECT_TYPE', 'Project type', label(options, commercial ? 'commercialProjectTypes' : 'projectTypes', lead.projectType)],
         ['SERVICES', 'Services', (lead.services || []).map((s) => s.title || services.find((x) => x.id === s)?.title).filter(Boolean).join(', ')],
         ['FLOOR_PLAN', 'Floor plan', fp.hasFloorPlan ? `${fp.media.length} file(s) uploaded` : fp.measurementAssistance?.opted ? `Expert measurement assistance (additional ₹${Number(fp.measurementAssistance.charge).toLocaleString('en-IN')})` : 'Not provided'],
       ];
@@ -304,7 +374,7 @@ export default function BookingFunnel() {
               <div key={key} className="flex items-start gap-4 py-4">
                 <dt className="w-32 shrink-0 text-graphite sm:w-40">{k}</dt>
                 <dd className="flex-1">{v || <span className="text-error">Missing</span>}</dd>
-                {key !== 'SPACE' && <button type="button" onClick={() => setStep(key)} className="text-sm text-wine underline underline-offset-4" aria-label={`Edit ${k.toLowerCase()}`}>Edit</button>}
+                {<button type="button" onClick={() => setStep(key)} className="text-sm text-wine underline underline-offset-4" aria-label={`Edit ${k.toLowerCase()}`}>Edit</button>}
               </div>
             ))}
           </dl>
@@ -318,7 +388,7 @@ export default function BookingFunnel() {
   }
 
   return (
-    <FunnelShell stepKey={step} stepNumber={Math.min(idx + 1, ORDER.length - 1)} total={ORDER.length - 1} progressLabel={step === 'REVIEW' ? 'Almost done' : 'Your consultation request'} title={title} description={description}>
+    <FunnelShell stepKey={step} stepNumber={Math.min(idx + 1, flowSteps.length - 1)} total={flowSteps.length - 1} progressLabel={step === 'REVIEW' ? 'Almost done' : 'Your consultation request'} title={title} description={description}>
       {body}
     </FunnelShell>
   );
