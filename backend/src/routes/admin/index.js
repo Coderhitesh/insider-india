@@ -122,6 +122,8 @@ mount('estimate-rules', catalog.estimateRules, 'packages.view', 'packages.manage
 mount('notification-templates', catalog.templates, 'notifications.send', 'notifications.send');
 mount('projects', catalog.projects, 'content.manage', 'content.manage');
 mount('testimonials', catalog.testimonials, 'content.manage', 'content.manage');
+router.get('/coupons', P('payments.view'), catalog.couponList);
+mount('coupons', catalog.coupons, 'payments.view', 'payments.manage');
 mount('partners', catalog.partners, 'content.manage', 'content.manage');
 mount('gallery-categories', catalog.galleryCategories, 'content.manage', 'content.manage');
 router.post('/gallery-images/bulk', P('content.manage'), validate({ body: v.galleryBulk }), catalog.galleryBulk);

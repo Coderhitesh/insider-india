@@ -51,6 +51,7 @@ async function summary(project) {
   const total = Math.round(project.grandTotal || 0);
   const paid = received.reduce((s, p) => s + p.amount, 0);
   const creditApplied = received.filter((p) => p.method === 'REFERRAL_CREDIT').reduce((s, p) => s + p.amount, 0);
+  const discountApplied = received.filter((p) => p.method === 'COUPON').reduce((s, p) => s + p.amount, 0);
 
   const schedule = (project.paymentSchedule || []).map((s) => ({
     id: String(s._id), label: s.label, percent: s.percent, amount: Math.round(s.amount || (s.percent ? (total * s.percent) / 100 : 0)), dueOn: s.dueOn, paid: 0,
@@ -81,6 +82,8 @@ async function summary(project) {
     total,
     paid,
     creditApplied,
+    discountApplied,
+    cashPaid: paid - creditApplied - discountApplied,
     balance: Math.max(0, total - paid),
     excess: Math.max(0, paid - total),
     paidPercent: total ? Math.min(100, Math.round((paid / total) * 100)) : 0,

@@ -249,6 +249,24 @@ const faqBase = z.object({
 });
 const faqSchemas = { create: faqBase, update: faqBase.partial() };
 
+const couponBase = z.object({
+  code: z.string().trim().toUpperCase().regex(/^[A-Z0-9_-]{3,30}$/, 'Use 3–30 letters, numbers, - or _'),
+  description: optStr(200),
+  type: z.enum(['PERCENT', 'FLAT']),
+  value: z.coerce.number().positive('Enter the discount'),
+  maxDiscount: z.coerce.number().min(0).nullable().optional(),
+  minProjectValue: z.coerce.number().min(0).nullable().optional(),
+  appliesTo: z.enum(['ALL', 'RESIDENTIAL', 'COMMERCIAL']).default('ALL'),
+  validFrom: z.coerce.date().nullable().optional(),
+  validTo: z.coerce.date().nullable().optional(),
+  usageLimit: z.coerce.number().int().min(1).nullable().optional(),
+  perCustomerLimit: z.coerce.number().int().min(1).default(1),
+  isActive: z.boolean().default(true),
+});
+const couponCheck = (v) => !(v.type === 'PERCENT' && v.value > 100) && !(v.validFrom && v.validTo && v.validTo < v.validFrom);
+const couponMsg = { message: 'Percent cannot exceed 100, and the end date must be after the start date', path: ['value'] };
+const couponSchemas = { create: couponBase.refine(couponCheck, couponMsg), update: couponBase.partial().refine(couponCheck, couponMsg) };
+
 const partnerBase = z.object({
   name: str(80).min(1, 'Enter the brand name'),
   logo: url.refine((v) => v !== '', 'Upload the logo'),
@@ -285,7 +303,7 @@ const galleryBulk = z.object({
 });
 
 module.exports = {
-  partnerSchemas, galleryCategorySchemas, galleryImageSchemas, galleryBulk,
+  couponSchemas, partnerSchemas, galleryCategorySchemas, galleryImageSchemas, galleryBulk,
   listQuery, updateLead, assign, bookingStatus, note, updateCustomer,
   createContractor, updateContractor, createStaff, updateStaff, resetPassword, createRole, updateRole,
   packageSchemas, serviceSchemas, ruleSchemas, templateSchemas, sendNotification,

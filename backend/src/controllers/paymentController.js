@@ -14,7 +14,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const logger = require('../utils/logger');
 const { CHANNELS } = require('../config/constants');
 
-const METHOD_LABEL = { CASH: 'Cash', UPI: 'UPI', BANK_TRANSFER: 'Bank transfer', CHEQUE: 'Cheque', CARD: 'Card', RAZORPAY: 'Online (Razorpay)', REFERRAL_CREDIT: 'Referral credit', OTHER: 'Other' };
+const METHOD_LABEL = { CASH: 'Cash', UPI: 'UPI', BANK_TRANSFER: 'Bank transfer', CHEQUE: 'Cheque', CARD: 'Card', RAZORPAY: 'Online (Razorpay)', REFERRAL_CREDIT: 'Referral credit', COUPON: 'Coupon discount', OTHER: 'Other' };
 
 async function loadStaffProject(req) {
   const p = await ExecutionProject.findById(req.params.id);
@@ -68,6 +68,24 @@ async function applyCredit(req, res, p) {
   created(res, { summary: await pay.summary(p), credit: await creditInfo(p) }, `${formatINR(payment.amount)} credit applied`);
 }
 
+// ── Coupons ──
+async function applyCoupon(req, res, p) {
+  const coupons = require('../services/couponService');
+  const r = await coupons.apply(req.body.code, p, req.user);
+  await audit(req, { action: 'COUPON_APPLIED', entityType: 'Payment', entityId: r.payment._id, after: { project: p.projectNumber, code: r.coupon.code, discount: r.discount, by: req.user.role } });
+  await logActivity({ booking: p.booking, actor: req.user, type: 'PAYMENT_RECEIVED', message: `Coupon ${r.coupon.code} applied — ${formatINR(r.discount)} off (${r.payment.paymentNumber})`, visibleToCustomer: true });
+  require('../services/referralService').syncLater(p.booking);
+  created(res, { summary: await pay.summary(p), credit: await creditInfo(p), discount: r.discount, code: r.coupon.code }, `Coupon applied — ${formatINR(r.discount)} off`);
+}
+/** Customer: check a code before applying (shows the discount). */
+exports.checkCouponCustomer = asyncHandler(async (req, res) => {
+  const p = await loadCustomerProject(req);
+  const r = await require('../services/couponService').evaluate(req.body.code, p);
+  ok(res, { code: r.coupon.code, discount: r.discount, label: r.label, description: r.coupon.description || null, balanceAfter: r.summary.balance - r.discount }, `${formatINR(r.discount)} off`);
+});
+exports.applyCouponCustomer = asyncHandler(async (req, res) => applyCoupon(req, res, await loadCustomerProject(req)));
+exports.applyCouponStaff = asyncHandler(async (req, res) => applyCoupon(req, res, await loadStaffProject(req)));
+
 /** Staff apply the customer's wallet credit to their project. */
 exports.applyCreditStaff = asyncHandler(async (req, res) => applyCredit(req, res, await loadStaffProject(req)));
 /** Customer uses their own wallet credit on their project. */
@@ -81,7 +99,7 @@ async function publicConfig() {
 // ── Staff ─────────────────────────────────────────────────────
 exports.staffList = asyncHandler(async (req, res) => {
   const p = await loadStaffProject(req);
-  ok(res, { summary: await pay.summary(p), credit: await creditInfo(p), methods: Object.entries(METHOD_LABEL).filter(([k]) => !['RAZORPAY', 'REFERRAL_CREDIT'].includes(k)).map(([value, label]) => ({ value, label })), gateway: await publicConfig() });
+  ok(res, { summary: await pay.summary(p), credit: await creditInfo(p), methods: Object.entries(METHOD_LABEL).filter(([k]) => !['RAZORPAY', 'REFERRAL_CREDIT', 'COUPON'].includes(k)).map(([value, label]) => ({ value, label })), gateway: await publicConfig() });
 });
 
 /** Records an offline payment (cash, UPI, bank transfer, cheque, card swipe …). */

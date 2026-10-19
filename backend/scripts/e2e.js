@@ -593,6 +593,45 @@ function upload(token, purpose, buf, name, type) {
   await call('PATCH', `/admin/gallery-categories/${kitchen.id}`, { token: tokAdm, body: { isActive: true } });
   for (const x of (await call('GET', `/admin/gallery-images?category=${kitchen.id}&limit=200`, { token: tokAdm })).data.items.filter((i) => /^E2E/.test(i.title || i.alt || ''))) await call('DELETE', `/admin/gallery-images/${x.id}`, { token: tokAdm });
 
+  section('Coupons');
+  {
+    const sfx = rnd().slice(-5);
+    const C = (code, body) => call('POST', '/admin/coupons', { token: tokAdm, body: { code, type: 'PERCENT', value: 10, ...body } });
+    check('percent over 100 rejected', (await C(`BAD${sfx}`, { value: 150 })).status === 422);
+    check('contractor cannot create coupons', (await call('POST', '/admin/coupons', { token: tokC, body: { code: `X${sfx}`, type: 'FLAT', value: 100 } })).status === 403);
+    const c1 = await C(`TEN${sfx}`, { maxDiscount: 5000, usageLimit: 5, description: 'E2E ten percent' });
+    check('coupon created', c1.status === 201 && c1.data.item.code === `TEN${sfx}`, c1.body);
+    check('duplicate code rejected', (await C(`TEN${sfx}`, {})).status >= 400);
+    await C(`OLD${sfx}`, { validTo: new Date(Date.now() - 864e5).toISOString() });
+    await C(`BIZ${sfx}`, { appliesTo: 'COMMERCIAL' });
+    await C(`BIG${sfx}`, { minProjectValue: 99000000 });
+    const chk = (code, token = tokA) => call('POST', `/account/projects/${pid}/payments/coupon/check`, { token, body: { code } });
+    check('unknown code → invalid', (await chk('NOPE123')).status === 422);
+    check('expired code refused', /expired/.test((await chk(`OLD${sfx}`)).body.message));
+    check('commercial-only code refused on a home project', /commercial/.test((await chk(`BIZ${sfx}`)).body.message));
+    check('minimum project value enforced', /at least/.test((await chk(`BIG${sfx}`)).body.message));
+    const ok1 = await chk(`ten${sfx}`);
+    check('valid code (any case) → 10% capped at ₹5,000', ok1.status === 200 && ok1.data.discount === 5000, ok1.body);
+    check('other customer cannot use it on this project', (await chk(`TEN${sfx}`, tokB)).status === 404);
+    const [a1, a2] = await Promise.all([1, 2].map(() => call('POST', `/account/projects/${pid}/payments/coupon`, { token: tokA, body: { code: `TEN${sfx}` } })));
+    check('parallel apply → only one discount', [a1, a2].filter((x) => x.status === 201).length === 1, [a1.status, a2.status]);
+    const ap = [a1, a2].find((x) => x.status === 201);
+    check('discount reduces the balance', ap?.data?.summary?.discountApplied === 5000, ap?.data?.summary);
+    check('one coupon per project', /already been applied/.test((await chk(`TEN${sfx}`)).body.message));
+    const list = await call('GET', `/admin/coupons?q=TEN${sfx}`, { token: tokAdm });
+    check('admin sees usage and discount given', list.data?.items?.[0]?.used === 1 && list.data.items[0].discountGiven === 5000, list.data?.items?.[0]);
+    const pays = (await call('GET', `/execution/${pid}/payments`, { token: tokAdm })).data;
+    check('coupon is not a normal payment method', !pays.methods.some((m) => m.value === 'COUPON'));
+    const cp = pays.summary.payments.find((x) => x.method === 'COUPON' && x.status === 'RECEIVED');
+    await call('POST', `/execution/${pid}/payments/${cp.id}/void`, { token: tokAdm, body: { reason: 'Applied by mistake' } });
+    check('voided discount frees the coupon again', (await call('GET', `/admin/coupons?q=TEN${sfx}`, { token: tokAdm })).data.items[0].used === 0 && (await chk(`TEN${sfx}`)).status === 200);
+    check('staff can apply a coupon too', (await call('POST', `/execution/${pid}/payments/coupon`, { token: tokAdm, body: { code: `TEN${sfx}` } })).status === 201);
+    const del = await call('DELETE', `/admin/coupons/${c1.data.item.id}`, { token: tokAdm });
+    check('used coupon is switched off, not deleted', del.data?.deactivated === true, del.body);
+    const cp2 = (await call('GET', `/execution/${pid}/payments`, { token: tokAdm })).data.summary.payments.find((x) => x.method === 'COUPON' && x.status === 'RECEIVED');
+    await call('POST', `/execution/${pid}/payments/${cp2.id}/void`, { token: tokAdm, body: { reason: 'e2e cleanup' } });
+  }
+
   section('Brand partners');
   {
     check('partner needs a logo', (await call('POST', '/admin/partners', { token: tokAdm, body: { name: 'E2E Brand' } })).status === 422);

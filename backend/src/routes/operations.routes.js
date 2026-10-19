@@ -66,6 +66,7 @@ executionRoutes.patch('/:id', P('bookings.edit'), validate({ params: idParam, bo
 executionRoutes.get('/:id/payments', P('payments.view'), id, payments.staffList);
 executionRoutes.post('/:id/payments', P('payments.manage'), validate({ params: idParam, body: v.recordPayment }), payments.record);
 executionRoutes.post('/:id/payments/:paymentId/void', P('payments.manage'), validate({ params: z.object({ id: objectId, paymentId: objectId }), body: v.voidPayment }), payments.void);
+executionRoutes.post('/:id/payments/coupon', P('payments.manage'), validate({ params: idParam, body: v.couponCode }), payments.applyCouponStaff);
 executionRoutes.post('/:id/payments/credit', P('payments.manage'), validate({ params: idParam, body: v.applyCredit }), payments.applyCreditStaff);
 executionRoutes.post('/:id/payments/remind', P('payments.manage'), id, payments.remind);
 executionRoutes.post('/:id/updates', P('site_visit.manage'), validate({ params: idParam, body: v.projectPost }), execution.postUpdate);
@@ -89,6 +90,8 @@ account.get('/referrals', referrals.mine);
 account.post('/referrals/join', validate({ body: rv.join }), referrals.join);
 account.put('/referrals/payout', validate({ body: rv.payout }), referrals.updatePayout);
 account.post('/referrals', validate({ body: rv.submit }), referrals.submit);
+account.post('/projects/:id/payments/coupon/check', validate({ params: idParam, body: v.couponCode }), payments.checkCouponCustomer);
+account.post('/projects/:id/payments/coupon', validate({ params: idParam, body: v.couponCode }), payments.applyCouponCustomer);
 account.post('/projects/:id/payments/credit', validate({ params: idParam, body: v.applyCredit }), payments.applyCreditCustomer);
 account.post('/projects/:id/payments/order', validate({ params: idParam, body: v.createPaymentOrder }), payments.createOrder);
 account.post('/projects/:id/payments/verify', validate({ params: idParam, body: v.verifyPayment }), payments.verify);

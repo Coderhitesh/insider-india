@@ -1,4 +1,4 @@
-const { Package, Service, EstimateRule, NotificationTemplate, Project, Testimonial, Faq, Estimate, Booking, Lead, User, Notification, Media, AuditLog, GalleryCategory, GalleryImage, Partner } = require('../../models');
+const { Package, Service, EstimateRule, NotificationTemplate, Project, Testimonial, Faq, Estimate, Booking, Lead, User, Notification, Media, AuditLog, GalleryCategory, GalleryImage, Partner, Coupon } = require('../../models');
 const { crud } = require('./crudFactory');
 const v = require('../../validations/admin');
 const StorageService = require('../../services/storage/StorageService');
@@ -46,6 +46,25 @@ exports.projects = crud({
   Model: Project, entityType: 'Project', createSchema: v.projectSchemas.create, updateSchema: v.projectSchemas.update,
   searchFields: ['title', 'city', 'locality'], slugFrom: 'title',
   filters: (q) => (q.category ? { category: q.category } : {}),
+});
+
+exports.coupons = crud({
+  Model: Coupon, entityType: 'Coupon', createSchema: v.couponSchemas.create, updateSchema: v.couponSchemas.update,
+  searchFields: ['code', 'description'], sort: { createdAt: -1 },
+  inUse: (doc) => require('../../models').Payment.exists({ coupon: doc._id }),
+  auditFields: ['code', 'type', 'value', 'maxDiscount', 'usageLimit', 'validTo', 'isActive'],
+});
+/** Coupon list with live usage and total discount given. */
+exports.couponList = asyncHandler(async (req, res) => {
+  const { Payment } = require('../../models');
+  const filter = {};
+  if (req.query.q) { const rx = new RegExp(escapeRegex(String(req.query.q).slice(0, 40)), 'i'); filter.$or = [{ code: rx }, { description: rx }]; }
+  if (req.query.active === 'true' || req.query.active === 'false') filter.isActive = req.query.active === 'true';
+  const items = await Coupon.find(filter).sort({ createdAt: -1 }).limit(500).lean();
+  const used = await Payment.find({ coupon: { $in: items.map((c) => c._id) }, method: 'COUPON', status: 'RECEIVED' }).select('coupon amount').lean();
+  const agg = new Map();
+  for (const u of used) { const a = agg.get(String(u.coupon)) || { uses: 0, total: 0 }; a.uses += 1; a.total += u.amount; agg.set(String(u.coupon), a); }
+  ok(res, { items: items.map((c) => ({ ...c, id: String(c._id), _id: undefined, __v: undefined, used: agg.get(String(c._id))?.uses || 0, discountGiven: agg.get(String(c._id))?.total || 0 })) });
 });
 
 exports.partners = crud({

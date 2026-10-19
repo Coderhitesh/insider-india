@@ -120,6 +120,7 @@ const recordPayment = z.object({
   scheduleItem: objectId.nullable().optional(),
   notifyCustomer: z.boolean().default(true),
 });
+const couponCode = z.object({ code: str(30).min(2, 'Enter a coupon code') });
 const applyCredit = z.object({ amount: z.coerce.number().min(1, 'Enter the amount').max(1e9), note: str(300).optional() });
 const voidPayment = z.object({ reason: str(500).min(3, 'Give a reason') });
 const createPaymentOrder = z.object({ amount: z.coerce.number().min(1).max(1e9), scheduleItem: objectId.nullable().optional() });
@@ -132,5 +133,5 @@ module.exports = {
   scheduleVisit, updateVisit, completeVisit, cancelVisit, saveMeasurement,
   createQuotation, quotationBody, noteOnly, requiredNote, accept, approve, revise,
   projectUpdate, projectStage, projectPost,
-  recordPayment, applyCredit, voidPayment, createPaymentOrder, verifyPayment, cancelPaymentOrder,
+  recordPayment, applyCredit, couponCode, voidPayment, createPaymentOrder, verifyPayment, cancelPaymentOrder,
 };

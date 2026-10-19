@@ -170,7 +170,7 @@ async function sync(ref) {
   let paid = 0;
   if (project) {
     // Wallet credit is not money received: it never counts towards the qualifying advance.
-    const rows = await Payment.find({ project: project._id, status: 'RECEIVED', method: { $ne: 'REFERRAL_CREDIT' } }).select('amount').lean();
+    const rows = await Payment.find({ project: project._id, status: 'RECEIVED', method: { $nin: ['REFERRAL_CREDIT', 'COUPON'] } }).select('amount').lean();
     paid = rows.reduce((s, p) => s + p.amount, 0);
   }
   if (project && String(ref.project) !== String(project._id)) { ref.project = project._id; changed = true; }

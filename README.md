@@ -213,3 +213,11 @@ Step 2 asks **My home** or **Commercial space** (pre-selected from `/commercial-
 - **WhatsApp button** (bottom-right, all public pages except the booking/estimate funnels) uses the WhatsApp number from Settings → Company (falls back to the phone number). Hidden if neither is set.
 - **Terms line** under every public form (contact, login, OTP / registration, booking, estimate, consultation forms) links to Privacy Policy and Terms.
 - **Motion**: sections and cards fade/slide in on scroll (staggered in lists), cards lift on hover, logo marquee pauses on hover. All of it is switched off for visitors who prefer reduced motion.
+
+## Coupons
+
+Admin → **Coupons** (permission `payments.view` / `payments.manage`): code, % (with optional ₹ cap) or flat ₹, minimum project value, homes / commercial / all, valid from–until, total uses, uses per customer, on/off. The list shows live usage and total discount given.
+
+Customer: project page → Payments → "Have a coupon code?" → **Check** shows the saving → **Apply**. Staff can apply a code from the project's Payments box too. The discount is recorded as a "Coupon discount" entry (not money received), so the balance drops and the receipt history shows it.
+
+Rules: one coupon per project; never more than the balance due; expired / not-started / used-up / wrong project type / below minimum value are refused; parallel applies are locked; voiding the discount entry frees the coupon use again; a used coupon can't be deleted (it is switched off instead); coupon discounts and referral credit never count as a qualifying advance.

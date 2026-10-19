@@ -11,7 +11,7 @@ import { api } from '@/lib/api';
 import { useApi } from '@/lib/useApi';
 import { fmtDate, inr } from '@/lib/admin';
 
-export const METHOD_LABEL = { CASH: 'Cash', UPI: 'UPI', BANK_TRANSFER: 'Bank transfer', CHEQUE: 'Cheque', CARD: 'Card', RAZORPAY: 'Online (Razorpay)', REFERRAL_CREDIT: 'Referral credit', OTHER: 'Other' };
+export const METHOD_LABEL = { CASH: 'Cash', UPI: 'UPI', BANK_TRANSFER: 'Bank transfer', CHEQUE: 'Cheque', CARD: 'Card', RAZORPAY: 'Online (Razorpay)', REFERRAL_CREDIT: 'Referral credit', COUPON: 'Coupon discount', OTHER: 'Other' };
 const SCHEDULE_TONE = { PAID: 'green', PARTIAL: 'amber', OVERDUE: 'red', PENDING: 'outline' };
 const SCHEDULE_LABEL = { PAID: 'Paid', PARTIAL: 'Part paid', OVERDUE: 'Overdue', PENDING: 'Pending' };
 const PAY_TONE = { RECEIVED: 'green', CREATED: 'amber', FAILED: 'outline', VOID: 'red' };
@@ -24,6 +24,7 @@ export default function ProjectPayments({ projectId, canManage, onChanged }) {
   const [form, setForm] = useState(null);
   const [voiding, setVoiding] = useState(null);
   const [crediting, setCrediting] = useState(null);
+  const [couponCode, setCouponCode] = useState('');
   const [errors, setErrors] = useState({});
   const [msg, setMsg] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -69,8 +70,14 @@ export default function ProjectPayments({ projectId, canManage, onChanged }) {
       <div className="mt-3 h-2 overflow-hidden bg-stone" role="progressbar" aria-valuenow={s.paidPercent} aria-valuemin={0} aria-valuemax={100} aria-label="Paid">
         <div className="h-full bg-success transition-[width]" style={{ width: `${s.paidPercent}%` }} />
       </div>
-      <p className="mt-1 text-xs text-graphite">{s.paidPercent}% received{s.creditApplied ? ` (incl. ${inr(s.creditApplied)} referral credit)` : ''}{s.excess ? ` · ${inr(s.excess)} received over the contract value` : ''}{s.nextDue ? ` · Next: ${s.nextDue.label} ${inr(s.nextDue.amount)}${s.nextDue.dueOn ? ` by ${fmtDate(s.nextDue.dueOn)}` : ''}` : ''}</p>
+      <p className="mt-1 text-xs text-graphite">{s.paidPercent}% received{s.creditApplied || s.discountApplied ? ` (incl. ${[s.discountApplied && `${inr(s.discountApplied)} coupon`, s.creditApplied && `${inr(s.creditApplied)} referral credit`].filter(Boolean).join(', ')})` : ''}{s.excess ? ` · ${inr(s.excess)} received over the contract value` : ''}{s.nextDue ? ` · Next: ${s.nextDue.label} ${inr(s.nextDue.amount)}${s.nextDue.dueOn ? ` by ${fmtDate(s.nextDue.dueOn)}` : ''}` : ''}</p>
 
+      {canManage && s.balance > 0 && !s.discountApplied && (
+        <div className="mt-3 flex gap-2">
+          <input aria-label="Coupon code" className="h-9 min-w-0 flex-1 border border-stone-deep bg-paper px-2 text-sm uppercase" placeholder="Coupon code" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ''))} />
+          <Button size="sm" variant="secondary" disabled={!couponCode} loading={busy} onClick={async () => { if (await run(() => api(`/execution/${projectId}/payments/coupon`, { method: 'POST', body: { code: couponCode } }), 'Coupon applied')) setCouponCode(''); }}>Apply coupon</Button>
+        </div>
+      )}
       <h3 className="mt-5 text-xs font-semibold uppercase tracking-wide text-graphite">Schedule</h3>
       {s.schedule.length ? (
         <ul className="mt-2 divide-y divide-stone border-y border-stone text-sm">

@@ -36,4 +36,5 @@ module.exports = {
   Enquiry: require('./Enquiry'),
   Lock: require('./Lock'),
   Partner: require('./Partner'),
+  Coupon: require('./Coupon'),
 };

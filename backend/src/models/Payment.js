@@ -1,7 +1,9 @@
 const { Schema, model, Types } = require('mongoose');
 
 // REFERRAL_CREDIT: paid from the customer's Refer & Earn wallet (not money received).
-const METHODS = ['CASH', 'UPI', 'BANK_TRANSFER', 'CHEQUE', 'CARD', 'RAZORPAY', 'REFERRAL_CREDIT', 'OTHER'];
+// COUPON: discount from a coupon code (not money received).
+const METHODS = ['CASH', 'UPI', 'BANK_TRANSFER', 'CHEQUE', 'CARD', 'RAZORPAY', 'REFERRAL_CREDIT', 'COUPON', 'OTHER'];
+const NON_CASH = ['REFERRAL_CREDIT', 'COUPON'];
 
 // One money movement against a project. Offline payments are recorded by staff (status RECEIVED at once);
 // online payments start as CREATED (Razorpay order) and become RECEIVED after signature/webhook verification.
@@ -24,10 +26,12 @@ const paymentSchema = new Schema(
     voidedAt: Date,
     voidedBy: { type: Types.ObjectId, ref: 'User' },
     voidReason: String,
+    coupon: { type: Types.ObjectId, ref: 'Coupon', index: true },
   },
   { timestamps: true },
 );
 
 paymentSchema.statics.METHODS = METHODS;
+paymentSchema.statics.NON_CASH = NON_CASH;
 
 module.exports = model('Payment', paymentSchema);
