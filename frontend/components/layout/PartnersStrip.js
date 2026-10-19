@@ -7,7 +7,7 @@ export default async function PartnersStrip() {
   // Repeat short lists so the strip is always wider than the screen, then duplicate once for a seamless loop.
   const base = Array.from({ length: Math.max(1, Math.ceil(10 / items.length)) }, () => items).flat();
   const Logo = ({ p, hidden }) => {
-    const img = <img src={p.logo} alt={hidden ? '' : p.name} loading="lazy" className="h-10 w-auto max-w-[150px] object-contain opacity-70 grayscale transition duration-300 group-hover/logo:opacity-100 group-hover/logo:grayscale-0 sm:h-12" />;
+    const img = <img src={p.logo} alt={hidden ? '' : p.name} loading="lazy" className="h-19 w-auto max-w-[150px] object-contain transition duration-300 group-hover/logo:opacity-100 group-hover/logo:grayscale-0 sm:h-28" />;
     return (
       <li className="group/logo flex shrink-0 items-center px-6 sm:px-10" aria-hidden={hidden || undefined}>
         {p.url ? <a href={p.url} target="_blank" rel="noopener noreferrer nofollow" tabIndex={hidden ? -1 : undefined} title={p.name}>{img}</a> : img}
