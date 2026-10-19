@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import TermsNote from '@/components/ui/TermsNote';
 import Button from '@/components/ui/Button';
 import { Field, Input } from '@/components/ui/Field';
 import Notice from '@/components/ui/Notice';
@@ -63,6 +64,7 @@ export default function ConsultationForm({ inverse = false, id = 'cta', variant 
           {error && <Notice tone="error" className="mb-3">{error}</Notice>}
           <Button type="submit" loading={loading} className="h-11 w-full">Get a free consultation <span aria-hidden="true">→</span></Button>
           <p className="mt-2 text-center text-[0.7rem] text-graphite">We verify your number with a one-time code in the next step.</p>
+          <TermsNote className="mt-1 text-center !text-[0.7rem]" />
         </div>
       </form>
     );
@@ -86,6 +88,7 @@ export default function ConsultationForm({ inverse = false, id = 'cta', variant 
         {error && <Notice tone="error" className="mb-4">{error}</Notice>}
         <Button type="submit" size="lg" loading={loading} variant={inverse ? 'light' : 'primary'}>Continue to consultation</Button>
         <p className={`mt-3 text-sm ${inverse ? 'text-stone' : 'text-graphite'}`}>We will verify your number with a one-time code in the next steps.</p>
+        <TermsNote className="mt-1" light={inverse} />
       </div>
     </form>
   );

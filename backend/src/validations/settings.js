@@ -22,7 +22,7 @@ const SETTINGS_SCHEMAS = {
   'company.profile': z.object({
     name: z.string().trim().min(2).max(120),
     tagline: s(200), phone: s(20), whatsapp: s(20), email: s(200), address: s(500), gstNumber: s(20),
-    logoUrl: url, faviconUrl: url,
+    logoUrl: url, logoDarkUrl: url.optional(), faviconUrl: url,
     social: z.object({ instagram: url, facebook: url, youtube: url, linkedin: url }).default({}),
     quotationFooter: s(2000), terms: s(20000), warrantyContent: s(20000),
   }),
@@ -38,6 +38,8 @@ const SETTINGS_SCHEMAS = {
     intervalSeconds: z.coerce.number().int().min(2).max(30).default(5),
     top: z.array(z.object({ image: z.string().trim().min(1).max(1000).transform(toStoredPath), alt: z.string().trim().max(160).default('') })).max(10).default([]),
     bottom: z.array(z.object({ image: z.string().trim().min(1).max(1000).transform(toStoredPath), alt: z.string().trim().max(160).default('') })).max(10).default([]),
+    headlines: z.array(z.object({ text: z.string().trim().min(3).max(90), highlight: z.string().trim().max(90).default('') })).max(6).optional(),
+    headlineSeconds: z.coerce.number().int().min(2).max(20).default(5),
   }),
   'referral.config': z.object({
     enabled: z.boolean(),

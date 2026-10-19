@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
+import TermsNote from '@/components/ui/TermsNote';
 import Button from '@/components/ui/Button';
 import { Field, Input, Textarea } from '@/components/ui/Field';
 import Notice from '@/components/ui/Notice';
@@ -93,7 +94,7 @@ export default function ContactForm() {
         {errors.consent && <p className="mt-1 text-caption text-error" role="alert">{errors.consent}</p>}
       </div>
       {error && <Notice tone="error" className="sm:col-span-2">{error}</Notice>}
-      <div className="sm:col-span-2"><Button type="submit" size="lg" loading={loading} className="w-full sm:w-auto">Send message</Button></div>
+      <div className="sm:col-span-2"><Button type="submit" size="lg" loading={loading} className="w-full sm:w-auto">Send message</Button><TermsNote className="mt-3" /></div>
     </form>
   );
 }

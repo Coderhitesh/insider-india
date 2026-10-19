@@ -66,6 +66,8 @@ exports.site = asyncHandler(async (req, res) => {
   const stats = (pub['site.stats']?.items || []).filter((s) => s.visible && s.value !== null && s.value !== '');
   cache(res, 120);
   const h = pub['site.hero'] || {};
-  const hero = { intervalSeconds: h.intervalSeconds || 5, top: (h.top || []).filter((x) => x.image), bottom: (h.bottom || []).filter((x) => x.image) };
+  const { SITE_HERO } = require('../config/defaults');
+  const headlines = (h.headlines?.length ? h.headlines : SITE_HERO.headlines).filter((x) => x.text);
+  const hero = { intervalSeconds: h.intervalSeconds || 5, top: (h.top || []).filter((x) => x.image), bottom: (h.bottom || []).filter((x) => x.image), headlines, headlineSeconds: h.headlineSeconds || SITE_HERO.headlineSeconds };
   ok(res, { company: pub['company.profile'] || {}, stats, hero });
 });

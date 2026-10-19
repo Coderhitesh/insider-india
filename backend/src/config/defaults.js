@@ -108,6 +108,7 @@ const COMPANY_PROFILE = {
   address: '',
   gstNumber: '',
   logoUrl: '',
+  logoDarkUrl: '', // footer (red background); empty = built-in dark logo
   faviconUrl: '',
   social: { instagram: '', facebook: '', youtube: '', linkedin: '' },
   quotationFooter: '',
@@ -134,7 +135,17 @@ const SITE_STATS = {
 };
 
 // Home page hero: two image sliders on the right (top + bottom). Empty lists fall back to the built-in photos.
-const SITE_HERO = { intervalSeconds: 5, top: [], bottom: [] };
+const SITE_HERO = {
+  intervalSeconds: 5,
+  top: [],
+  bottom: [],
+  // Rotating home headline. `highlight`: words shown in brand red.
+  headlines: [
+    { text: 'Interiors designed around the way you live.', highlight: 'designed' },
+    { text: 'Crafting spaces, building stories, sometimes dreams.', highlight: 'stories, dreams.' },
+  ],
+  headlineSeconds: 5,
+};
 
 // Online payments. NONE = only offline payments (cash/UPI/bank/cheque) are recorded by staff.
 const PAYMENT_PROVIDER = { active: 'NONE', razorpay: { keyId: '', keySecret: '', webhookSecret: '' } };

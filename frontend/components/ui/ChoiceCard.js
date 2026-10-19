@@ -16,13 +16,23 @@ export default function ChoiceCard({ type = 'radio', name, value, checked, onCha
       )}
     >
       <input type={type} name={name} value={value} checked={checked} onChange={onChange} className="sr-only" />
-      <span aria-hidden="true" className={clsx('absolute right-3 top-3 flex size-6 items-center justify-center rounded-full border-2 transition-colors', checked ? 'border-wine bg-wine text-paper' : 'border-stone-deep group-hover:border-wine', type === 'checkbox' && 'rounded-md')}>
-        {checked && <Check className="size-3.5" strokeWidth={3} />}
-      </span>
+      {/* With a picture the tick sits beside the title (never on top of the image); without one it stays in the corner. */}
+      {!media && <Tick checked={checked} type={type} className="absolute right-3 top-3" />}
       {media && <span className="mb-4 block overflow-hidden rounded-lg">{media}</span>}
-      <span className={clsx('pr-8 font-semibold text-charcoal', compact ? 'text-[0.95rem]' : 'text-lg')}>{title}</span>
+      <span className={clsx('flex items-start justify-between gap-3 font-semibold text-charcoal', !media && 'pr-8', compact ? 'text-[0.95rem]' : 'text-lg')}>
+        <span>{title}</span>
+        {media && <Tick checked={checked} type={type} className="mt-0.5 shrink-0" />}
+      </span>
       {description && <span className="mt-1 pr-6 text-sm text-graphite">{description}</span>}
       {meta && <span className="mt-3 text-sm text-charcoal">{meta}</span>}
     </label>
+  );
+}
+
+function Tick({ checked, type, className }) {
+  return (
+    <span aria-hidden="true" className={clsx('flex size-6 items-center justify-center rounded-full border-2 bg-paper transition-colors', checked ? 'border-wine bg-wine text-paper' : 'border-stone-deep group-hover:border-wine', type === 'checkbox' && 'rounded-md', className)}>
+      {checked && <Check className="size-3.5" strokeWidth={3} />}
+    </span>
   );
 }

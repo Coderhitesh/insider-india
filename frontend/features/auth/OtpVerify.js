@@ -6,6 +6,7 @@ import { readReferralCode } from '@/components/providers/Providers';
 import OtpInput from '@/components/ui/OtpInput';
 import Notice from '@/components/ui/Notice';
 import Spinner from '@/components/ui/Spinner';
+import TermsNote from '@/components/ui/TermsNote';
 import Button from '@/components/ui/Button';
 import { api } from '@/lib/api';
 import { useAuth } from '@/store/auth';
@@ -108,6 +109,7 @@ export default function OtpVerify({ mobile, leadId, leadToken, name, defaultLeng
         </div>
         {error && <Notice tone="error" className="mt-5 max-w-md">{error}</Notice>}
         <Button type="submit" size="lg" className="mt-6 w-full sm:w-auto" loading={verifying} disabled={code.length !== info.length}>Verify and continue</Button>
+        <TermsNote className="mt-3" action="verifying" />
       </form>
 
       <div className="mt-8 border-t border-stone pt-5">

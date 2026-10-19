@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import ChoiceCard from '@/components/ui/ChoiceCard';
 import Notice from '@/components/ui/Notice';
 import Spinner from '@/components/ui/Spinner';
+import TermsNote from '@/components/ui/TermsNote';
 import Button from '@/components/ui/Button';
 import Swatch from '@/components/ui/Swatch';
 import { Field, Input } from '@/components/ui/Field';
@@ -238,6 +239,7 @@ export default function BookingFunnel() {
               ))}
             </div>
           </fieldset>
+          <TermsNote action="continuing" />
           {errorNotice}
           <StepFooter loading={saving} />
         </form>

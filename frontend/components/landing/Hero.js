@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Button from '@/components/ui/Button';
 import { HOME_IMG, Eyebrow, Arrow } from './media';
 import HeroSlider from './HeroSlider';
+import RotatingHeadline from './RotatingHeadline';
 
 // Built-in photos, used until images are added in Admin → Settings → Home banner.
 const TOP_FALLBACK = [{ src: HOME_IMG.hero, alt: 'A warm living room with a sectional sofa and marble coffee table' }];
@@ -29,9 +30,7 @@ export default function Hero({ stats, hero = {} }) {
         <div className="relative z-10 flex items-center">
           <div className="w-full px-5 py-12 sm:px-10 sm:py-16 lg:ml-auto lg:max-w-[640px] lg:py-20 lg:pl-12 lg:pr-4 xl:pl-6">
             <Eyebrow className="hero-rise">Interiors that belong</Eyebrow>
-            <h1 id="hero-title" className="hero-rise mt-4 text-[clamp(2.7rem,5.6vw,4.9rem)] leading-[0.98]">
-              Interiors <span className="text-wine">designed</span> around the way you live.
-            </h1>
+            <RotatingHeadline id="hero-title" items={hero.headlines} seconds={hero.headlineSeconds || 5} className="hero-rise mt-4 text-[clamp(2.5rem,5.2vw,4.6rem)] leading-[1.02]" />
             <p className="hero-rise mt-6 max-w-lg text-[1.05rem] leading-relaxed text-graphite" style={{ animationDelay: '100ms' }}>
               Beautiful, functional and personalised interiors for homes, kitchens, wardrobes and workspaces — planned around your budget.
             </p>
@@ -61,9 +60,9 @@ export default function Hero({ stats, hero = {} }) {
             <svg aria-hidden="true" viewBox="0 0 120 600" preserveAspectRatio="none" className="absolute inset-y-0 -left-px hidden h-full w-24 text-[#fff8f6] lg:block">
               <path fill="currentColor" d="M0 0h70C30 140 20 300 60 430c18 60 40 120 60 170H0z" />
             </svg>
-            {/* <p aria-hidden="true" className="pointer-events-none absolute left-[33%] top-[22%] hidden -rotate-6 font-display text-[clamp(1.3rem,4.2cqw,2.6rem)] italic leading-tight text-white/90 [text-shadow:0_1px_8px_rgb(0_0_0/.25)] sm:block">
+            <p aria-hidden="true" className="pointer-events-none absolute left-[33%] top-[22%] hidden -rotate-6 font-display text-[clamp(1.3rem,4.2cqw,2.6rem)] italic leading-tight text-white/90 [text-shadow:0_1px_8px_rgb(0_0_0/.25)] sm:block">
               Spaces<br />for a better<br />everyday
-            </p> */}
+            </p>
             <Link href="/how-it-works" className="group absolute bottom-[8%] right-[4%] flex w-[min(260px,46%)] items-center justify-between gap-3 rounded-xl bg-white/95 p-3.5 shadow-[0_10px_30px_-12px_rgb(0_0_0/.35)] backdrop-blur sm:p-4">
               <span className="text-[clamp(0.72rem,1.5cqw,0.92rem)] font-medium leading-snug text-charcoal">Turn your space into a home you love</span>
               <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-wine text-paper transition-transform group-hover:scale-105"><Arrow /></span>

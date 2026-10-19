@@ -35,4 +35,5 @@ module.exports = {
   GalleryImage: require('./GalleryImage'),
   Enquiry: require('./Enquiry'),
   Lock: require('./Lock'),
+  Partner: require('./Partner'),
 };

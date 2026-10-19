@@ -122,9 +122,24 @@ export function Content() {
   return (
     <>
       <Header title="Website content" subtitle="Projects, gallery, testimonials and FAQs. Unpublished items never appear on the site." />
-      <Tabs tabs={[['projects', 'Projects'], ['gallery', 'Gallery photos'], ['gallery-categories', 'Gallery categories'], ['testimonials', 'Testimonials'], ['faqs', 'FAQs']]} value={tab} onChange={setTab} />
+      <Tabs tabs={[['projects', 'Projects'], ['gallery', 'Gallery photos'], ['gallery-categories', 'Gallery categories'], ['partners', 'Brand partners'], ['testimonials', 'Testimonials'], ['faqs', 'FAQs']]} value={tab} onChange={setTab} />
       {tab === 'gallery' && <GalleryPhotos />}
       {tab === 'gallery-categories' && <GalleryCategories />}
+      {tab === 'partners' && (
+        <CrudResource embedded endpoint="/admin/partners" title="Brand partners" managePerm="content.manage" reorder
+          columns={[
+            { key: 'logo', label: 'Logo', render: (r) => <img src={r.logo} alt="" className="h-10 w-24 bg-white object-contain" /> },
+            { key: 'name', label: 'Brand' }, { key: 'url', label: 'Link', render: (r) => r.url || '—' },
+            { key: 'isActive', label: 'Status', render: active },
+          ]}
+          defaults={{ name: '', logo: '', url: '', isActive: true }}
+          toForm={strip}
+          fields={[
+            { name: 'name', label: 'Brand name' }, { name: 'url', label: 'Website (optional)', hint: 'https://…' },
+            { name: 'logo', label: 'Logo (PNG/WebP with transparent background, ~300×120)', type: 'image', wide: true },
+            { name: 'isActive', label: 'Show on website', type: 'switch', help: 'Shown in the scrolling “Our brand partners” strip above the footer' },
+          ]} />
+      )}
       {tab === 'projects' && (
         <CrudResource embedded endpoint="/admin/projects" title="Projects" managePerm="content.manage" reorder
           filters={[{ name: 'category', label: 'Category', options: CATS }]}

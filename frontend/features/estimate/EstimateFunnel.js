@@ -8,6 +8,7 @@ import ChoiceCard from '@/components/ui/ChoiceCard';
 import Counter from '@/components/ui/Counter';
 import Notice from '@/components/ui/Notice';
 import Spinner from '@/components/ui/Spinner';
+import TermsNote from '@/components/ui/TermsNote';
 import Button from '@/components/ui/Button';
 import { Field, Input } from '@/components/ui/Field';
 import { FunnelShell, StepFooter } from '@/features/funnel/FunnelShell';
@@ -269,6 +270,7 @@ export default function EstimateFunnel() {
             </Field>
           </>
         )}
+        <TermsNote action="continuing" />
         {errorNotice}
         <StepFooter onBack={back} loading={busy} continueLabel="Get my estimate" />
       </form>

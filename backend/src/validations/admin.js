@@ -249,6 +249,15 @@ const faqBase = z.object({
 });
 const faqSchemas = { create: faqBase, update: faqBase.partial() };
 
+const partnerBase = z.object({
+  name: str(80).min(1, 'Enter the brand name'),
+  logo: url.refine((v) => v !== '', 'Upload the logo'),
+  url: z.union([z.literal(''), z.string().trim().max(500).url('Enter a full link, e.g. https://brand.com')]).optional(),
+  isActive: z.boolean().default(true),
+  order: z.coerce.number().int().optional(),
+});
+const partnerSchemas = { create: partnerBase, update: partnerBase.partial() };
+
 const galleryCategoryBase = z.object({
   name: str(80).min(2),
   slug: optStr(80),
@@ -276,7 +285,7 @@ const galleryBulk = z.object({
 });
 
 module.exports = {
-  galleryCategorySchemas, galleryImageSchemas, galleryBulk,
+  partnerSchemas, galleryCategorySchemas, galleryImageSchemas, galleryBulk,
   listQuery, updateLead, assign, bookingStatus, note, updateCustomer,
   createContractor, updateContractor, createStaff, updateStaff, resetPassword, createRole, updateRole,
   packageSchemas, serviceSchemas, ruleSchemas, templateSchemas, sendNotification,

@@ -1,4 +1,4 @@
-const { Package, Service, EstimateRule, NotificationTemplate, Project, Testimonial, Faq, Estimate, Booking, Lead, User, Notification, Media, AuditLog, GalleryCategory, GalleryImage } = require('../../models');
+const { Package, Service, EstimateRule, NotificationTemplate, Project, Testimonial, Faq, Estimate, Booking, Lead, User, Notification, Media, AuditLog, GalleryCategory, GalleryImage, Partner } = require('../../models');
 const { crud } = require('./crudFactory');
 const v = require('../../validations/admin');
 const StorageService = require('../../services/storage/StorageService');
@@ -46,6 +46,10 @@ exports.projects = crud({
   Model: Project, entityType: 'Project', createSchema: v.projectSchemas.create, updateSchema: v.projectSchemas.update,
   searchFields: ['title', 'city', 'locality'], slugFrom: 'title',
   filters: (q) => (q.category ? { category: q.category } : {}),
+});
+
+exports.partners = crud({
+  Model: Partner, entityType: 'Partner', createSchema: v.partnerSchemas.create, updateSchema: v.partnerSchemas.update, searchFields: ['name'],
 });
 
 exports.galleryCategories = crud({

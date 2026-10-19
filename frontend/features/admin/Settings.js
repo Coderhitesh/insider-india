@@ -19,7 +19,7 @@ const SCHEMAS = {
   'company.profile': ['Company', [
     { name: 'name', label: 'Company name' }, { name: 'tagline', label: 'Tagline' }, { name: 'phone', label: 'Phone' }, { name: 'whatsapp', label: 'WhatsApp number' },
     { name: 'email', label: 'Email' }, { name: 'gstNumber', label: 'GST number' }, { name: 'address', label: 'Office address', type: 'textarea', rows: 2 },
-    { name: 'logoUrl', label: 'Logo (PNG/JPG for PDFs)', type: 'image' }, { name: 'faviconUrl', label: 'Favicon', type: 'image' },
+    { name: 'logoUrl', label: 'Logo (PNG/JPG for PDFs)', type: 'image' }, { name: 'logoDarkUrl', label: 'Footer logo (on red background)', type: 'image', hint: 'Leave empty to use the built-in dark logo' }, { name: 'faviconUrl', label: 'Favicon', type: 'image' },
     { name: 'social.instagram', label: 'Instagram URL' }, { name: 'social.facebook', label: 'Facebook URL' }, { name: 'social.youtube', label: 'YouTube URL' }, { name: 'social.linkedin', label: 'LinkedIn URL' },
     { name: 'quotationFooter', label: 'Quotation PDF footer', type: 'textarea', rows: 2 },
     { name: 'warrantyContent', label: 'Warranty terms (website + PDF)', type: 'textarea', rows: 6 }, { name: 'terms', label: 'Terms & conditions (website + PDF)', type: 'textarea', rows: 8 },
@@ -28,6 +28,10 @@ const SCHEMAS = {
     { name: 'key', label: 'Key' }, { name: 'label', label: 'Label' }, { name: 'value', label: 'Value', hint: 'Leave empty to hide' }, { name: 'visible', label: 'Visible', type: 'switch', help: 'Show on home page' },
   ] }]],
   'site.hero': ['Home banner', [
+    { name: 'headlines', label: 'Rotating headline (shown one after another)', type: 'rows', addLabel: 'Add headline', newRow: { text: '', highlight: '' }, fields: [
+      { name: 'text', label: 'Headline', hint: 'Keep it short — about 6–8 words' }, { name: 'highlight', label: 'Words in red', hint: 'e.g. designed' },
+    ] },
+    { name: 'headlineSeconds', label: 'Seconds per headline', type: 'number', min: 2, max: 20 },
     { name: 'top', label: 'Top banner — right side (slides rotate; first image shows first)', type: 'rows', addLabel: 'Add image', newRow: { image: '', alt: '' }, fields: [
       { name: 'image', label: 'Image (landscape, 1600px+ wide)', type: 'image' }, { name: 'alt', label: 'Description (for SEO / screen readers)' },
     ] },

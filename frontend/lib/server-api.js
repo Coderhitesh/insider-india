@@ -36,3 +36,4 @@ export const getProject = (slug) => getJSON(`/catalog/projects/${encodeURICompon
 export const getProjectSlugs = async () => (await getJSON('/catalog/projects/slugs', { revalidate: 3600, fallback: {} }))?.items || [];
 export const getReferralProgram = async () => (await getJSON('/catalog/referral-program', { revalidate: 60, fallback: {} }))?.program || null;
 export const getGallery = async () => (await getJSON('/catalog/gallery', { revalidate: 60, fallback: null })) || { categories: [], items: [] };
+export const getPartners = async () => (await getJSON('/catalog/partners', { revalidate: 120, fallback: {} }))?.items || [];

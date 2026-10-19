@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import TermsNote from '@/components/ui/TermsNote';
 import Button from '@/components/ui/Button';
 import { Field, Input } from '@/components/ui/Field';
 import { normalizeMobile } from '@/lib/format';
@@ -30,6 +31,7 @@ export default function LoginForm() {
         <Input id="login-mobile" type="tel" inputMode="numeric" autoComplete="tel-national" prefix="+91" maxLength={14} autoFocus value={mobile} onChange={(e) => { setMobile(e.target.value); setError(''); }} error={error} />
       </Field>
       <Button type="submit" size="lg" className="mt-6 w-full">Send code</Button>
+      <TermsNote className="mt-3 text-center" action="continuing" />
     </form>
   );
 }

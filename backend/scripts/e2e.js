@@ -593,6 +593,18 @@ function upload(token, purpose, buf, name, type) {
   await call('PATCH', `/admin/gallery-categories/${kitchen.id}`, { token: tokAdm, body: { isActive: true } });
   for (const x of (await call('GET', `/admin/gallery-images?category=${kitchen.id}&limit=200`, { token: tokAdm })).data.items.filter((i) => /^E2E/.test(i.title || i.alt || ''))) await call('DELETE', `/admin/gallery-images/${x.id}`, { token: tokAdm });
 
+  section('Brand partners');
+  {
+    check('partner needs a logo', (await call('POST', '/admin/partners', { token: tokAdm, body: { name: 'E2E Brand' } })).status === 422);
+    const pa = await call('POST', '/admin/partners', { token: tokAdm, body: { name: 'E2E Brand', logo: 'https://example.com/logo.png', url: 'https://example.com' } });
+    check('partner added', pa.status === 201, pa.body);
+    check('contractor cannot manage partners', (await call('GET', '/admin/partners', { token: tokC })).status === 403);
+    check('partner shown publicly', (await call('GET', '/catalog/partners')).data?.items?.some((x) => x.name === 'E2E Brand'));
+    await call('PATCH', `/admin/partners/${pa.data.item.id}`, { token: tokAdm, body: { isActive: false } });
+    check('hidden partner not public', !(await call('GET', '/catalog/partners')).data.items.some((x) => x.name === 'E2E Brand'));
+    await call('DELETE', `/admin/partners/${pa.data.item.id}`, { token: tokAdm });
+  }
+
   section('Contact page enquiries');
   {
     const em = rnd();

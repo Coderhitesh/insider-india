@@ -150,3 +150,32 @@
 .site-skin .grid-paper-invert { background-image: none; }
 .site-skin .budget-card { border-radius: 14px; overflow: hidden; }
 .site-skin .budget-card > div:first-child { background: linear-gradient(135deg, #b30d29 0%, #9a0c22 55%, #7d0a1c 100%); }
+
+/* ── Motion: scroll reveal, marquee, WhatsApp pulse, gentle hovers ── */
+[data-reveal] { opacity: 0; transform: translateY(26px); transition: opacity 0.7s var(--ease-quart), transform 0.7s var(--ease-quart); transition-delay: var(--reveal-delay, 0ms); }
+[data-reveal].is-in { opacity: 1; transform: none; }
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.marquee-track { animation: marquee 38s linear infinite; }
+.marquee:hover .marquee-track { animation-play-state: paused; }
+@keyframes wa-ping { 0% { transform: scale(1); opacity: 0.55; } 80%, 100% { transform: scale(1.7); opacity: 0; } }
+.wa-ping { animation: wa-ping 2.2s cubic-bezier(0, 0, 0.2, 1) infinite; }
+@keyframes wa-in { from { transform: translateY(24px) scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
+.wa-fab { animation: wa-in 0.6s 0.8s var(--ease-quart) both; }
+.site-skin .soft-card { transition: transform 0.35s var(--ease-quart), box-shadow 0.35s var(--ease-quart), border-color 0.2s; }
+.site-skin a .soft-card:hover, .site-skin a.soft-card:hover, .site-skin li > .soft-card:hover { transform: translateY(-4px); box-shadow: 0 22px 40px -24px rgb(154 12 34 / 0.35); }
+.site-skin .btn, .site-skin a[class*="bg-wine"], .site-skin button[class*="bg-wine"] { transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s; }
+.site-skin a[class*="bg-wine"]:hover, .site-skin button[type="submit"][class*="bg-wine"]:hover { box-shadow: 0 10px 22px -12px rgb(154 12 34 / 0.6); }
+.site-skin .img-zoom img { transition: transform 0.8s var(--ease-quart); }
+.site-skin .img-zoom:hover img { transform: scale(1.05); }
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] { opacity: 1 !important; transform: none !important; }
+  .marquee-track, .wa-ping { animation: none !important; }
+}
+
+/* Rotating hero headline: words rise in from below, then leave upwards. */
+@keyframes word-in { from { transform: translateY(110%); } to { transform: translateY(0); } }
+@keyframes word-out { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-110%); opacity: 0; } }
+.headline-line[data-state="in"] .headline-word { animation: word-in 0.75s var(--ease-quart) both; animation-delay: var(--d); }
+.headline-line[data-state="out"] .headline-word { animation: word-out 0.55s cubic-bezier(0.5, 0, 0.75, 0) both; animation-delay: calc(var(--d) * 0.6); }
+.headline-line[data-state="idle"] .headline-word { transform: translateY(110%); }
+@media (prefers-reduced-motion: reduce) { .headline-line .headline-word { animation: none !important; transform: none !important; } }

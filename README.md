@@ -206,3 +206,10 @@ Step 2 asks **My home** or **Commercial space** (pre-selected from `/commercial-
 ## Contact page enquiries
 
 `/contact` has a plain message form (name, mobile, optional email/city, topic, message, preferred reply channel, consent). Saved as **Enquiries** (`ENQ-YYYY-NNNNNN`), admins get an in-app notification, and staff manage them in **Admin → Enquiries** (status New / In progress / Resolved / Spam, notes, call / WhatsApp links). Permissions `enquiries.view`, `enquiries.manage` (given to Admin automatically). Spam guards: hidden honeypot field, 10 messages/hour per IP, same message from the same number within 10 minutes is not duplicated.
+
+## Brand partners, WhatsApp button, motion
+
+- **Brand partners**: Admin → Website content → Brand partners (logo, name, optional link, order, show/hide). Shown as a scrolling logo strip above the footer on every public page; hidden while the list is empty.
+- **WhatsApp button** (bottom-right, all public pages except the booking/estimate funnels) uses the WhatsApp number from Settings → Company (falls back to the phone number). Hidden if neither is set.
+- **Terms line** under every public form (contact, login, OTP / registration, booking, estimate, consultation forms) links to Privacy Policy and Terms.
+- **Motion**: sections and cards fade/slide in on scroll (staggered in lists), cards lift on hover, logo marquee pauses on hover. All of it is switched off for visitors who prefer reduced motion.

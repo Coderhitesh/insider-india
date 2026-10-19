@@ -1,4 +1,4 @@
-const { Project, Testimonial, Faq, GalleryCategory, GalleryImage } = require('../models');
+const { Project, Testimonial, Faq, GalleryCategory, GalleryImage, Partner } = require('../models');
 const { parsePagination, pageMeta } = require('../utils/pagination');
 const { ok } = require('../utils/respond');
 const ApiError = require('../utils/ApiError');
@@ -72,6 +72,12 @@ exports.gallery = asyncHandler(async (req, res) => {
     categories: cats.map((c) => ({ id: String(c._id), name: c.name, slug: c.slug, description: c.description || '', coverImage: c.coverImage || items.find((x) => x.category === c.slug)?.image || null, seo: c.seo || {}, count: count.get(c.slug) || 0 })),
     items,
   });
+});
+
+exports.partners = asyncHandler(async (req, res) => {
+  const items = await Partner.find({ isActive: true }).sort({ order: 1, createdAt: 1 }).limit(60).select('name logo url').lean();
+  cache(res, 120);
+  ok(res, { items: items.map(clean) });
 });
 
 exports.faqs = asyncHandler(async (req, res) => {
