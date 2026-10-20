@@ -3,10 +3,12 @@ import clsx from 'clsx';
 
 // Monogram tile + wordmark. Replaced by company.logoUrl when set in Admin.
 export default function Logo({ company, className, inverse = false }) {
-  // Footer (red background): logo on its own dark tile so the red mark stays visible.
+  // Footer (dark background).
   if (inverse) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <Link href="/" className={className} aria-label={`${company?.name || 'INSIDER INDIA LLP'} home`}><img src={company?.logoDarkUrl || '/images/logo/logo-dark.jpg'} alt={company?.name || 'INSIDER INDIA LLP'} className="h-24 w-auto rounded-2xl shadow-[0_18px_40px_-18px_rgb(0_0_0/.6)] ring-1 ring-white/15" /></Link>;
+    // Same logo as the header (Admin → Settings → Company); a separate footer logo can be set there too. Slightly smaller than the header.
+    const src = company?.logoDarkUrl || company?.logoUrl || '/images/logo/logo-dark.jpg';
+    return <Link href="/" className={className} aria-label={`${company?.name || 'INSIDER INDIA LLP'} home`}><img src={src} alt={company?.name || 'INSIDER INDIA LLP'} className="h-14 w-auto rounded-lg" /></Link>;
   }
   if (company?.logoUrl) {
     // eslint-disable-next-line @next/next/no-img-element

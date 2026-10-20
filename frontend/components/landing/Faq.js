@@ -4,6 +4,7 @@ import { faqLd } from '@/lib/seo';
 import { Eyebrow } from './media';
 
 export default function Faq({ items = [] }) {
+  // console.log("items",items)
   if (!items.length) return null;
   return (
     <section aria-labelledby="faq-title" className="bg-[#fdf8f7] py-14 sm:py-16">

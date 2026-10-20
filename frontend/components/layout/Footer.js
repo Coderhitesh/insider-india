@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Phone, Mail, MapPin, Instagram, Facebook, Linkedin, Youtube, Twitter, Globe, MessageCircle } from 'lucide-react';
 import Logo from './Logo';
+import { LOCATIONS } from '@/lib/locations';
 
 const SOCIAL_ICON = { instagram: Instagram, facebook: Facebook, linkedin: Linkedin, youtube: Youtube, twitter: Twitter, x: Twitter };
 
@@ -20,8 +21,8 @@ export default function Footer({ company }) {
   ].filter(Boolean);
 
   return (
-    <footer className="red-panel relative overflow-hidden text-paper">
-      <div className="container-x relative grid gap-10 py-14 md:grid-cols-12 lg:gap-8">
+    <footer className="relative overflow-hidden bg-[#373B3A] text-paper">
+      <div className="container-x relative grid gap-10 pb-10 pt-16 md:grid-cols-12 lg:gap-8">
         <div className="md:col-span-12 lg:col-span-3">
           <Logo company={company} inverse />
           <p className="mt-5 max-w-xs text-sm text-paper/85">{company.tagline || 'Interiors designed around the way you live.'}</p>
@@ -60,10 +61,20 @@ export default function Footer({ company }) {
           ) : <p className="text-paper/80"><Link href="/contact" className="underline underline-offset-4">Contact us</Link></p>}
         </div>
       </div>
-      <div className="relative bg-black/15">
-        <div className="container-x flex flex-col gap-2 py-4 text-xs text-paper/80 sm:flex-row sm:justify-between">
+      <div className="container-x border-t border-white/10 py-9">
+        <p className="mb-3 text-sm font-semibold">Locations we serve</p>
+        <ul className="flex flex-wrap items-center gap-x-1 gap-y-1.5 text-[0.82rem] leading-relaxed text-paper/70">
+          {LOCATIONS.map((l, i) => (
+            <li key={l.slug} className="flex items-center">
+              {i > 0 && <span aria-hidden="true" className="mr-1 text-paper/30">•</span>}
+              <Link href={`/interior-designer/${l.slug}`} className="transition-colors hover:text-paper">Interior Designer in {l.name}</Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="relative bg-black/20">
+        <div className="container-x py-4 text-xs text-paper/75">
           <p>© {new Date().getFullYear()} {company.name}. All rights reserved.{company.gstNumber ? ` GSTIN ${company.gstNumber}` : ''}</p>
-          <p>Interiors for a better everyday.</p>
         </div>
       </div>
     </footer>

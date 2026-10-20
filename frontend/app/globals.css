@@ -176,6 +176,8 @@
 @keyframes word-in { from { transform: translateY(110%); } to { transform: translateY(0); } }
 @keyframes word-out { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-110%); opacity: 0; } }
 .headline-line[data-state="in"] .headline-word { animation: word-in 0.75s var(--ease-quart) both; animation-delay: var(--d); }
+/* When swapping, the new line waits until the old one has left (no overlap). */
+.headline-line[data-state="in"][data-swap] .headline-word { animation-delay: calc(var(--d) + 520ms); }
 .headline-line[data-state="out"] .headline-word { animation: word-out 0.55s cubic-bezier(0.5, 0, 0.75, 0) both; animation-delay: calc(var(--d) * 0.6); }
 .headline-line[data-state="idle"] .headline-word { transform: translateY(110%); }
 @media (prefers-reduced-motion: reduce) { .headline-line .headline-word { animation: none !important; transform: none !important; } }

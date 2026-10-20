@@ -1,4 +1,5 @@
 import { SITE_URL } from '@/lib/config';
+import { LOCATIONS } from '@/lib/locations';
 import { getProjectSlugs, getGallery } from '@/lib/server-api';
 
 export const revalidate = 3600;
@@ -15,6 +16,7 @@ export default async function sitemap() {
   return [
     ...STATIC.map(([path, priority, changeFrequency]) => ({ url: `${SITE_URL}${path}`, priority, changeFrequency, lastModified: new Date() })),
     ...gallery.categories.filter((c) => c.count > 0).map((c) => ({ url: `${SITE_URL}/gallery/${c.slug}`, lastModified: new Date(), priority: 0.6, changeFrequency: 'weekly' })),
+    ...LOCATIONS.map((l) => ({ url: `${SITE_URL}/interior-designer/${l.slug}`, lastModified: new Date(), priority: 0.6, changeFrequency: 'monthly' })),
     ...projects.map((p) => ({ url: `${SITE_URL}/project/${p.slug}`, lastModified: p.updatedAt ? new Date(p.updatedAt) : new Date(), priority: 0.6, changeFrequency: 'monthly' })),
   ];
 }

@@ -60,9 +60,6 @@ export default function Hero({ stats, hero = {} }) {
             <svg aria-hidden="true" viewBox="0 0 120 600" preserveAspectRatio="none" className="absolute inset-y-0 -left-px hidden h-full w-24 text-[#fff8f6] lg:block">
               <path fill="currentColor" d="M0 0h70C30 140 20 300 60 430c18 60 40 120 60 170H0z" />
             </svg>
-            <p aria-hidden="true" className="pointer-events-none absolute left-[33%] top-[22%] hidden -rotate-6 font-display text-[clamp(1.3rem,4.2cqw,2.6rem)] italic leading-tight text-white/90 [text-shadow:0_1px_8px_rgb(0_0_0/.25)] sm:block">
-              Spaces<br />for a better<br />everyday
-            </p>
             <Link href="/how-it-works" className="group absolute bottom-[8%] right-[4%] flex w-[min(260px,46%)] items-center justify-between gap-3 rounded-xl bg-white/95 p-3.5 shadow-[0_10px_30px_-12px_rgb(0_0_0/.35)] backdrop-blur sm:p-4">
               <span className="text-[clamp(0.72rem,1.5cqw,0.92rem)] font-medium leading-snug text-charcoal">Turn your space into a home you love</span>
               <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-wine text-paper transition-transform group-hover:scale-105"><Arrow /></span>

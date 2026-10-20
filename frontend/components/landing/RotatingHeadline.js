@@ -32,7 +32,7 @@ export default function RotatingHeadline({ items = DEFAULT_HEADLINES, seconds = 
           const hl = new Set(String(h.highlight || '').split(/[\s,]+/).map(norm).filter(Boolean));
           const state = k === i ? 'in' : k === prev ? 'out' : 'idle';
           return (
-            <span key={k} className={`headline-line [grid-area:1/1] ${state === 'idle' ? 'invisible' : ''}`} data-state={state}>
+            <span key={k} className={`headline-line [grid-area:1/1] ${state === 'idle' ? 'invisible' : ''}`} data-state={state} data-swap={state === 'in' && prev >= 0 ? '' : undefined}>
               {h.text.split(' ').map((w, j) => (
                 <span key={j} className="inline-block overflow-hidden pb-[0.12em] align-bottom">
                   <span className={`headline-word inline-block ${hl.has(norm(w)) ? 'text-wine' : ''}`} style={{ '--d': `${j * 70}ms` }}>{w}&nbsp;</span>
